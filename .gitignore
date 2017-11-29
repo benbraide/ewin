@@ -30,3 +30,17 @@
 *.exe
 *.out
 *.app
+/ewin/ewin/x64/Debug/ewin.tlog
+*.log
+*.res
+*.idb
+*.pdb
+*.opendb
+*.db
+/ewin/.vs/ewin/v15/ipch
+*.suo
+*.sln
+*.ilk
+*.filters
+*.vcxproj
+*.user

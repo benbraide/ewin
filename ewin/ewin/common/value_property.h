@@ -5,6 +5,8 @@
 
 #include <functional>
 
+#include "macro.h"
+
 namespace ewin::common{
 	enum class property_error{
 		nil,
@@ -13,10 +15,14 @@ namespace ewin::common{
 		forbidden,
 	};
 
-	enum class property_access{
-		nil,
-		read,
-		write,
+	enum class property_access : unsigned int{
+		nil					= (0 << 0x0000),
+		read				= (1 << 0x0000),
+		write				= (1 << 0x0001),
+		list_add			= (1 << 0x0002),
+		list_remove			= (1 << 0x0003),
+		list_at				= (1 << 0x0004),
+		list_find			= (1 << 0x0005),
 	};
 
 	class property_manager{
@@ -58,7 +64,7 @@ namespace ewin::common{
 		}
 
 		value_property &operator =(const value_type &value){
-			if (access == access_type::read)
+			if (access != access_type::nil && !EWIN_IS(access, access_type::write))
 				throw error_type::access_violation;
 
 			if (linked_ != nullptr){
@@ -75,7 +81,7 @@ namespace ewin::common{
 		}
 
 		operator value_type() const{
-			if (access == access_type::write)
+			if (access != access_type::nil && !EWIN_IS(access, access_type::read))
 				throw error_type::access_violation;
 
 			if (linked_ != nullptr){
@@ -113,6 +119,8 @@ namespace ewin::common{
 
 	template <class value_type, class manager_type = void>
 	using write_only_value_property = value_property<value_type, manager_type, property_access::write>;
+
+	EWIN_MAKE_OPERATORS(property_access)
 }
 
 #endif /* !EWIN_VALUE_PROPERTY_H */

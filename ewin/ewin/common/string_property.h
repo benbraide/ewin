@@ -5,7 +5,7 @@
 
 #include <string>
 
-#include "value_property.h"
+#include "numeric_property.h"
 
 namespace ewin::common{
 	template <class manager_type = void, property_access access = property_access::nil>
@@ -18,6 +18,7 @@ namespace ewin::common{
 		typedef property_access access_type;
 
 		typedef std::function<void(void *, void *, access_type)> callback_type;
+		typedef numeric_value_property<std::size_t, string_value_property, access_type::read> numeric_value_property_type;
 
 		string_value_property(){}
 
@@ -36,7 +37,7 @@ namespace ewin::common{
 		}
 
 		string_value_property &operator =(const value_type &value){
-			if (access == access_type::read)
+			if (access != access_type::nil && !EWIN_IS(access, access_type::write))
 				throw error_type::access_violation;
 
 			if (linked_ != nullptr){
@@ -53,7 +54,7 @@ namespace ewin::common{
 		}
 
 		operator value_type() const{
-			if (access == access_type::write)
+			if (access != access_type::nil && !EWIN_IS(access, access_type::read))
 				throw error_type::access_violation;
 
 			if (linked_ != nullptr){
@@ -72,7 +73,7 @@ namespace ewin::common{
 		}
 
 		string_value_property &operator +=(const value_type &rhs){
-			if (access == access_type::read || access == access_type::write)
+			if (access != access_type::nil && !EWIN_IS(access, access_type::read | access_type::write))
 				throw error_type::access_violation;
 
 			if (linked_ != nullptr){
@@ -95,6 +96,8 @@ namespace ewin::common{
 			return ((value_type)(*this) + (value_type)rhs);
 		}
 
+		numeric_value_property_type size;
+
 		static const property_access required_access = access;
 
 	protected:
@@ -104,6 +107,7 @@ namespace ewin::common{
 		void initialize_(value_type *linked, callback_type callback){
 			linked_ = linked;
 			callback_ = callback;
+			size.initialize_(nullptr, callback);
 		}
 
 		value_type *linked_;

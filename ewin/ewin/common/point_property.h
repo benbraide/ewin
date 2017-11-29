@@ -58,8 +58,8 @@ namespace ewin::common{
 	protected:
 		void initialize_(value_type *linked, callback_type callback){
 			base_type::initialize_(linked, callback);
-			x.initialize_(linked, callback);
-			y.initialize_(linked, callback);
+			x.initialize_(nullptr, callback);
+			y.initialize_(nullptr, callback);
 		}
 	};
 

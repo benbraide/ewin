@@ -28,10 +28,6 @@ namespace ewin::common{
 			return *this;
 		}
 
-		bool operator !() const{
-			return !(value_type)(*this);
-		}
-
 		template <typename target_type>
 		bool operator ==(const target_type &rhs) const{
 			return ((value_type)(*this) == (value_type)rhs);

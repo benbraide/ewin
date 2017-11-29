@@ -63,10 +63,10 @@ namespace ewin::common{
 	protected:
 		void initialize_(value_type *linked, callback_type callback){
 			base_type::initialize_(linked, callback);
-			left.initialize_(linked, callback);
-			top.initialize_(linked, callback);
-			right.initialize_(linked, callback);
-			bottom.initialize_(linked, callback);
+			left.initialize_(nullptr, callback);
+			top.initialize_(nullptr, callback);
+			right.initialize_(nullptr, callback);
+			bottom.initialize_(nullptr, callback);
 		}
 	};
 

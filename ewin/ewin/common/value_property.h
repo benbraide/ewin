@@ -19,6 +19,17 @@ namespace ewin::common{
 		write,
 	};
 
+	class property_manager{
+	public:
+		virtual ~property_manager() = default;
+
+	protected:
+		template <typename property_type, typename value_type, typename callback_type>
+		void initialize_(property_type &prop, value_type *linked, callback_type callback){
+			prop.initialize_(linked, callback);
+		}
+	};
+
 	template <class value_type, class manager_type = void, property_access access = property_access::nil>
 	class value_property{
 	public:
@@ -85,6 +96,7 @@ namespace ewin::common{
 		static const property_access required_access = access;
 
 	protected:
+		friend class property_manager;
 		friend std::conditional_t<std::is_void_v<manager_type>, value_property, manager_type>;
 
 		void initialize_(value_type *linked, callback_type callback){

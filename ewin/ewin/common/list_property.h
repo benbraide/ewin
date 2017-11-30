@@ -126,11 +126,11 @@ namespace ewin::common{
 		callback_type callback_;
 	};
 
-	template <class manager_type = void>
-	using read_only_list_value_property = list_value_property<manager_type, property_access::read>;
+	template <class value_type, class iterator_type, class const_iterator_type, class manager_type = void>
+	using read_only_list_value_property = list_value_property<value_type, iterator_type, const_iterator_type, manager_type, property_access::read>;
 
-	template <class manager_type = void>
-	using write_only_list_value_property = list_value_property<manager_type, property_access::write>;
+	template <class value_type, class iterator_type, class const_iterator_type, class manager_type = void>
+	using write_only_list_value_property = list_value_property<value_type, iterator_type, const_iterator_type, manager_type, property_access::write>;
 }
 
 #endif /* !EWIN_LIST_PROPERTY_H */

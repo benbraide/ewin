@@ -25,6 +25,7 @@ namespace ewin::common{
 		list_find			= (1 << 0x0005),
 		list_begin			= (1 << 0x0006),
 		list_end			= (1 << 0x0007),
+		write_alt			= (1 << 0x0008),
 	};
 
 	class property_manager{
@@ -49,7 +50,8 @@ namespace ewin::common{
 
 		typedef std::function<void(void *, void *, access_type)> callback_type;
 
-		value_property(){}
+		value_property()
+			: linked_(nullptr){}
 
 		explicit value_property(value_type &linked)
 			: linked_(&linked){}

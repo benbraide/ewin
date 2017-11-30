@@ -23,6 +23,8 @@ namespace ewin::common{
 		list_remove			= (1 << 0x0003),
 		list_at				= (1 << 0x0004),
 		list_find			= (1 << 0x0005),
+		list_begin			= (1 << 0x0006),
+		list_end			= (1 << 0x0007),
 	};
 
 	class property_manager{

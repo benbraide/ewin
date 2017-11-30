@@ -9,10 +9,12 @@
 #include "numeric_property.h"
 
 namespace ewin::common{
-	template <class value_type, class manager_type = void, property_access access = property_access::nil>
+	template <class value_type, class iterator_type, class const_iterator_type, class manager_type = void, property_access access = property_access::nil>
 	class list_value_property{
 	public:
 		typedef value_type value_type;
+		typedef iterator_type iterator_type;
+		typedef const_iterator_type const_iterator_type;
 		typedef manager_type manager_type;
 
 		typedef property_error error_type;
@@ -80,6 +82,32 @@ namespace ewin::common{
 
 		operator bool() const{
 			return (size > 0u);
+		}
+
+		iterator_type begin(){
+			if (callback_ == nullptr)
+				throw error_type::uninitialized;
+
+			auto value = iterator_type();
+			callback_(this, &value, access_type::list_begin);
+			return value;
+		}
+
+		const_iterator_type begin() const{
+			return const_cast<list_value_property *>(this)->begin();
+		}
+
+		iterator_type end(){
+			if (callback_ == nullptr)
+				throw error_type::uninitialized;
+
+			auto value = iterator_type();
+			callback_(this, &value, access_type::list_end);
+			return value;
+		}
+
+		const_iterator_type end() const{
+			return const_cast<list_value_property *>(this)->end();
 		}
 
 		numeric_value_property_type size;

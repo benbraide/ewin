@@ -8,10 +8,10 @@
 #include "numeric_property.h"
 
 namespace ewin::common{
-	template <class manager_type = void, property_access access = property_access::nil>
+	template <class value_type, class manager_type = void, property_access access = property_access::nil>
 	class string_value_property{
 	public:
-		typedef std::string value_type;
+		typedef value_type value_type;
 		typedef manager_type manager_type;
 
 		typedef property_error error_type;
@@ -96,6 +96,30 @@ namespace ewin::common{
 			return ((value_type)(*this) + (value_type)rhs);
 		}
 
+		typename value_type::iterator begin(){
+			if (linked_ == nullptr)
+				throw error_type::forbidden;
+			return linked_->begin();
+		}
+
+		typename value_type::const_iterator begin() const{
+			if (linked_ == nullptr)
+				throw error_type::forbidden;
+			return linked_->begin();
+		}
+
+		typename value_type::iterator end(){
+			if (linked_ == nullptr)
+				throw error_type::forbidden;
+			return linked_->end();
+		}
+
+		typename value_type::const_iterator end() const{
+			if (linked_ == nullptr)
+				throw error_type::forbidden;
+			return linked_->end();
+		}
+
 		numeric_value_property_type size;
 
 		static const property_access required_access = access;
@@ -114,11 +138,11 @@ namespace ewin::common{
 		callback_type callback_;
 	};
 
-	template <class manager_type = void>
-	using read_only_string_value_property = string_value_property<manager_type, property_access::read>;
+	template <class value_type, class manager_type = void>
+	using read_only_string_value_property = string_value_property<value_type, manager_type, property_access::read>;
 
-	template <class manager_type = void>
-	using write_only_string_value_property = string_value_property<manager_type, property_access::write>;
+	template <class value_type, class manager_type = void>
+	using write_only_string_value_property = string_value_property<value_type, manager_type, property_access::write>;
 }
 
 #endif /* !EWIN_STRING_PROPERTY_H */

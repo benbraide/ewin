@@ -9,7 +9,7 @@
 
 #include <windows.h>
 
-namespace ewin::types{
+namespace ewin::common::types{
 	typedef __int64				int64;
 	typedef unsigned __int64	uint64;
 	typedef std::size_t			size;
@@ -30,10 +30,16 @@ namespace ewin::types{
 
 	typedef ::HANDLE			handle;
 	typedef ::HINSTANCE			hinstance;
+	typedef ::WNDPROC			procedure;
 
 	typedef ::HWND				hwnd;
 	typedef ::HMENU				hmenu;
 
+	typedef ::HICON				hicon;
+	typedef ::HCURSOR			hcursor;
+	typedef ::HBRUSH			hbrush;
+
+	typedef ::WNDCLASSEXW		wnd_class;
 	typedef ::CREATESTRUCTW		create_struct;
 	typedef ::WINDOWPLACEMENT	wnd_placement;
 }

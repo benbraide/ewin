@@ -15,6 +15,9 @@
 #include "../common/point_property.h"
 #include "../common/rect_property.h"
 
+#include "window_class.h"
+#include "window_frame.h"
+
 namespace ewin::application{
 	class object;
 }

@@ -28,18 +28,7 @@ namespace ewin::window{
 		typedef object_list_type::iterator object_list_iterator_type;
 		typedef object_list_type::const_iterator object_list_const_iterator_type;
 
-		struct create_info{
-			common::types::hinstance instance;
-			common::types::procedure procedure;
-			std::wstring name;
-			std::wstring menu;
-			common::types::uint style;
-			common::types::hbrush background_brush;
-			common::types::hicon small_icon;
-			common::types::hicon icon;
-			int wnd_extra;
-			int cls_extra;
-		};
+		struct create_info{};
 
 		object()
 			: auto_destroy_(true){
@@ -59,7 +48,6 @@ namespace ewin::window{
 		common::read_only_value_property<common::types::procedure, object> procedure;
 
 		common::string_value_property<std::wstring, object> caption;
-		common::string_value_property<std::wstring, object> menu;
 
 		common::state_value_property<common::types::uint, object> style;
 		common::state_value_property<common::types::uint, object> extended_style;
@@ -107,6 +95,7 @@ namespace ewin::window{
 		common::boolean_value_property<object> transparent;
 
 		common::boolean_value_property<object> created;
+		common::write_only_value_property<create_info, object> create;
 		common::boolean_value_property<object> auto_destroy;
 
 	private:

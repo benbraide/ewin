@@ -20,7 +20,8 @@ namespace ewin::common{
 		typedef std::function<void(void *, void *, access_type)> callback_type;
 		typedef numeric_value_property<std::size_t, string_value_property, access_type::read> numeric_value_property_type;
 
-		string_value_property(){}
+		string_value_property()
+			: linked_(nullptr){}
 
 		explicit string_value_property(value_type &linked)
 			: linked_(&linked){}

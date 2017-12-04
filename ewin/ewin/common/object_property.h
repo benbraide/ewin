@@ -11,8 +11,6 @@ namespace ewin::common{
 	public:
 		typedef value_type value_type;
 		typedef manager_type manager_type;
-
-		typedef property_error error_type;
 		typedef property_access access_type;
 
 		typedef std::function<void(void *, void *, access_type)> callback_type;
@@ -23,9 +21,25 @@ namespace ewin::common{
 		explicit object_value_property(value_type &linked)
 			: linked_(&linked){}
 
+		explicit object_value_property(callback_type callback)
+			: linked_(nullptr), callback_(callback){}
+
+		object_value_property(value_type &linked, callback_type callback)
+			: linked_(&linked), callback_(callback){}
+
 		value_type *operator ->() const{
-			if (linked_ == nullptr)
-				throw error_type::uninitialized;
+			if (linked_ == nullptr){
+				if (callback_ == nullptr)
+					throw error_type::uninitialized_property;
+
+				value_type *value = nullptr;
+				callback_(const_cast<object_value_property *>(this), &value, access_type::read);
+				if (value == nullptr)
+					throw error_type::uninitialized_property;
+
+				return value;
+			}
+
 			return linked_;
 		}
 
@@ -40,6 +54,7 @@ namespace ewin::common{
 		}
 
 		value_type *linked_;
+		callback_type callback_;
 	};
 }
 

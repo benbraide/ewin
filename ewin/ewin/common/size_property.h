@@ -56,10 +56,42 @@ namespace ewin::common{
 		numeric_value_property_type height;
 
 	protected:
+		friend class property_manager;
+		friend std::conditional_t<std::is_void_v<manager_type>, value_property, manager_type>;
+
 		void initialize_(value_type *linked, callback_type callback){
+			auto handler = std::bind(&size_value_property::handle_property_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+
 			base_type::initialize_(linked, callback);
-			width.initialize_(nullptr, callback);
-			height.initialize_(nullptr, callback);
+
+			width.initialize_(((linked == nullptr) ? nullptr : &linked->width), handler);
+			height.initialize_(((linked == nullptr) ? nullptr : &linked->height), handler);
+		}
+
+		void handle_property_(void *prop, void *arg, property_access access){
+			if (arg != nullptr && linked_ == nullptr){
+				if (callback_ == nullptr)
+					throw error_type::uninitialized_property;
+
+				if (prop == &width){
+					if (access == property_access::write){
+						auto value = value_type{ *reinterpret_cast<backend_value_type *>(arg), (operator value_type()).height };
+						callback_(this, &value, access);
+					}
+					else if (access == property_access::read)
+						*reinterpret_cast<backend_value_type *>(arg) = (operator value_type()).width;
+				}
+				else if (prop == &height){
+					if (access == property_access::write){
+						auto value = value_type{ (operator value_type()).width, *reinterpret_cast<backend_value_type *>(arg) };
+						callback_(this, &value, access);
+					}
+					else if (access == property_access::read)
+						*reinterpret_cast<backend_value_type *>(arg) = (operator value_type()).height;
+				}
+			}
+			else//Alert
+				callback_(this, nullptr, access);
 		}
 	};
 

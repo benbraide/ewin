@@ -12,7 +12,6 @@
 namespace ewin::common::types{
 	typedef __int64				int64;
 	typedef unsigned __int64	uint64;
-	typedef std::size_t			size;
 
 	typedef ::LRESULT			result;
 	typedef ::WPARAM			wparam;
@@ -42,6 +41,10 @@ namespace ewin::common::types{
 	typedef ::WNDCLASSEXW		wnd_class;
 	typedef ::CREATESTRUCTW		create_struct;
 	typedef ::WINDOWPLACEMENT	wnd_placement;
+
+	typedef ::POINT				point;
+	typedef ::SIZE				size;
+	typedef ::RECT				rect;
 }
 
 #endif /* !EWIN_TYPE_ALIASES_H */

@@ -56,10 +56,42 @@ namespace ewin::common{
 		numeric_value_property_type y;
 
 	protected:
+		friend class property_manager;
+		friend std::conditional_t<std::is_void_v<manager_type>, value_property, manager_type>;
+
 		void initialize_(value_type *linked, callback_type callback){
+			auto handler = std::bind(&point_value_property::handle_property_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+
 			base_type::initialize_(linked, callback);
-			x.initialize_(nullptr, callback);
-			y.initialize_(nullptr, callback);
+
+			x.initialize_(((linked == nullptr) ? nullptr : &linked->x), handler);
+			y.initialize_(((linked == nullptr) ? nullptr : &linked->y), handler);
+		}
+
+		void handle_property_(void *prop, void *arg, property_access access){
+			if (arg != nullptr && linked_ == nullptr){
+				if (callback_ == nullptr)
+					throw error_type::uninitialized_property;
+
+				if (prop == &x){
+					if (access == property_access::write){
+						auto value = value_type{ *reinterpret_cast<backend_value_type *>(arg), (operator value_type()).y };
+						callback_(this, &value, access);
+					}
+					else if (access == property_access::read)
+						*reinterpret_cast<backend_value_type *>(arg) = (operator value_type()).x;	
+				}
+				else if (prop == &y){
+					if (access == property_access::write){
+						auto value = value_type{ (operator value_type()).x, *reinterpret_cast<backend_value_type *>(arg) };
+						callback_(this, &value, access);
+					}
+					else if (access == property_access::read)
+						*reinterpret_cast<backend_value_type *>(arg) = (operator value_type()).y;
+				}
+			}
+			else//Alert
+				callback_(this, nullptr, access);
 		}
 	};
 

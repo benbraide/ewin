@@ -12,8 +12,6 @@ namespace ewin::common{
 		typedef value_type value_type;
 		typedef read_type read_type;
 		typedef manager_type manager_type;
-
-		typedef property_error error_type;
 		typedef property_access access_type;
 
 		typedef std::function<void(void *, void *, access_type)> callback_type;
@@ -30,31 +28,31 @@ namespace ewin::common{
 
 		extended_value_property &operator =(const value_type &value){
 			if (access != access_type::nil && !EWIN_IS(access, access_type::write))
-				throw error_type::access_violation;
+				throw error_type::property_access_violation;
 
 			if (callback_ != nullptr)//Call handler
 				callback_(this, &const_cast<value_type &>(value), access_type::write);
 			else//Error
-				throw error_type::uninitialized;
+				throw error_type::uninitialized_property;
 
 			return *this;
 		}
 
 		extended_value_property &operator =(const read_type &value){
 			if (access != access_type::nil && !EWIN_IS(access, access_type::write))
-				throw error_type::access_violation;
+				throw error_type::property_access_violation;
 
 			if (callback_ != nullptr)//Call handler
 				callback_(this, &const_cast<read_type &>(value), access_type::write_alt);
 			else//Error
-				throw error_type::uninitialized;
+				throw error_type::uninitialized_property;
 
 			return *this;
 		}
 
 		operator read_type() const{
 			if (access != access_type::nil && !EWIN_IS(access, access_type::read))
-				throw error_type::access_violation;
+				throw error_type::property_access_violation;
 
 			if (callback_ != nullptr){//Call handler
 				auto value = read_type();
@@ -62,7 +60,7 @@ namespace ewin::common{
 				return value;
 			}
 
-			throw error_type::uninitialized;//Error
+			throw error_type::uninitialized_property;//Error
 		}
 
 		static const property_access required_access = access;

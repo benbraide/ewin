@@ -11,8 +11,9 @@ namespace ewin::window{
 
 	class wnd_frame{
 	public:
-		explicit wnd_frame(object &hwnd);
+		explicit wnd_frame(object &target);
 
+		common::read_only_value_property<object *, wnd_frame> owner;
 		common::boolean_value_property<wnd_frame> visible;
 
 		common::boolean_value_property<wnd_frame> show_caption;
@@ -34,7 +35,11 @@ namespace ewin::window{
 
 		void handle_property_(void *prop, void *arg, common::property_access access);
 
-		object *hwnd_;
+		common::types::ptr styles_() const;
+
+		common::types::ptr extended_styles_() const;
+
+		object *target_;
 	};
 }
 

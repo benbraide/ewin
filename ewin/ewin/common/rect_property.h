@@ -61,12 +61,64 @@ namespace ewin::common{
 		numeric_value_property_type bottom;
 
 	protected:
+		friend class property_manager;
+		friend std::conditional_t<std::is_void_v<manager_type>, value_property, manager_type>;
+
 		void initialize_(value_type *linked, callback_type callback){
+			auto handler = std::bind(&rect_value_property::handle_property_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+
 			base_type::initialize_(linked, callback);
-			left.initialize_(nullptr, callback);
-			top.initialize_(nullptr, callback);
-			right.initialize_(nullptr, callback);
-			bottom.initialize_(nullptr, callback);
+
+			left.initialize_(((linked == nullptr) ? nullptr : &linked->left), handler);
+			top.initialize_(((linked == nullptr) ? nullptr : &linked->top), handler);
+			right.initialize_(((linked == nullptr) ? nullptr : &linked->right), handler);
+			bottom.initialize_(((linked == nullptr) ? nullptr : &linked->bottom), handler);
+		}
+
+		void handle_property_(void *prop, void *arg, property_access access){
+			if (arg != nullptr && linked_ == nullptr){
+				if (callback_ == nullptr)
+					throw error_type::uninitialized_property;
+
+				if (prop == &left){
+					if (access == property_access::write){
+						auto rect = operator value_type();
+						auto value = value_type{ *reinterpret_cast<backend_value_type *>(arg), rect.top, rect.right, rect.bottom };
+						callback_(this, &value, access);
+					}
+					else if (access == property_access::read)
+						*reinterpret_cast<backend_value_type *>(arg) = (operator value_type()).left;
+				}
+				else if (prop == &top){
+					if (access == property_access::write){
+						auto rect = operator value_type();
+						auto value = value_type{ rect.left, *reinterpret_cast<backend_value_type *>(arg), rect.right, rect.bottom };
+						callback_(this, &value, access);
+					}
+					else if (access == property_access::read)
+						*reinterpret_cast<backend_value_type *>(arg) = (operator value_type()).top;
+				}
+				else if (prop == &right){
+					if (access == property_access::write){
+						auto rect = operator value_type();
+						auto value = value_type{ rect.left, rect.top, *reinterpret_cast<backend_value_type *>(arg), rect.bottom };
+						callback_(this, &value, access);
+					}
+					else if (access == property_access::read)
+						*reinterpret_cast<backend_value_type *>(arg) = (operator value_type()).right;
+				}
+				else if (prop == &bottom){
+					if (access == property_access::write){
+						auto rect = operator value_type();
+						auto value = value_type{ rect.left, rect.top, rect.right, *reinterpret_cast<backend_value_type *>(arg) };
+						callback_(this, &value, access);
+					}
+					else if (access == property_access::read)
+						*reinterpret_cast<backend_value_type *>(arg) = (operator value_type()).bottom;
+				}
+			}
+			else//Alert
+				callback_(this, nullptr, access);
 		}
 	};
 

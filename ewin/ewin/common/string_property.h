@@ -13,8 +13,6 @@ namespace ewin::common{
 	public:
 		typedef value_type value_type;
 		typedef manager_type manager_type;
-
-		typedef property_error error_type;
 		typedef property_access access_type;
 
 		typedef std::function<void(void *, void *, access_type)> callback_type;
@@ -39,7 +37,7 @@ namespace ewin::common{
 
 		string_value_property &operator =(const value_type &value){
 			if (access != access_type::nil && !EWIN_IS(access, access_type::write))
-				throw error_type::access_violation;
+				throw error_type::property_access_violation;
 
 			if (linked_ != nullptr){
 				*linked_ = value;
@@ -49,14 +47,14 @@ namespace ewin::common{
 			else if (callback_ != nullptr)//Call handler
 				callback_(this, &const_cast<value_type &>(value), access_type::write);
 			else//Error
-				throw error_type::uninitialized;
+				throw error_type::uninitialized_property;
 
 			return *this;
 		}
 
 		operator value_type() const{
 			if (access != access_type::nil && !EWIN_IS(access, access_type::read))
-				throw error_type::access_violation;
+				throw error_type::property_access_violation;
 
 			if (linked_ != nullptr){
 				if (callback_ != nullptr)//Alert listener
@@ -70,12 +68,12 @@ namespace ewin::common{
 				return value;
 			}
 
-			throw error_type::uninitialized;//Error
+			throw error_type::uninitialized_property;//Error
 		}
 
 		string_value_property &operator +=(const value_type &rhs){
 			if (access != access_type::nil && !EWIN_IS(access, access_type::read | access_type::write))
-				throw error_type::access_violation;
+				throw error_type::property_access_violation;
 
 			if (linked_ != nullptr){
 				if (callback_ != nullptr)//Alert listener
@@ -90,7 +88,7 @@ namespace ewin::common{
 				return (*this = (value + rhs));
 			}
 
-			throw error_type::uninitialized;//Error
+			throw error_type::uninitialized_property;//Error
 		}
 
 		value_type operator +(const value_type &rhs) const{
@@ -99,25 +97,25 @@ namespace ewin::common{
 
 		typename value_type::iterator begin(){
 			if (linked_ == nullptr)
-				throw error_type::forbidden;
+				throw error_type::property_access_violation;
 			return linked_->begin();
 		}
 
 		typename value_type::const_iterator begin() const{
 			if (linked_ == nullptr)
-				throw error_type::forbidden;
+				throw error_type::property_access_violation;
 			return linked_->begin();
 		}
 
 		typename value_type::iterator end(){
 			if (linked_ == nullptr)
-				throw error_type::forbidden;
+				throw error_type::property_access_violation;
 			return linked_->end();
 		}
 
 		typename value_type::const_iterator end() const{
 			if (linked_ == nullptr)
-				throw error_type::forbidden;
+				throw error_type::property_access_violation;
 			return linked_->end();
 		}
 

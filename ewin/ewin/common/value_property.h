@@ -6,15 +6,9 @@
 #include <functional>
 
 #include "macro.h"
+#include "error.h"
 
 namespace ewin::common{
-	enum class property_error{
-		nil,
-		uninitialized,
-		access_violation,
-		forbidden,
-	};
-
 	enum class property_access : unsigned int{
 		nil					= (0 << 0x0000),
 		read				= (1 << 0x0000),
@@ -44,8 +38,6 @@ namespace ewin::common{
 	public:
 		typedef value_type value_type;
 		typedef manager_type manager_type;
-
-		typedef property_error error_type;
 		typedef property_access access_type;
 
 		typedef std::function<void(void *, void *, access_type)> callback_type;
@@ -69,7 +61,7 @@ namespace ewin::common{
 
 		value_property &operator =(const value_type &value){
 			if (access != access_type::nil && !EWIN_IS(access, access_type::write))
-				throw error_type::access_violation;
+				throw error_type::property_access_violation;
 
 			if (linked_ != nullptr){
 				*linked_ = value;
@@ -79,14 +71,14 @@ namespace ewin::common{
 			else if (callback_ != nullptr)//Call handler
 				callback_(this, &const_cast<value_type &>(value), access_type::write);
 			else//Error
-				throw error_type::uninitialized;
+				throw error_type::uninitialized_property;
 
 			return *this;
 		}
 
 		operator value_type() const{
 			if (access != access_type::nil && !EWIN_IS(access, access_type::read))
-				throw error_type::access_violation;
+				throw error_type::property_access_violation;
 
 			if (linked_ != nullptr){
 				if (callback_ != nullptr)//Alert listener
@@ -100,7 +92,7 @@ namespace ewin::common{
 				return value;
 			}
 
-			throw error_type::uninitialized;//Error
+			throw error_type::uninitialized_property;//Error
 		}
 
 		static const property_access required_access = access;

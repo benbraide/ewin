@@ -16,8 +16,6 @@ namespace ewin::common{
 		typedef iterator_type iterator_type;
 		typedef const_iterator_type const_iterator_type;
 		typedef manager_type manager_type;
-
-		typedef property_error error_type;
 		typedef property_access access_type;
 
 		typedef std::vector<value_type> list_type;
@@ -32,50 +30,50 @@ namespace ewin::common{
 
 		list_value_property &operator +=(const value_type &value){
 			if (access != access_type::nil && !EWIN_IS(access, access_type::list_add))
-				throw error_type::access_violation;
+				throw error_type::property_access_violation;
 
 			if (callback_ != nullptr)//Call handler
 				callback_(this, &const_cast<value_type &>(value), access_type::list_add);
 			else//Error
-				throw error_type::uninitialized;
+				throw error_type::uninitialized_property;
 
 			return *this;
 		}
 
 		list_value_property &operator -=(const value_type &value){
 			if (access != access_type::nil && !EWIN_IS(access, access_type::list_remove))
-				throw error_type::access_violation;
+				throw error_type::property_access_violation;
 
 			if (callback_ != nullptr)//Call handler
 				callback_(this, &const_cast<value_type &>(value), access_type::list_remove);
 			else//Error
-				throw error_type::uninitialized;
+				throw error_type::uninitialized_property;
 
 			return *this;
 		}
 
 		value_type *operator [](std::size_t index) const{
 			if (access != access_type::nil && !EWIN_IS(access, access_type::list_at))
-				throw error_type::access_violation;
+				throw error_type::property_access_violation;
 
 			auto info = std::make_pair<std::size_t, value_type *>(index, nullptr);
 			if (callback_ != nullptr)//Call handler
 				callback_(const_cast<list_value_property *>(this), &info, access_type::list_at);
 			else//Error
-				throw error_type::uninitialized;
+				throw error_type::uninitialized_property;
 
 			return info.second;
 		}
 
 		std::size_t operator [](const value_type &value) const{
 			if (access != access_type::nil && !EWIN_IS(access, access_type::list_find))
-				throw error_type::access_violation;
+				throw error_type::property_access_violation;
 
 			auto info = std::make_pair<std::size_t, value_type *>(static_cast<std::size_t>(-1), &const_cast<value_type &>(value));
 			if (callback_ != nullptr)//Call handler
 				callback_(const_cast<list_value_property *>(this), &info, access_type::list_find);
 			else//Error
-				throw error_type::uninitialized;
+				throw error_type::uninitialized_property;
 
 			return info.first;
 		}
@@ -86,7 +84,7 @@ namespace ewin::common{
 
 		iterator_type begin(){
 			if (callback_ == nullptr)
-				throw error_type::uninitialized;
+				throw error_type::uninitialized_property;
 
 			auto value = iterator_type();
 			callback_(this, &value, access_type::list_begin);
@@ -99,7 +97,7 @@ namespace ewin::common{
 
 		iterator_type end(){
 			if (callback_ == nullptr)
-				throw error_type::uninitialized;
+				throw error_type::uninitialized_property;
 
 			auto value = iterator_type();
 			callback_(this, &value, access_type::list_end);

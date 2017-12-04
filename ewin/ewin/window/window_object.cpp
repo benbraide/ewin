@@ -28,13 +28,14 @@ void ewin::window::object::bind_properties_(){
 	procedure.initialize_(&procedure_, nullptr);
 
 	size.initialize_(nullptr, handler);
-	relative_size.initialize_(nullptr, handler);
+	client_size.initialize_(nullptr, handler);
 
-	offset.initialize_(nullptr, handler);
-	relative_offset.initialize_(nullptr, handler);
+	position.initialize_(nullptr, handler);
+	relative_position.initialize_(nullptr, handler);
 
 	rect.initialize_(nullptr, handler);
 	relative_rect.initialize_(nullptr, handler);
+	client_rect.initialize_(nullptr, handler);
 
 	tree.initialize_(&frame_, nullptr);
 	view.initialize_(&frame_, nullptr);
@@ -92,80 +93,43 @@ void ewin::window::object::handle_property_(void *prop, void *arg, common::prope
 	}
 	else if (prop == &size){
 		if (access == common::property_access::read)
-			*static_cast<common::types::size *>(arg) = get_size_();
+			*static_cast<size_type *>(arg) = get_size_(false);
 		else if (access == common::property_access::write)
-			set_size_(*static_cast<common::types::size *>(arg));
+			set_size_(*static_cast<size_type *>(arg), false);
 	}
-
-	/*if (prop == &instance){
+	else if (prop == &client_size){
 		if (access == common::property_access::read)
-			*static_cast<common::types::hinstance *>(arg) = info_.hInstance;
+			*static_cast<size_type *>(arg) = get_size_(true);
 		else if (access == common::property_access::write)
-			info_.hInstance = *static_cast<common::types::hinstance *>(arg);
+			set_size_(*static_cast<size_type *>(arg), true);
 	}
-	else if (prop == &procedure){
+	else if (prop == &position){
 		if (access == common::property_access::read)
-			*static_cast<common::types::procedure *>(arg) = info_.lpfnWndProc;
+			*static_cast<point_type *>(arg) = get_position_(false);
 		else if (access == common::property_access::write)
-			info_.lpfnWndProc = *static_cast<common::types::procedure *>(arg);
+			set_position_(*static_cast<point_type *>(arg), false);
 	}
-	else if (prop == &name){
+	else if (prop == &relative_position){
 		if (access == common::property_access::read)
-			*static_cast<std::wstring *>(arg) = name_;
+			*static_cast<point_type *>(arg) = get_position_(true);
 		else if (access == common::property_access::write)
-			info_.lpszClassName = (name_ = *static_cast<std::wstring *>(arg)).data();
+			set_position_(*static_cast<point_type *>(arg), true);
 	}
-	else if (prop == &menu){
+	else if (prop == &rect){
 		if (access == common::property_access::read)
-			*static_cast<std::wstring *>(arg) = menu_;
+			*static_cast<rect_type *>(arg) = get_rect_(false);
 		else if (access == common::property_access::write)
-			info_.lpszMenuName = (menu_ = *static_cast<std::wstring *>(arg)).data();
+			set_rect_(*static_cast<rect_type *>(arg), false);
 	}
-	else if (prop == &style){
+	else if (prop == &relative_rect){
 		if (access == common::property_access::read)
-			*static_cast<common::types::uint *>(arg) = info_.style;
+			*static_cast<rect_type *>(arg) = get_rect_(true);
 		else if (access == common::property_access::write)
-			info_.style = *static_cast<common::types::uint *>(arg);
+			set_rect_(*static_cast<rect_type *>(arg), true);
 	}
-	else if (prop == &background_brush){
-		if (access == common::property_access::read)
-			*static_cast<common::types::hbrush *>(arg) = info_.hbrBackground;
-		else if (access == common::property_access::write)
-			info_.hbrBackground = *static_cast<common::types::hbrush *>(arg);
+	else if (prop == &client_rect){
+		*static_cast<rect_type *>(arg) = get_client_rect_();
 	}
-	else if (prop == &small_icon){
-		if (access == common::property_access::read)
-			*static_cast<common::types::hicon *>(arg) = info_.hIconSm;
-		else if (access == common::property_access::write)
-			info_.hIconSm = *static_cast<common::types::hicon *>(arg);
-	}
-	else if (prop == &icon){
-		if (access == common::property_access::read)
-			*static_cast<common::types::hicon *>(arg) = info_.hIcon;
-		else if (access == common::property_access::write)
-			info_.hIcon = *static_cast<common::types::hicon *>(arg);
-	}
-	else if (prop == &wnd_extra){
-		if (access == common::property_access::read)
-			*static_cast<int *>(arg) = info_.cbWndExtra;
-		else if (access == common::property_access::write)
-			info_.cbWndExtra = *static_cast<int *>(arg);
-	}
-	else if (prop == &cls_extra){
-		if (access == common::property_access::read)
-			*static_cast<int *>(arg) = info_.cbClsExtra;
-		else if (access == common::property_access::write)
-			info_.cbClsExtra = *static_cast<int *>(arg);
-	}
-	else if (prop == &created){
-		if (access == common::property_access::read)
-			*static_cast<bool *>(arg) = (id_ != static_cast<common::types::atom>(0));
-		else if (access == common::property_access::write)
-			create_(*static_cast<bool *>(arg), nullptr);
-	}
-	else if (prop == &create){
-		create_(true, static_cast<create_info *>(arg));
-	}*/
 }
 
 ewin::window::object::ptr_type ewin::window::object::reflect_(){
@@ -203,11 +167,11 @@ void ewin::window::object::create_(bool create, const create_info *info){
 		id_ = static_cast<common::types::atom>(0);*/
 }
 
-void ewin::window::object::set_rect_(const common::types::rect &value, bool relative){
+void ewin::window::object::set_rect_(const rect_type &value, bool relative){
 
 }
 
-ewin::common::types::rect ewin::window::object::get_rect_(bool relative) const{
+ewin::window::object::rect_type ewin::window::object::get_rect_(bool relative) const{
 	common::types::rect value{};
 	::GetWindowRect(handle_, &value);
 	if (relative/* && HAS_PARENT*/){//Convert value from screen
@@ -215,31 +179,51 @@ ewin::common::types::rect ewin::window::object::get_rect_(bool relative) const{
 		::ScreenToClient(nullptr/*PARENT*/, reinterpret_cast<common::types::point *>(&value.right));
 	}
 
-	return value;
+	return rect_type{ value.left, value.top, value.right, value.bottom };
 }
 
-void ewin::window::object::set_point_(const common::types::point &value, bool relative){
-	
+ewin::window::object::rect_type ewin::window::object::get_client_rect_() const{
+	common::types::rect value{};
+	::GetClientRect(handle_, &value);
+	return rect_type{ value.left, value.top, value.right, value.bottom };
 }
 
-ewin::common::types::point ewin::window::object::get_point_(bool relative) const{
+void ewin::window::object::set_position_(const point_type &value, bool relative){
+	auto size = get_size_(false);
+	set_rect_(rect_type{ value.x, value.y, (value.x + size.width), (value.y + size.height) }, relative);
+}
+
+ewin::window::object::point_type ewin::window::object::get_position_(bool relative) const{
 	auto rect_value = get_rect_(relative);
-	return common::types::point{ rect_value.left, rect_value.top };
+	return point_type{ rect_value.left, rect_value.top };
 }
 
-void ewin::window::object::set_size_(const common::types::size &value){
+void ewin::window::object::set_size_(const size_type &value, bool client){
+	auto position = get_position_(true);
+	if (client){//Convert
+		auto rect = get_rect_(false), relative_rect = get_rect_(true);
+		auto padding = rect_type{
+			(relative_rect.left - rect.left),
+			(relative_rect.top - rect.top),
+			(rect.right - relative_rect.right),
+			(rect.bottom - relative_rect.bottom)
+		};
 
+		set_rect_(
+			rect_type{ position.x, position.y, (position.x + value.width + padding.left + padding.right), (position.y + value.height + padding.top + padding.bottom) },
+			true
+		);
+	}
+	else//No conversion
+		set_rect_(rect_type{ position.x, position.y, (position.x + value.width), (position.y + value.height) }, true);
 }
 
-ewin::common::types::size ewin::window::object::get_size_() const{
+ewin::window::object::size_type ewin::window::object::get_size_(bool client) const{
+	if (client){//Client size
+		auto rect_value = get_client_rect_();
+		return size_type{ rect_value.right - rect_value.left, rect_value.bottom - rect_value.top };
+	}
+
 	auto rect_value = get_rect_(false);
-	return common::types::size{ rect_value.right - rect_value.left, rect_value.bottom - rect_value.top };
-}
-
-void ewin::window::object::set_relative_size_(const sizef &value){
-
-}
-
-ewin::window::object::sizef ewin::window::object::get_relative_size_() const{
-	return sizef{};
+	return size_type{ rect_value.right - rect_value.left, rect_value.bottom - rect_value.top };
 }

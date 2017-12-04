@@ -31,6 +31,10 @@ namespace ewin::window{
 		typedef common::error_type error_type;
 		typedef common::error_throw_policy_type error_throw_policy_type;
 
+		typedef common::point_value_property_backend<int> point_type;
+		typedef common::size_value_property_backend<int> size_type;
+		typedef common::rect_value_property_backend<int> rect_type;
+
 		typedef std::shared_ptr<object> ptr_type;
 		typedef std::list<ptr_type> object_list_type;
 
@@ -38,11 +42,6 @@ namespace ewin::window{
 		typedef object_list_type::const_iterator object_list_const_iterator_type;
 
 		struct create_info{};
-
-		struct sizef{
-			float width;
-			float height;
-		};
 
 		object();
 
@@ -59,13 +58,14 @@ namespace ewin::window{
 		common::read_only_value_property<common::types::procedure, object> procedure;
 
 		common::size_value_property<int, object> size;
-		common::size_value_property<float, object> relative_size;
+		common::size_value_property<int, object> client_size;
 
-		common::point_value_property<int, object> offset;
-		common::point_value_property<int, object> relative_offset;
+		common::point_value_property<int, object> position;
+		common::point_value_property<int, object> relative_position;
 
 		common::rect_value_property<int, object> rect;
 		common::rect_value_property<int, object> relative_rect;
+		common::read_only_rect_value_property<int, object> client_rect;
 
 		/*common::extended_value_property<object, object *, object> parent;
 
@@ -120,21 +120,19 @@ namespace ewin::window{
 
 		void create_(bool create, const create_info *info);
 
-		virtual void set_rect_(const common::types::rect &value, bool relative);
+		virtual void set_rect_(const rect_type &value, bool relative);
 
-		virtual common::types::rect get_rect_(bool relative) const;
+		virtual rect_type get_rect_(bool relative) const;
 
-		virtual void set_point_(const common::types::point &value, bool relative);
+		virtual rect_type get_client_rect_() const;
 
-		virtual common::types::point get_point_(bool relative) const;
+		virtual void set_position_(const point_type &value, bool relative);
 
-		virtual void set_size_(const common::types::size &value);
+		virtual point_type get_position_(bool relative) const;
 
-		virtual common::types::size get_size_() const;
+		virtual void set_size_(const size_type &value, bool client);
 
-		virtual void set_relative_size_(const sizef &value);
-
-		virtual sizef get_relative_size_() const;
+		virtual size_type get_size_(bool client) const;
 
 		application_type *app_;
 		common::types::hwnd handle_;

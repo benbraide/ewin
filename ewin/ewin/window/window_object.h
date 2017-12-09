@@ -16,6 +16,7 @@
 #include "window_class.h"
 #include "window_frame.h"
 #include "window_tree.h"
+#include "window_view.h"
 
 namespace ewin::window{
 	class object : public std::enable_shared_from_this<object>{
@@ -73,8 +74,11 @@ namespace ewin::window{
 		common::rect_value_property<int, object> relative_rect;
 		common::read_only_rect_value_property<int, object> client_rect;
 
+		common::validation_property<common::types::uint, common::types::uint, object> filter_styles;
+		common::validation_property<common::types::uint, common::types::uint, object> filter_extended_styles;
+
 		common::read_only_object_value_property<wnd_tree, object> tree;
-		common::read_only_object_value_property<wnd_frame, object> view;
+		common::read_only_object_value_property<wnd_view, object> view;
 		common::read_only_object_value_property<wnd_frame, object> frame;
 		common::read_only_object_value_property<wnd_frame, object> style;
 		common::read_only_object_value_property<wnd_frame, object> state;
@@ -144,6 +148,7 @@ namespace ewin::window{
 		bool auto_destroy_;
 
 		wnd_tree tree_;
+		wnd_view view_;
 		wnd_frame frame_;
 	};
 }

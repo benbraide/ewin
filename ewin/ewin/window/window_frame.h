@@ -6,10 +6,10 @@
 #include "../common/type_aliases.h"
 #include "../common/boolean_property.h"
 
-namespace ewin::window{
-	class object;
+#include "window_style_helper.h"
 
-	class wnd_frame{
+namespace ewin::window{
+	class wnd_frame : public wnd_style_helper{
 	public:
 		explicit wnd_frame(object &target);
 
@@ -31,15 +31,11 @@ namespace ewin::window{
 		common::boolean_value_property<wnd_frame> dialog_modal;
 
 	private:
+		friend class object;
+
 		void bind_properties_();
 
 		void handle_property_(void *prop, void *arg, common::property_access access);
-
-		common::types::ptr styles_() const;
-
-		common::types::ptr extended_styles_() const;
-
-		object *target_;
 	};
 }
 

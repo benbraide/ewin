@@ -14,8 +14,6 @@
 #include "window_iterators.h"
 
 namespace ewin::window{
-	class object;
-
 	class wnd_tree{
 	public:
 		typedef std::shared_ptr<object> object_ptr_type;
@@ -46,6 +44,8 @@ namespace ewin::window{
 		common::read_only_list_value_property<object, ancestor_forward_iterator, ancestor_forward_iterator, wnd_tree> ancestors;
 
 	private:
+		friend class object;
+
 		void bind_properties_();
 
 		void handle_property_(void *prop, void *arg, common::property_access access);

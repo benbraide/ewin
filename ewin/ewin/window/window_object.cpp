@@ -1,7 +1,7 @@
 #include "window_object.h"
 
 ewin::window::object::object()
-	: error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), auto_destroy_(true), tree_(*this), frame_(*this){
+	: error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), auto_destroy_(true), tree_(*this), view_(*this), frame_(*this){
 	bind_properties_();
 }
 
@@ -38,7 +38,7 @@ void ewin::window::object::bind_properties_(){
 	client_rect.initialize_(nullptr, handler);
 
 	tree.initialize_(&tree_, nullptr);
-	view.initialize_(&frame_, nullptr);
+	view.initialize_(&view_, nullptr);
 	frame.initialize_(&frame_, nullptr);
 	style.initialize_(&frame_, nullptr);
 	state.initialize_(&frame_, nullptr);

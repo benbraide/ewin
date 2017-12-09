@@ -32,6 +32,7 @@ void ewin::window::wnd_frame::handle_property_(void *prop, void *arg, common::pr
 		return;
 	}
 
+	target_->error = common::error_type::nil;//Clear error
 	if (prop == &visible){
 		if (access == common::property_access::write){
 			if (*reinterpret_cast<bool *>(arg))

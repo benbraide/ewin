@@ -3,25 +3,19 @@
 #ifndef EWIN_WINDOW_OBJECT_H
 #define EWIN_WINDOW_OBJECT_H
 
-#include <list>
-#include <memory>
-
-#include "../common/type_aliases.h"
-#include "../common/boolean_property.h"
 #include "../common/string_property.h"
 #include "../common/state_property.h"
-#include "../common/list_property.h"
-#include "../common/extended_value_property.h"
 #include "../common/size_property.h"
 #include "../common/point_property.h"
 #include "../common/rect_property.h"
-#include "../common/object_property.h"
 #include "../common/validation_property.h"
+#include "../common/variant_property.h"
 
 #include "../application/application_object.h"
 
 #include "window_class.h"
 #include "window_frame.h"
+#include "window_tree.h"
 
 namespace ewin::window{
 	class object : public std::enable_shared_from_this<object>{
@@ -36,12 +30,24 @@ namespace ewin::window{
 		typedef common::rect_value_property_backend<int> rect_type;
 
 		typedef std::shared_ptr<object> ptr_type;
-		typedef std::list<ptr_type> object_list_type;
-
-		typedef object_list_type::iterator object_list_iterator_type;
-		typedef object_list_type::const_iterator object_list_const_iterator_type;
+		
+		struct property_forbidden_info{
+			void *value;
+			common::property_access access;
+		};
 
 		struct create_info{};
+
+		struct parent_change_info{
+			object *old;
+			object *current;
+		};
+
+		struct child_change_info{
+			object *value;
+			std::size_t index;
+			bool removed;
+		};
 
 		object();
 
@@ -67,20 +73,11 @@ namespace ewin::window{
 		common::rect_value_property<int, object> relative_rect;
 		common::read_only_rect_value_property<int, object> client_rect;
 
-		/*common::extended_value_property<object, object *, object> parent;
-
-		common::extended_value_property<object, object *, object> previous_sibling;
-		common::extended_value_property<object, object *, object> next_sibling;
-
-		common::list_value_property<object, object_list_iterator_type, object_list_const_iterator_type, object> children;
-		common::list_value_property<object, object_list_iterator_type, object_list_const_iterator_type, object> siblings;
-		common::list_value_property<object, object_list_iterator_type, object_list_const_iterator_type, object> ancestors;*/
-
-		common::object_value_property<wnd_frame, object> tree;
-		common::object_value_property<wnd_frame, object> view;
-		common::object_value_property<wnd_frame, object> frame;
-		common::object_value_property<wnd_frame, object> style;
-		common::object_value_property<wnd_frame, object> state;
+		common::read_only_object_value_property<wnd_tree, object> tree;
+		common::read_only_object_value_property<wnd_frame, object> view;
+		common::read_only_object_value_property<wnd_frame, object> frame;
+		common::read_only_object_value_property<wnd_frame, object> style;
+		common::read_only_object_value_property<wnd_frame, object> state;
 
 		/*common::boolean_value_property<object> visible;
 		common::boolean_value_property<object> enabled;
@@ -109,6 +106,8 @@ namespace ewin::window{
 		common::write_only_value_property<create_info, object> create;
 		common::boolean_value_property<object> auto_destroy;
 
+		common::write_only_variant_value_property<object, parent_change_info, child_change_info> changed;
+
 	private:
 		void bind_properties_();
 
@@ -116,9 +115,11 @@ namespace ewin::window{
 
 		virtual ptr_type reflect_();
 
-		virtual bool is_forbidden_(void *target);
+		virtual bool is_forbidden_(const property_forbidden_info &info);
 
 		void create_(bool create, const create_info *info);
+
+		virtual void set_error_(error_type value);
 
 		virtual void set_rect_(const rect_type &value, bool relative);
 
@@ -139,8 +140,10 @@ namespace ewin::window{
 		common::types::procedure procedure_;
 
 		error_throw_policy_type error_throw_policy_;
+		error_type error_value_;
 		bool auto_destroy_;
 
+		wnd_tree tree_;
 		wnd_frame frame_;
 	};
 }

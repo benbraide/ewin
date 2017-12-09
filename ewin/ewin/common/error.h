@@ -9,7 +9,11 @@ namespace ewin::common{
 		uninitialized_property,
 		property_access_violation,
 		forbidden_property,
+		bad_iterator,
 		no_app,
+		multiple_app,
+		locked_app,
+		parent_not_created,
 	};
 
 	enum class error_throw_policy_type{

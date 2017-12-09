@@ -27,20 +27,53 @@ namespace ewin::common{
 		object_value_property(value_type &linked, callback_type callback)
 			: linked_(&linked), callback_(callback){}
 
-		value_type *operator ->() const{
-			if (linked_ == nullptr){
-				if (callback_ == nullptr)
-					throw error_type::uninitialized_property;
+		template <typename target_type>
+		object_value_property &operator =(const target_type &value){
+			return operator =(*((value_type *)value));
+		}
 
+		object_value_property &operator =(const value_type *value){
+			return operator =(*value);
+		}
+
+		object_value_property &operator =(const value_type &value){
+			if (access != access_type::nil && !EWIN_IS(access, access_type::write))
+				throw error_type::property_access_violation;
+
+			if (linked_ != nullptr){
+				*linked_ = value;
+				if (callback_ != nullptr)//Alert listener
+					callback_(this, nullptr, access_type::write);
+			}
+			else if (callback_ != nullptr)//Call handler
+				callback_(this, &const_cast<value_type &>(value), access_type::write);
+			else//Error
+				throw error_type::uninitialized_property;
+
+			return *this;
+		}
+
+		operator value_type *() const{
+			if (access != access_type::nil && !EWIN_IS(access, access_type::read))
+				throw error_type::property_access_violation;
+
+			if (linked_ != nullptr){
+				if (callback_ != nullptr)//Alert listener
+					callback_(const_cast<object_value_property *>(this), nullptr, access_type::read);
+				return linked_;
+			}
+
+			if (callback_ != nullptr){//Call handler
 				value_type *value = nullptr;
 				callback_(const_cast<object_value_property *>(this), &value, access_type::read);
-				if (value == nullptr)
-					throw error_type::uninitialized_property;
-
 				return value;
 			}
 
-			return linked_;
+			throw error_type::uninitialized_property;//Error
+		}
+
+		value_type *operator ->() const{
+			return operator value_type *();
 		}
 
 		static const property_access required_access = access;
@@ -51,11 +84,18 @@ namespace ewin::common{
 
 		void initialize_(value_type *linked, callback_type callback){
 			linked_ = linked;
+			callback_ = callback;
 		}
 
 		value_type *linked_;
 		callback_type callback_;
 	};
+
+	template <class value_type, class manager_type = void>
+	using read_only_object_value_property = object_value_property<value_type, manager_type, property_access::read>;
+
+	template <class value_type, class manager_type = void>
+	using write_only_object_value_property = object_value_property<value_type, manager_type, property_access::write>;
 }
 
 #endif /* !EWIN_OBJECT_PROPERTY_H */

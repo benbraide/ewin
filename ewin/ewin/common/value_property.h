@@ -15,11 +15,13 @@ namespace ewin::common{
 		write				= (1 << 0x0001),
 		list_add			= (1 << 0x0002),
 		list_remove			= (1 << 0x0003),
-		list_at				= (1 << 0x0004),
-		list_find			= (1 << 0x0005),
-		list_begin			= (1 << 0x0006),
-		list_end			= (1 << 0x0007),
-		write_alt			= (1 << 0x0008),
+		list_remove_index	= (1 << 0x0004),
+		list_at				= (1 << 0x0005),
+		list_find			= (1 << 0x0006),
+		list_begin			= (1 << 0x0007),
+		list_end			= (1 << 0x0008),
+		list_size			= (1 << 0x0009),
+		write_alt			= (1 << 0x000A),
 	};
 
 	class property_manager{

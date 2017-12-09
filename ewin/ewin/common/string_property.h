@@ -15,6 +15,9 @@ namespace ewin::common{
 		typedef manager_type manager_type;
 		typedef property_access access_type;
 
+		typedef typename value_type::iterator iterator_type;
+		typedef typename value_type::const_iterator const_iterator_type;
+
 		typedef std::function<void(void *, void *, access_type)> callback_type;
 		typedef numeric_value_property<std::size_t, string_value_property, access_type::read> numeric_value_property_type;
 
@@ -95,28 +98,50 @@ namespace ewin::common{
 			return ((value_type)(*this) + (value_type)rhs);
 		}
 
-		typename value_type::iterator begin(){
-			if (linked_ == nullptr)
+		iterator_type begin(){
+			if (access != access_type::nil && !EWIN_IS(access, access_type::list_begin))
 				throw error_type::property_access_violation;
-			return linked_->begin();
+
+			if (linked_ != nullptr){
+				if (callback_ != nullptr)//Alert
+					callback_(this, nullptr, access_type::list_begin);
+				return linked_->begin();
+			}
+
+			if (callback_ == nullptr)
+				throw error_type::uninitialized_property;
+
+			auto value = iterator_type();
+			callback_(this, &value, access_type::list_begin);
+
+			return value;
 		}
 
-		typename value_type::const_iterator begin() const{
-			if (linked_ == nullptr)
-				throw error_type::property_access_violation;
-			return linked_->begin();
+		const_iterator_type begin() const{
+			return const_cast<string_value_property *>(this)->begin();
 		}
 
-		typename value_type::iterator end(){
-			if (linked_ == nullptr)
+		iterator_type end(){
+			if (access != access_type::nil && !EWIN_IS(access, access_type::list_end))
 				throw error_type::property_access_violation;
-			return linked_->end();
+
+			if (linked_ != nullptr){
+				if (callback_ != nullptr)//Alert
+					callback_(this, nullptr, access_type::list_end);
+				return linked_->end();
+			}
+
+			if (callback_ == nullptr)
+				throw error_type::uninitialized_property;
+
+			auto value = iterator_type();
+			callback_(this, &value, access_type::list_end);
+
+			return value;
 		}
 
-		typename value_type::const_iterator end() const{
-			if (linked_ == nullptr)
-				throw error_type::property_access_violation;
-			return linked_->end();
+		const_iterator_type end() const{
+			return const_cast<string_value_property *>(this)->end();
 		}
 
 		numeric_value_property_type size;
@@ -128,9 +153,29 @@ namespace ewin::common{
 		friend std::conditional_t<std::is_void_v<manager_type>, string_value_property, manager_type>;
 
 		void initialize_(value_type *linked, callback_type callback){
+			auto handler = std::bind(&string_value_property::handle_property_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+
 			linked_ = linked;
 			callback_ = callback;
-			size.initialize_(nullptr, callback);
+
+			size.initialize_(nullptr, handler);
+		}
+
+		void handle_property_(void *prop, void *arg, property_access access){
+			if (prop == &size){//Fetch size
+				if (access != access_type::nil && !EWIN_IS(access, access_type::list_size))
+					throw error_type::property_access_violation;
+
+				if (linked_ != nullptr){
+					*reinterpret_cast<std::size_t *>(arg) = linked_->size();
+					if (callback_ != nullptr)//Alert
+						callback_(this, nullptr, property_access::list_size);
+				}
+				else if (callback_ != nullptr)
+					callback_(this, arg, property_access::list_size);
+				else//Error
+					throw error_type::uninitialized_property;
+			}
 		}
 
 		value_type *linked_;
@@ -138,10 +183,21 @@ namespace ewin::common{
 	};
 
 	template <class value_type, class manager_type = void>
-	using read_only_string_value_property = string_value_property<value_type, manager_type, property_access::read>;
+	using read_only_string_value_property = string_value_property<
+		value_type,
+		manager_type,
+		property_access::read | property_access::list_begin | property_access::list_end | property_access::list_size
+	>;
 
 	template <class value_type, class manager_type = void>
 	using write_only_string_value_property = string_value_property<value_type, manager_type, property_access::write>;
+
+	template <class value_type, class manager_type = void>
+	using iterator_only_string_value_property = string_value_property<
+		value_type,
+		manager_type,
+		property_access::list_begin | property_access::list_end
+	>;
 }
 
 #endif /* !EWIN_STRING_PROPERTY_H */

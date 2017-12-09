@@ -78,20 +78,20 @@ namespace ewin::window{
 			id.initialize_(&id_, nullptr);
 			raw_name.initialize_(&info_.lpszClassName, nullptr);
 
-			instance.initialize_(&info_.hInstance, handler);
-			procedure.initialize_(&info_.lpfnWndProc, handler);
+			instance.initialize_(&info_.hInstance, nullptr);
+			procedure.initialize_(&info_.lpfnWndProc, nullptr);
 
 			name.initialize_(&name_, handler);
 			menu.initialize_(&menu_, handler);
 
-			style.initialize_(&info_.style, handler);
-			background_brush.initialize_(&info_.hbrBackground, handler);
+			style.initialize_(&info_.style, nullptr);
+			background_brush.initialize_(&info_.hbrBackground, nullptr);
 
-			small_icon.initialize_(&info_.hIconSm, handler);
-			icon.initialize_(&info_.hIcon, handler);
+			small_icon.initialize_(&info_.hIconSm, nullptr);
+			icon.initialize_(&info_.hIcon, nullptr);
 
-			wnd_extra.initialize_(&info_.cbWndExtra, handler);
-			cls_extra.initialize_(&info_.cbClsExtra, handler);
+			wnd_extra.initialize_(&info_.cbWndExtra, nullptr);
+			cls_extra.initialize_(&info_.cbClsExtra, nullptr);
 
 			created.initialize_(nullptr, handler);
 			create.initialize_(nullptr, handler);
@@ -99,65 +99,13 @@ namespace ewin::window{
 		}
 
 		void handle_property_(void *prop, void *arg, common::property_access access){
-			if (prop == &instance){
-				if (access == common::property_access::read)
-					*static_cast<common::types::hinstance *>(arg) = info_.hInstance;
-				else if (access == common::property_access::write)
-					info_.hInstance = *static_cast<common::types::hinstance *>(arg);
-			}
-			else if (prop == &procedure){
-				if (access == common::property_access::read)
-					*static_cast<common::types::procedure *>(arg) = info_.lpfnWndProc;
-				else if (access == common::property_access::write)
-					info_.lpfnWndProc = *static_cast<common::types::procedure *>(arg);
-			}
-			else if (prop == &name){
-				if (access == common::property_access::read)
-					*static_cast<std::wstring *>(arg) = name_;
-				else if (access == common::property_access::write)
-					info_.lpszClassName = (name_ = *static_cast<std::wstring *>(arg)).data();
+			if (prop == &name){
+				if (access == common::property_access::write)
+					info_.lpszClassName = name_.data();
 			}
 			else if (prop == &menu){
-				if (access == common::property_access::read)
-					*static_cast<std::wstring *>(arg) = menu_;
-				else if (access == common::property_access::write)
-					info_.lpszMenuName = (menu_ = *static_cast<std::wstring *>(arg)).data();
-			}
-			else if (prop == &style){
-				if (access == common::property_access::read)
-					*static_cast<common::types::uint *>(arg) = info_.style;
-				else if (access == common::property_access::write)
-					info_.style = *static_cast<common::types::uint *>(arg);
-			}
-			else if (prop == &background_brush){
-				if (access == common::property_access::read)
-					*static_cast<common::types::hbrush *>(arg) = info_.hbrBackground;
-				else if (access == common::property_access::write)
-					info_.hbrBackground = *static_cast<common::types::hbrush *>(arg);
-			}
-			else if (prop == &small_icon){
-				if (access == common::property_access::read)
-					*static_cast<common::types::hicon *>(arg) = info_.hIconSm;
-				else if (access == common::property_access::write)
-					info_.hIconSm = *static_cast<common::types::hicon *>(arg);
-			}
-			else if (prop == &icon){
-				if (access == common::property_access::read)
-					*static_cast<common::types::hicon *>(arg) = info_.hIcon;
-				else if (access == common::property_access::write)
-					info_.hIcon = *static_cast<common::types::hicon *>(arg);
-			}
-			else if (prop == &wnd_extra){
-				if (access == common::property_access::read)
-					*static_cast<int *>(arg) = info_.cbWndExtra;
-				else if (access == common::property_access::write)
-					info_.cbWndExtra = *static_cast<int *>(arg);
-			}
-			else if (prop == &cls_extra){
-				if (access == common::property_access::read)
-					*static_cast<int *>(arg) = info_.cbClsExtra;
-				else if (access == common::property_access::write)
-					info_.cbClsExtra = *static_cast<int *>(arg);
+				if (access == common::property_access::write)
+					info_.lpszMenuName = menu_.data();
 			}
 			else if (prop == &created){
 				if (access == common::property_access::read)
@@ -165,9 +113,8 @@ namespace ewin::window{
 				else if (access == common::property_access::write)
 					create_(*static_cast<bool *>(arg), nullptr);
 			}
-			else if (prop == &create){
+			else if (prop == &create)
 				create_(true, static_cast<create_info *>(arg));
-			}
 		}
 
 		void create_(bool create, const create_info *info){

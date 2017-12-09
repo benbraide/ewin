@@ -1,7 +1,7 @@
 #include "window_object.h"
 
 ewin::window::object::object()
-	: error_throw_policy_(error_throw_policy_type::always), auto_destroy_(true), frame_(*this){
+	: error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), auto_destroy_(true), tree_(*this), frame_(*this){
 	bind_properties_();
 }
 
@@ -37,7 +37,7 @@ void ewin::window::object::bind_properties_(){
 	relative_rect.initialize_(nullptr, handler);
 	client_rect.initialize_(nullptr, handler);
 
-	tree.initialize_(&frame_, nullptr);
+	tree.initialize_(&tree_, nullptr);
 	view.initialize_(&frame_, nullptr);
 	frame.initialize_(&frame_, nullptr);
 	style.initialize_(&frame_, nullptr);
@@ -51,39 +51,24 @@ void ewin::window::object::bind_properties_(){
 void ewin::window::object::handle_property_(void *prop, void *arg, common::property_access access){
 	if (prop == &reflect){
 		*static_cast<ptr_type *>(arg) = reflect_();
+		return;
 	}
-	else if (prop == &is_forbidden){
-		*static_cast<bool *>(arg) = is_forbidden_(arg);
+
+	if (prop == &is_forbidden){
+		*static_cast<bool *>(arg) = is_forbidden_(*reinterpret_cast<property_forbidden_info *>(arg));
+		return;
 	}
-	else if (prop == &error){
-		if (access == common::property_access::write){
-			switch (static_cast<error_throw_policy_type>(error_throw_policy_)){
-			case error_throw_policy_type::never://Update last error
-				if (application_type::current != nullptr)
-					application_type::current->last_error = application_type::error_info{ this, *static_cast<error_type *>(arg) };
-				else//Error
-					throw error_type::no_app;
-				break;
-			case error_throw_policy_type::once://Throw once
-				error_throw_policy_ = error_throw_policy_type::never;
-				throw *static_cast<error_type *>(arg);
-				break;
-			default:
-				throw *static_cast<error_type *>(arg);
-				break;
-			}
-		}
-		else if (access == common::property_access::read){
-			if (application_type::current != nullptr){
-				if (application_type::current->last_error_owner == this)
-					*static_cast<error_type *>(arg) = application_type::current->last_error_value;
-				else//No error
-					*static_cast<error_type *>(arg) = error_type::nil;
-			}
-			else//Error
-				throw error_type::no_app;
-		}
-		
+
+	if (is_forbidden_(property_forbidden_info{ prop, access })){
+		set_error_(error_type::forbidden_property);
+		return;
+	}
+
+	if (prop == &error){
+		if (access == common::property_access::write)
+			set_error_(*static_cast<error_type *>(arg));
+		else if (access == common::property_access::read)
+			*static_cast<error_type *>(arg) = error_value_;
 	}
 	else if (prop == &app){
 		if (access == common::property_access::read)
@@ -136,7 +121,9 @@ ewin::window::object::ptr_type ewin::window::object::reflect_(){
 	return shared_from_this();
 }
 
-bool ewin::window::object::is_forbidden_(void *target){
+bool ewin::window::object::is_forbidden_(const property_forbidden_info &info){
+	if (info.value == &app_ && info.access == common::property_access::write)
+		return (handle_ != nullptr);//Prevent app change after creation
 	return false;
 }
 
@@ -167,16 +154,44 @@ void ewin::window::object::create_(bool create, const create_info *info){
 		id_ = static_cast<common::types::atom>(0);*/
 }
 
-void ewin::window::object::set_rect_(const rect_type &value, bool relative){
+void ewin::window::object::set_error_(error_type value){
+	switch (static_cast<error_throw_policy_type>(error_throw_policy_)){
+	case error_throw_policy_type::never://Update last error
+		error_value_ = value;
+		break;
+	case error_throw_policy_type::once://Throw once
+		error_throw_policy_ = error_throw_policy_type::never;
+		if (value != error_type::nil)
+			throw value;
+		break;
+	default:
+		if (value != error_type::nil)
+			throw value;
+		break;
+	}
+}
 
+void ewin::window::object::set_rect_(const rect_type &value, bool relative){
+	if (!relative && tree_.parent != nullptr){
+		common::types::size size{ (value.right - value.left), (value.bottom - value.top) };
+		common::types::point relative_pos{ value.left, value.top };
+
+		::ScreenToClient(static_cast<object *>(tree_.parent)->handle_, &relative_pos);
+		::SetWindowPos(handle_, nullptr, relative_pos.x, relative_pos.y, (relative_pos.x + size.cx), (relative_pos.y + size.cy), SWP_NOZORDER | SWP_NOACTIVATE);
+	}
+	else//No conversion
+		::SetWindowPos(handle_, nullptr, value.left, value.top, (value.right - value.left), (value.bottom - value.top), SWP_NOZORDER | SWP_NOACTIVATE);
 }
 
 ewin::window::object::rect_type ewin::window::object::get_rect_(bool relative) const{
 	common::types::rect value{};
 	::GetWindowRect(handle_, &value);
-	if (relative/* && HAS_PARENT*/){//Convert value from screen
-		::ScreenToClient(nullptr/*PARENT*/, reinterpret_cast<common::types::point *>(&value.left));
-		::ScreenToClient(nullptr/*PARENT*/, reinterpret_cast<common::types::point *>(&value.right));
+	if (relative && tree_.parent != nullptr){//Convert value from screen
+		common::types::size size{ (value.right - value.left), (value.bottom - value.top) };
+		common::types::point relative_pos{ value.left, value.top };
+
+		::ScreenToClient(static_cast<object *>(tree_.parent)->handle_, &relative_pos);
+		value = common::types::rect{ relative_pos.x, relative_pos.y, (relative_pos.x + size.cx), (relative_pos.y + size.cy) };
 	}
 
 	return rect_type{ value.left, value.top, value.right, value.bottom };

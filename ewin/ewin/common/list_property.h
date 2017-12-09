@@ -52,6 +52,19 @@ namespace ewin::common{
 			return *this;
 		}
 
+		template <typename unused = value_type>
+		std::enable_if_t<!std::is_same_v<unused, std::size_t>, list_value_property> &operator -=(std::size_t index){
+			if (access != access_type::nil && !EWIN_IS(access, access_type::list_remove_index))
+				throw error_type::property_access_violation;
+
+			if (callback_ != nullptr)//Call handler
+				callback_(this, &index, access_type::list_remove_index);
+			else//Error
+				throw error_type::uninitialized_property;
+
+			return *this;
+		}
+
 		value_type *operator [](std::size_t index) const{
 			if (access != access_type::nil && !EWIN_IS(access, access_type::list_at))
 				throw error_type::property_access_violation;
@@ -83,6 +96,9 @@ namespace ewin::common{
 		}
 
 		iterator_type begin(){
+			if (access != access_type::nil && !EWIN_IS(access, access_type::list_begin))
+				throw error_type::property_access_violation;
+
 			if (callback_ == nullptr)
 				throw error_type::uninitialized_property;
 
@@ -96,6 +112,9 @@ namespace ewin::common{
 		}
 
 		iterator_type end(){
+			if (access != access_type::nil && !EWIN_IS(access, access_type::list_end))
+				throw error_type::property_access_violation;
+
 			if (callback_ == nullptr)
 				throw error_type::uninitialized_property;
 
@@ -117,18 +136,62 @@ namespace ewin::common{
 		friend std::conditional_t<std::is_void_v<manager_type>, list_value_property, manager_type>;
 
 		void initialize_(value_type *linked, callback_type callback){
+			auto handler = std::bind(&list_value_property::handle_property_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+
 			callback_ = callback;
-			size.initialize_(nullptr, callback);
+			size.initialize_(nullptr, handler);
+		}
+
+		void handle_property_(void *prop, void *arg, property_access access){
+			if (prop == &size){//Fetch size
+				if (access != access_type::nil && !EWIN_IS(access, access_type::list_size))
+					throw error_type::property_access_violation;
+
+				if (callback_ == nullptr)
+					throw error_type::uninitialized_property;
+
+				callback_(this, arg, property_access::list_size);
+			}
 		}
 
 		callback_type callback_;
 	};
 
 	template <class value_type, class iterator_type, class const_iterator_type, class manager_type = void>
-	using read_only_list_value_property = list_value_property<value_type, iterator_type, const_iterator_type, manager_type, property_access::read>;
+	using read_only_list_value_property = list_value_property<
+		value_type,
+		iterator_type,
+		const_iterator_type,
+		manager_type,
+		property_access::list_at | property_access::list_find | property_access::list_begin | property_access::list_end | property_access::list_size
+	>;
 
 	template <class value_type, class iterator_type, class const_iterator_type, class manager_type = void>
-	using write_only_list_value_property = list_value_property<value_type, iterator_type, const_iterator_type, manager_type, property_access::write>;
+	using write_only_list_value_property = list_value_property<
+		value_type,
+		iterator_type,
+		const_iterator_type,
+		manager_type,
+		property_access::list_add | property_access::list_remove | property_access::list_remove_index
+	>;
+
+	template <class value_type, class iterator_type, class const_iterator_type, class manager_type = void>
+	using access_only_list_value_property = list_value_property<
+		value_type,
+		iterator_type,
+		const_iterator_type,
+		manager_type,
+		property_access::list_at | property_access::list_find | property_access::list_size
+	>;
+
+	template <class value_type, class iterator_type, class const_iterator_type, class manager_type = void>
+	using iterator_only_list_value_property = list_value_property<
+		value_type,
+		iterator_type,
+		const_iterator_type,
+		manager_type,
+		property_access::list_begin | property_access::list_end
+	>;
 }
 
 #endif /* !EWIN_LIST_PROPERTY_H */

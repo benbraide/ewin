@@ -29,6 +29,10 @@ namespace ewin::window{
 
 		explicit wnd_tree(object &target);
 
+		wnd_tree(const wnd_tree &) = delete;
+		
+		wnd_tree &operator =(const wnd_tree &) = delete;
+
 		common::read_only_object_value_property<object, wnd_tree> owner;
 		common::object_value_property<object, wnd_tree> parent;
 

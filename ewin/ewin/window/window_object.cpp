@@ -1,7 +1,7 @@
 #include "window_object.h"
 
 ewin::window::object::object()
-	: error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), auto_destroy_(true), tree_(*this), view_(*this), frame_(*this){
+	: tree(*this), view(*this), frame(*this), error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), auto_destroy_(true){
 	bind_properties_();
 }
 
@@ -37,11 +37,11 @@ void ewin::window::object::bind_properties_(){
 	relative_rect.initialize_(nullptr, handler);
 	client_rect.initialize_(nullptr, handler);
 
-	tree.initialize_(&tree_, nullptr);
+	/*tree.initialize_(&tree_, nullptr);
 	view.initialize_(&view_, nullptr);
 	frame.initialize_(&frame_, nullptr);
 	style.initialize_(&frame_, nullptr);
-	state.initialize_(&frame_, nullptr);
+	state.initialize_(&frame_, nullptr);*/
 
 	created.initialize_(nullptr, handler);
 	create.initialize_(nullptr, handler);
@@ -172,11 +172,11 @@ void ewin::window::object::set_error_(error_type value){
 }
 
 void ewin::window::object::set_rect_(const rect_type &value, bool relative){
-	if (!relative && tree_.parent != nullptr){
+	if (!relative && tree.parent != nullptr){
 		common::types::size size{ (value.right - value.left), (value.bottom - value.top) };
 		common::types::point relative_pos{ value.left, value.top };
 
-		::ScreenToClient(static_cast<object *>(tree_.parent)->handle_, &relative_pos);
+		::ScreenToClient(tree.parent->handle_, &relative_pos);
 		::SetWindowPos(handle_, nullptr, relative_pos.x, relative_pos.y, (relative_pos.x + size.cx), (relative_pos.y + size.cy), SWP_NOZORDER | SWP_NOACTIVATE);
 	}
 	else//No conversion
@@ -186,11 +186,11 @@ void ewin::window::object::set_rect_(const rect_type &value, bool relative){
 ewin::window::object::rect_type ewin::window::object::get_rect_(bool relative) const{
 	common::types::rect value{};
 	::GetWindowRect(handle_, &value);
-	if (relative && tree_.parent != nullptr){//Convert value from screen
+	if (relative && tree.parent != nullptr){//Convert value from screen
 		common::types::size size{ (value.right - value.left), (value.bottom - value.top) };
 		common::types::point relative_pos{ value.left, value.top };
 
-		::ScreenToClient(static_cast<object *>(tree_.parent)->handle_, &relative_pos);
+		::ScreenToClient(tree.parent->handle_, &relative_pos);
 		value = common::types::rect{ relative_pos.x, relative_pos.y, (relative_pos.x + size.cx), (relative_pos.y + size.cy) };
 	}
 

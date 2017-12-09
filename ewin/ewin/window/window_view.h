@@ -13,6 +13,10 @@ namespace ewin::window{
 	public:
 		explicit wnd_view(object &target);
 
+		wnd_view(const wnd_view &) = delete;
+		
+		wnd_view &operator =(const wnd_view &) = delete;
+
 		common::boolean_value_property<wnd_view> visible;
 		common::write_only_value_property<common::types::uint, wnd_view> show;
 		common::write_only_value_property<common::types::uint, wnd_view> show_async;

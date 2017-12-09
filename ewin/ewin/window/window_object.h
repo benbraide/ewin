@@ -77,11 +77,15 @@ namespace ewin::window{
 		common::validation_property<common::types::uint, common::types::uint, object> filter_styles;
 		common::validation_property<common::types::uint, common::types::uint, object> filter_extended_styles;
 
-		common::read_only_object_value_property<wnd_tree, object> tree;
+		wnd_tree tree;
+		wnd_view view;
+		wnd_frame frame;
+
+		/*common::read_only_object_value_property<wnd_tree, object> tree;
 		common::read_only_object_value_property<wnd_view, object> view;
 		common::read_only_object_value_property<wnd_frame, object> frame;
 		common::read_only_object_value_property<wnd_frame, object> style;
-		common::read_only_object_value_property<wnd_frame, object> state;
+		common::read_only_object_value_property<wnd_frame, object> state;*/
 
 		/*common::boolean_value_property<object> visible;
 		common::boolean_value_property<object> enabled;
@@ -146,10 +150,6 @@ namespace ewin::window{
 		error_throw_policy_type error_throw_policy_;
 		error_type error_value_;
 		bool auto_destroy_;
-
-		wnd_tree tree_;
-		wnd_view view_;
-		wnd_frame frame_;
 	};
 }
 

@@ -13,6 +13,10 @@ namespace ewin::window{
 	public:
 		explicit wnd_frame(object &target);
 
+		wnd_frame(const wnd_frame &) = delete;
+		
+		wnd_frame &operator =(const wnd_frame &) = delete;
+
 		common::read_only_value_property<object *, wnd_frame> owner;
 		common::boolean_value_property<wnd_frame> visible;
 

@@ -39,7 +39,7 @@ void ewin::window::wnd_tree::handle_property_(void *prop, void *arg, common::pro
 	else if (prop == &previous_sibling){
 		if (access == common::property_access::write){
 			auto value = *reinterpret_cast<object **>(arg);
-			set_parent_(value->tree->parent, (value->tree->index + 1u));
+			set_parent_(value->tree.parent, (value->tree.index + 1u));
 		}
 		else if (access == common::property_access::read)
 			*reinterpret_cast<object **>(arg) = sibling_(true);
@@ -47,7 +47,7 @@ void ewin::window::wnd_tree::handle_property_(void *prop, void *arg, common::pro
 	else if (prop == &next_sibling){
 		if (access == common::property_access::write){
 			auto value = *reinterpret_cast<object **>(arg);
-			set_parent_(value->tree->parent, value->tree->index);
+			set_parent_(value->tree.parent, value->tree.index);
 		}
 		else if (access == common::property_access::read)
 			*reinterpret_cast<object **>(arg) = sibling_(false);
@@ -84,9 +84,9 @@ void ewin::window::wnd_tree::handle_property_(void *prop, void *arg, common::pro
 			info.first = find_(*info.second, list_target_type::siblings);
 		}
 		else if (access == common::property_access::list_size)
-			*reinterpret_cast<std::size_t *>(arg) = (target_->tree->parent_->tree->children_.size() - 1u);
+			*reinterpret_cast<std::size_t *>(arg) = (target_->tree.parent_->tree.children_.size() - 1u);
 		else if (access == common::property_access::list_begin)
-			*reinterpret_cast<sibling_forward_iterator *>(arg) = sibling_forward_iterator(target_->tree->parent_->tree->children_.begin()->get(), target_);
+			*reinterpret_cast<sibling_forward_iterator *>(arg) = sibling_forward_iterator(target_->tree.parent_->tree.children_.begin()->get(), target_);
 		else if (access == common::property_access::list_end)
 			*reinterpret_cast<sibling_forward_iterator *>(arg) = sibling_forward_iterator();
 	}
@@ -102,7 +102,7 @@ void ewin::window::wnd_tree::handle_property_(void *prop, void *arg, common::pro
 		else if (access == common::property_access::list_size)
 			*reinterpret_cast<std::size_t *>(arg) = ancestor_count_();
 		else if (access == common::property_access::list_begin)
-			*reinterpret_cast<ancestor_forward_iterator *>(arg) = ancestor_forward_iterator(target_->tree->parent_.get());
+			*reinterpret_cast<ancestor_forward_iterator *>(arg) = ancestor_forward_iterator(target_->tree.parent_.get());
 		else if (access == common::property_access::list_end)
 			*reinterpret_cast<ancestor_forward_iterator *>(arg) = ancestor_forward_iterator();
 	}
@@ -114,7 +114,7 @@ void ewin::window::wnd_tree::set_parent_(object *value, std::size_t index){
 			return;//No changes
 
 		auto current_index = index_(false);
-		if (index == current_index || (index >= parent_->tree->children_.size() && current_index == (parent_->tree->children_.size() - 1u)))
+		if (index == current_index || (index >= parent_->tree.children_.size() && current_index == (parent_->tree.children_.size() - 1u)))
 			return;//No changes
 	}
 
@@ -123,7 +123,7 @@ void ewin::window::wnd_tree::set_parent_(object *value, std::size_t index){
 		return;
 	}
 
-	auto &parent_children = parent_->tree->children_;
+	auto &parent_children = parent_->tree.children_;
 	object_ptr_type target = target_->reflect;
 	auto old_parent = parent_;
 
@@ -155,16 +155,16 @@ std::size_t ewin::window::wnd_tree::index_(bool absolute) const{
 		return static_cast<std::size_t>(-1);
 
 	object_ptr_type target = target_->reflect;
-	auto value = std::distance(parent_->tree->children_.begin(), std::find(parent_->tree->children_.begin(), parent_->tree->children_.end(), target));
+	auto value = std::distance(parent_->tree.children_.begin(), std::find(parent_->tree.children_.begin(), parent_->tree.children_.end(), target));
 
-	return (absolute ? (parent_->tree->group_index + value) : value);
+	return (absolute ? (parent_->tree.group_index + value) : value);
 }
 
 ewin::window::object *ewin::window::wnd_tree::sibling_(bool previous) const{
-	if (parent_ == nullptr || parent_->tree->children_.size() < 2u)//No sibling
+	if (parent_ == nullptr || parent_->tree.children_.size() < 2u)//No sibling
 		return nullptr;
 
-	auto &parent_children = parent_->tree->children_;
+	auto &parent_children = parent_->tree.children_;
 	auto end_iter = parent_children.end();
 
 	if (previous){
@@ -186,7 +186,7 @@ ewin::window::object *ewin::window::wnd_tree::sibling_(bool previous) const{
 ewin::window::object *ewin::window::wnd_tree::ancestor_(std::size_t index) const{
 	auto ancestor = parent_;
 	for (; index > 0u && ancestor != nullptr; --index)
-		ancestor = ancestor->tree->parent_;
+		ancestor = ancestor->tree.parent_;
 	return ancestor.get();
 }
 
@@ -197,17 +197,17 @@ ewin::window::object *ewin::window::wnd_tree::at_(std::size_t index, list_target
 	if (list_target == list_target_type::children)
 		return ((index < children_.size()) ? std::next(children_.begin(), index)->get() : nullptr);
 
-	if (target_->tree->parent_->tree->children_.size() < 2u)
+	if (target_->tree.parent_->tree.children_.size() < 2u)
 		return nullptr;//No sibling
 
-	auto sibling = target_->tree->parent_->tree->children_.begin()->get();
+	auto sibling = target_->tree.parent_->tree.children_.begin()->get();
 	if (sibling == target_)//Advance
-		sibling = sibling->tree->next_sibling;
+		sibling = sibling->tree.next_sibling;
 
 	for (; sibling != nullptr && index > 0u; --index){//Traverse siblings
-		sibling = target_->tree->parent_->tree->children_.begin()->get();
+		sibling = target_->tree.parent_->tree.children_.begin()->get();
 		if (sibling == target_)//Advance
-			sibling = sibling->tree->next_sibling;
+			sibling = sibling->tree.next_sibling;
 	}
 
 	return sibling;
@@ -221,20 +221,20 @@ std::size_t ewin::window::wnd_tree::find_(object &target, list_target_type list_
 
 	std::size_t index = 0u;
 	if (list_target == list_target_type::siblings){//Find target in sibling list
-		auto sibling = target_->tree->parent_->tree->children_.begin()->get();
+		auto sibling = target_->tree.parent_->tree.children_.begin()->get();
 		if (sibling == target_)//Advance
-			sibling = sibling->tree->next_sibling;
+			sibling = sibling->tree.next_sibling;
 
 		for (; sibling != nullptr && sibling != &target; ++index){//Traverse siblings
-			sibling = target_->tree->parent_->tree->children_.begin()->get();
+			sibling = target_->tree.parent_->tree.children_.begin()->get();
 			if (sibling == target_)//Advance
-				sibling = sibling->tree->next_sibling;
+				sibling = sibling->tree.next_sibling;
 		}
 	}
 	else{//Find target in ancestor list
 		auto ancestor = parent_;
 		for (; ancestor != nullptr && ancestor.get() != &target; ++index)
-			ancestor = ancestor->tree->parent_;
+			ancestor = ancestor->tree.parent_;
 	}
 
 	return index;
@@ -243,18 +243,18 @@ std::size_t ewin::window::wnd_tree::find_(object &target, list_target_type list_
 std::size_t ewin::window::wnd_tree::ancestor_count_() const{
 	std::size_t count = 0u;
 	for (auto ancestor = parent_; ancestor != nullptr; ++count)
-		ancestor = ancestor->tree->parent_;
+		ancestor = ancestor->tree.parent_;
 	return count;
 }
 
 void ewin::window::wnd_tree::add_child_(object *value){
-	if (value->tree->parent_.get() != target_)
-		value->tree->set_parent_(target_, children_.size());
+	if (value->tree.parent_.get() != target_)
+		value->tree.set_parent_(target_, children_.size());
 }
 
 void ewin::window::wnd_tree::remove_child_(object *value){
-	if (value->tree->parent_.get() == target_)
-		value->tree->set_parent_(nullptr, 0u);
+	if (value->tree.parent_.get() == target_)
+		value->tree.set_parent_(nullptr, 0u);
 }
 
 void ewin::window::wnd_tree::remove_child_(std::size_t index){

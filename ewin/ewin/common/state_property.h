@@ -31,13 +31,41 @@ namespace ewin::common{
 
 		template <typename target_type>
 		state_value_property &operator +=(const target_type &rhs){
-			*this = (*this + rhs);
+			if (access != access_type::nil && !EWIN_IS(access, access_type::write))
+				throw error_type::property_access_violation;
+
+			if (linked_ != nullptr){
+				EWIN_SET(*linked_, (value_type)value);
+				if (callback_ != nullptr)//Alert listener
+					callback_(this, nullptr, access_type::list_add);
+			}
+			else if (callback_ != nullptr){//Call handler
+				auto converted_value = (value_type)value;
+				callback_(this, &const_cast<value_type &>(converted_value), access_type::list_add);
+			}
+			else//Error
+				throw error_type::uninitialized_property;
+
 			return *this;
 		}
 
 		template <typename target_type>
 		state_value_property &operator -=(const target_type &rhs){
-			*this = (*this - rhs);
+			if (access != access_type::nil && !EWIN_IS(access, access_type::write))
+				throw error_type::property_access_violation;
+
+			if (linked_ != nullptr){
+				EWIN_REMOVE(*linked_, (value_type)value);
+				if (callback_ != nullptr)//Alert listener
+					callback_(this, nullptr, access_type::list_remove);
+			}
+			else if (callback_ != nullptr){//Call handler
+				auto converted_value = (value_type)value;
+				callback_(this, &const_cast<value_type &>(converted_value), access_type::list_remove);
+			}
+			else//Error
+				throw error_type::uninitialized_property;
+
 			return *this;
 		}
 
@@ -62,12 +90,7 @@ namespace ewin::common{
 		}
 
 		template <typename target_type>
-		bool operator <(const target_type &rhs) const{
-			return !EWIN_IS_ANY((value_type)(*this), (value_type)rhs);
-		}
-
-		template <typename target_type>
-		bool operator <=(const target_type &rhs) const{
+		bool operator [](const target_type &rhs) const{
 			return EWIN_IS_ANY((value_type)(*this), (value_type)rhs);
 		}
 
@@ -82,26 +105,6 @@ namespace ewin::common{
 		}
 
 		template <typename target_type>
-		bool operator >=(const target_type &rhs) const{
-			return (*this <= rhs);
-		}
-
-		template <typename target_type>
-		bool operator >(const target_type &rhs) const{
-			return (*this < rhs);
-		}
-
-		template <typename target_type>
-		friend bool operator <(const target_type &lhs, const state_value_property &rhs){
-			return (rhs < lhs);
-		}
-
-		template <typename target_type>
-		friend bool operator <=(const target_type &lhs, const state_value_property &rhs){
-			return (rhs <= lhs);
-		}
-
-		template <typename target_type>
 		friend bool operator ==(const target_type &lhs, const state_value_property &rhs){
 			return (rhs == lhs);
 		}
@@ -109,16 +112,6 @@ namespace ewin::common{
 		template <typename target_type>
 		friend bool operator !=(const target_type &lhs, const state_value_property &rhs){
 			return (rhs != lhs);
-		}
-
-		template <typename target_type>
-		friend bool operator >=(const target_type &lhs, const state_value_property &rhs){
-			return (rhs >= lhs);
-		}
-
-		template <typename target_type>
-		friend bool operator >(const target_type &lhs, const state_value_property &rhs){
-			return (rhs > lhs);
 		}
 	};
 

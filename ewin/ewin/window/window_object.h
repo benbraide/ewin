@@ -17,6 +17,8 @@
 #include "window_frame.h"
 #include "window_tree.h"
 #include "window_view.h"
+#include "window_state.h"
+#include "window_style.h"
 
 namespace ewin::window{
 	class object : public std::enable_shared_from_this<object>{
@@ -80,35 +82,8 @@ namespace ewin::window{
 		wnd_tree tree;
 		wnd_view view;
 		wnd_frame frame;
-
-		/*common::read_only_object_value_property<wnd_tree, object> tree;
-		common::read_only_object_value_property<wnd_view, object> view;
-		common::read_only_object_value_property<wnd_frame, object> frame;
-		common::read_only_object_value_property<wnd_frame, object> style;
-		common::read_only_object_value_property<wnd_frame, object> state;*/
-
-		/*common::boolean_value_property<object> visible;
-		common::boolean_value_property<object> enabled;
-
-		common::boolean_value_property<object> maximized;
-		common::boolean_value_property<object> minimized;
-
-		common::boolean_value_property<object> show_caption;
-		common::boolean_value_property<object> show_system_menu;
-
-		common::boolean_value_property<object> clip_children;
-		common::boolean_value_property<object> clip_siblings;
-
-		common::boolean_value_property<object> tab_stop;
-		common::boolean_value_property<object> file_drop;
-		common::boolean_value_property<object> mouse_activate;
-
-		common::boolean_value_property<object> right_align;
-		common::boolean_value_property<object> rtl_reading;
-		common::boolean_value_property<object> rtl_layout;
-
-		common::boolean_value_property<object> top_most;
-		common::boolean_value_property<object> transparent;*/
+		wnd_state state;
+		wnd_style style;
 
 		common::boolean_value_property<object> created;
 		common::write_only_value_property<create_info, object> create;

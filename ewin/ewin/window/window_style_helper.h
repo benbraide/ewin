@@ -18,6 +18,10 @@ namespace ewin::window{
 	protected:
 		friend class object;
 
+		void reset_(common::types::uint value);
+
+		void reset_extended_(common::types::uint value);
+
 		void set_(common::types::uint value);
 
 		void set_extended_(common::types::uint value);

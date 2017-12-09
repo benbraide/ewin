@@ -17,7 +17,6 @@ namespace ewin::window{
 		
 		wnd_frame &operator =(const wnd_frame &) = delete;
 
-		common::read_only_value_property<object *, wnd_frame> owner;
 		common::boolean_value_property<wnd_frame> visible;
 
 		common::boolean_value_property<wnd_frame> show_caption;

@@ -44,6 +44,8 @@ namespace ewin::application{
 
 		void task_(task_type &callback);
 
+		static common::types::result CALLBACK entry_(common::types::hwnd hwnd, common::types::uint msg, common::types::wparam wparam, common::types::lparam lparam);
+
 		window_type &get_message_window_();
 
 		std::thread::id thread_id_;

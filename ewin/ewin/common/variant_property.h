@@ -7,20 +7,20 @@
 #include "value_property.h"
 
 namespace ewin::common{
+	struct variant_value_property_arg_info{
+		void *value;
+		std::size_t index;
+	};
+
 	template <class manager_type, property_access access, class... type_list>
 	class variant_value_property{
 	public:
 		typedef void value_type;
-
 		typedef manager_type manager_type;
 		typedef property_access access_type;
+		typedef variant_value_property_arg_info arg_info_type;
 
 		typedef std::function<void(void *, void *, access_type)> callback_type;
-
-		struct arg_info{
-			void *value;
-			std::size_t index;
-		};
 
 		variant_value_property(){}
 
@@ -35,7 +35,7 @@ namespace ewin::common{
 			if (callback_ == nullptr)//Error
 				throw error_type::uninitialized_property;
 
-			arg_info info{ &const_cast<target_type &>(value), variadic_type_index<target_type, type_list...>::value };
+			arg_info_type info{ &const_cast<target_type &>(value), variadic_type_index<target_type, type_list...>::value };
 			callback_(this, &info, access_type::write);
 
 			return *this;
@@ -50,7 +50,7 @@ namespace ewin::common{
 				throw error_type::uninitialized_property;
 
 			auto value = target_type();
-			arg_info info{ &value, variadic_type_index<target_type, type_list...>::value };
+			arg_info_type info{ &value, variadic_type_index<target_type, type_list...>::value };
 
 			callback_(const_cast<variant_value_property *>(this), &info, access_type::read);
 			return value;

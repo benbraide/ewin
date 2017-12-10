@@ -1,7 +1,8 @@
 #include "window_object.h"
 
 ewin::window::object::object()
-	: tree(*this), view(*this), frame(*this), state(*this), style(*this), error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), auto_destroy_(true){
+	: tree(*this), view(*this), frame(*this), state(*this), style(*this),
+	error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), local_error_value_(ERROR_SUCCESS), auto_destroy_(true){
 	bind_properties_();
 }
 
@@ -154,14 +155,27 @@ bool ewin::window::object::is_forbidden_(const property_forbidden_info &info){
 }
 
 void ewin::window::object::create_(bool create, const create_info *info){
-	if (!create && handle_ != nullptr){
+	if (!create && handle_ != nullptr){//Destroy window
 		app_->task += [this]{
-			if (::DestroyWindow(handle_) == FALSE){
-
-			}
-			else//Destroyed
+			if (::DestroyWindow(handle_) != FALSE){
 				handle_ = nullptr;
+			}
+			else//Failed to destroy
+				set_error_(::GetLastError());
 		};
+	}
+}
+
+void ewin::window::object::set_error_(common::variant_value_property_arg_info &info){
+	switch (info.index){
+	case 0u:
+		set_error_(*static_cast<error_type *>(info.value));
+		break;
+	case 1u:
+		set_error_(*static_cast<common::types::dword *>(info.value));
+		break;
+	default:
+		break;
 	}
 }
 
@@ -183,6 +197,11 @@ void ewin::window::object::set_error_(error_type value){
 		throw value;
 		break;
 	}
+}
+
+void ewin::window::object::set_error_(common::types::dword value){
+	local_error_value_ = value;
+	set_error_(error_type::local_error);
 }
 
 void ewin::window::object::set_rect_(const rect_type &value, bool relative){

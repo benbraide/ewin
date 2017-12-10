@@ -18,3 +18,7 @@ void ewin::application::object::task_(task_type &callback){
 ewin::application::object::window_type &ewin::application::object::get_message_window_(){
 	return *message_window_;
 }
+
+ewin::common::types::result CALLBACK ewin::application::object::entry_(common::types::hwnd hwnd, common::types::uint msg, common::types::wparam wparam, common::types::lparam lparam){
+	return 0;
+}

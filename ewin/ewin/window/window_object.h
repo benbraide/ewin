@@ -11,7 +11,7 @@
 #include "../common/transformation_property.h"
 #include "../common/variant_property.h"
 
-#include "../application/application_object.h"
+#include "../application/application_manager.h"
 
 #include "window_class.h"
 #include "window_frame.h"
@@ -66,7 +66,7 @@ namespace ewin::window{
 		common::transformation_property<bool, void *, object> is_forbidden;
 
 		common::value_property<error_throw_policy_type, object> error_throw_policy;
-		common::value_property<error_type, object> error;
+		common::variant_value_property<object, common::property_access::nil, error_type, common::types::dword> error;
 
 		common::extended_value_property<application_type, application_type *, object> app;
 		common::read_only_value_property<common::types::hwnd, object> handle;
@@ -114,7 +114,11 @@ namespace ewin::window{
 
 		void create_(bool create, const create_info *info);
 
+		virtual void set_error_(common::variant_value_property_arg_info &info);
+
 		virtual void set_error_(error_type value);
+
+		virtual void set_error_(common::types::dword value);
 
 		virtual void set_rect_(const rect_type &value, bool relative);
 
@@ -150,6 +154,7 @@ namespace ewin::window{
 
 		error_throw_policy_type error_throw_policy_;
 		error_type error_value_;
+		common::types::dword local_error_value_;
 		bool auto_destroy_;
 	};
 }

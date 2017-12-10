@@ -62,6 +62,7 @@ namespace ewin::window{
 		common::state_value_property<common::types::uint, wnd_class> style;
 		common::value_property<common::types::hbrush, wnd_class> background_brush;
 
+		common::value_property<common::types::hcursor, wnd_class> cursor;
 		common::value_property<common::types::hicon, wnd_class> small_icon;
 		common::value_property<common::types::hicon, wnd_class> icon;
 
@@ -88,6 +89,7 @@ namespace ewin::window{
 			style.initialize_(&info_.style, nullptr);
 			background_brush.initialize_(&info_.hbrBackground, nullptr);
 
+			cursor.initialize_(&info_.hCursor, nullptr);
 			small_icon.initialize_(&info_.hIconSm, nullptr);
 			icon.initialize_(&info_.hIcon, nullptr);
 

@@ -6,6 +6,7 @@
 namespace ewin::common{
 	enum class error_type{
 		nil,
+		local_error,
 		uninitialized_property,
 		property_access_violation,
 		forbidden_property,

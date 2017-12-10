@@ -5,6 +5,8 @@
 
 #include <memory>
 
+#include "../window/window_class.h"
+
 #include "application_object.h"
 
 namespace ewin::application{
@@ -29,7 +31,16 @@ namespace ewin::application{
 	class manager_initializer{
 	public:
 		manager_initializer();
-	} manager_initializer_;
+
+		~manager_initializer();
+
+		static window::wnd_class general_window_class;
+		static window::wnd_class dialog_window_class;
+
+	private:
+		bool initialized_;
+		static const manager_initializer manager_initializer_;
+	};
 }
 
 #endif /* !EWIN_APPLICATION_MANAGER_H */

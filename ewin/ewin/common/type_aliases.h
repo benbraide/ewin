@@ -7,7 +7,7 @@
 
 #include <string>
 
-#include <windows.h>
+#include "common_headers.h"
 
 namespace ewin::common::types{
 	typedef __int64				int64;

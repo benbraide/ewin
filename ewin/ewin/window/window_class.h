@@ -7,6 +7,7 @@
 #include "../common/boolean_property.h"
 #include "../common/string_property.h"
 #include "../common/state_property.h"
+#include "../common/transformation_property.h"
 
 namespace ewin::window{
 	class wnd_class{
@@ -68,7 +69,7 @@ namespace ewin::window{
 		common::numeric_value_property<int, wnd_class> cls_extra;
 
 		common::boolean_value_property<wnd_class> created;
-		common::write_only_value_property<create_info, wnd_class> create;
+		common::transformation_property<create_info, void, wnd_class> create;
 		common::boolean_value_property<wnd_class> auto_destroy;
 
 	private:

@@ -8,7 +8,7 @@
 #include "../common/size_property.h"
 #include "../common/point_property.h"
 #include "../common/rect_property.h"
-#include "../common/validation_property.h"
+#include "../common/transformation_property.h"
 #include "../common/variant_property.h"
 
 #include "../application/application_object.h"
@@ -57,7 +57,7 @@ namespace ewin::window{
 		virtual ~object();
 
 		common::read_only_value_property<ptr_type, object> reflect;
-		common::validation_property<bool, void *, object> is_forbidden;
+		common::transformation_property<bool, void *, object> is_forbidden;
 
 		common::value_property<error_throw_policy_type, object> error_throw_policy;
 		common::value_property<error_type, object> error;
@@ -76,8 +76,11 @@ namespace ewin::window{
 		common::rect_value_property<int, object> relative_rect;
 		common::read_only_rect_value_property<int, object> client_rect;
 
-		common::validation_property<common::types::uint, common::types::uint, object> filter_styles;
-		common::validation_property<common::types::uint, common::types::uint, object> filter_extended_styles;
+		common::transformation_property<common::types::uint, common::types::uint, object> filter_styles;
+		common::transformation_property<common::types::uint, common::types::uint, object> filter_extended_styles;
+
+		common::read_only_size_value_property<common::types::uint, object> filtered_styles;
+		common::read_only_size_value_property<common::types::uint, object> filtered_extended_styles;
 
 		wnd_tree tree;
 		wnd_view view;
@@ -86,7 +89,7 @@ namespace ewin::window{
 		wnd_style style;
 
 		common::boolean_value_property<object> created;
-		common::write_only_value_property<create_info, object> create;
+		common::transformation_property<create_info, void, object> create;
 		common::boolean_value_property<object> auto_destroy;
 
 		common::write_only_variant_value_property<object, parent_change_info, child_change_info> changed;
@@ -117,6 +120,16 @@ namespace ewin::window{
 		virtual void set_size_(const size_type &value, bool client);
 
 		virtual size_type get_size_(bool client) const;
+
+		virtual void filter_styles_(std::pair<common::types::uint *, common::types::uint> &info, bool is_extended) const;
+
+		virtual common::types::uint filter_styles_(common::types::uint value, bool is_extended) const;
+
+		virtual common::types::uint filtered_styles_(bool is_extended) const;
+
+		virtual common::types::uint white_listed_styles_(bool is_extended) const;
+
+		virtual common::types::uint black_listed_styles_(bool is_extended) const;
 
 		application_type *app_;
 		common::types::hwnd handle_;

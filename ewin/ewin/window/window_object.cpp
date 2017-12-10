@@ -37,6 +37,12 @@ void ewin::window::object::bind_properties_(){
 	relative_rect.initialize_(nullptr, handler);
 	client_rect.initialize_(nullptr, handler);
 
+	filter_styles.initialize_(nullptr, handler);
+	filter_extended_styles.initialize_(nullptr, handler);
+
+	filtered_styles.initialize_(nullptr, handler);
+	filtered_extended_styles.initialize_(nullptr, handler);
+
 	created.initialize_(nullptr, handler);
 	create.initialize_(nullptr, handler);
 	auto_destroy.initialize_(&auto_destroy_, nullptr);
@@ -49,7 +55,8 @@ void ewin::window::object::handle_property_(void *prop, void *arg, common::prope
 	}
 
 	if (prop == &is_forbidden){
-		*static_cast<bool *>(arg) = is_forbidden_(*reinterpret_cast<property_forbidden_info *>(arg));
+		auto info = static_cast<std::pair<property_forbidden_info *, bool> *>(arg);
+		info->second = is_forbidden_(*info->first);
 		return;
 	}
 
@@ -63,8 +70,11 @@ void ewin::window::object::handle_property_(void *prop, void *arg, common::prope
 			set_error_(*static_cast<error_type *>(arg));
 		else if (access == common::property_access::read)
 			*static_cast<error_type *>(arg) = error_value_;
+		return;
 	}
-	else if (prop == &app){
+
+	error_value_ = error_type::nil;
+	if (prop == &app){
 		if (access == common::property_access::read)
 			*static_cast<application_type **>(arg) = app_;
 		else if (access == common::property_access::write && handle_ == nullptr)
@@ -106,9 +116,16 @@ void ewin::window::object::handle_property_(void *prop, void *arg, common::prope
 		else if (access == common::property_access::write)
 			set_rect_(*static_cast<rect_type *>(arg), true);
 	}
-	else if (prop == &client_rect){
+	else if (prop == &client_rect)
 		*static_cast<rect_type *>(arg) = get_client_rect_();
-	}
+	else if (prop == &filter_styles)
+		filter_styles_(*static_cast<std::pair<common::types::uint *, common::types::uint> *>(arg), false);
+	else if (prop == &filter_extended_styles)
+		filter_styles_(*static_cast<std::pair<common::types::uint *, common::types::uint> *>(arg), true);
+	else if (prop == &filtered_styles)
+		*static_cast<common::types::uint *>(arg) = filtered_styles_(false);
+	else if (prop == &filtered_extended_styles)
+		*static_cast<common::types::uint *>(arg) = filtered_styles_(true);
 }
 
 ewin::window::object::ptr_type ewin::window::object::reflect_(){
@@ -149,18 +166,21 @@ void ewin::window::object::create_(bool create, const create_info *info){
 }
 
 void ewin::window::object::set_error_(error_type value){
+	if (value == error_type::nil){//Clear error
+		error_value_ = value;
+		return;
+	}
+
 	switch (static_cast<error_throw_policy_type>(error_throw_policy_)){
 	case error_throw_policy_type::never://Update last error
 		error_value_ = value;
 		break;
 	case error_throw_policy_type::once://Throw once
 		error_throw_policy_ = error_throw_policy_type::never;
-		if (value != error_type::nil)
-			throw value;
+		throw value;
 		break;
 	default:
-		if (value != error_type::nil)
-			throw value;
+		throw value;
 		break;
 	}
 }
@@ -235,4 +255,24 @@ ewin::window::object::size_type ewin::window::object::get_size_(bool client) con
 
 	auto rect_value = get_rect_(false);
 	return size_type{ rect_value.right - rect_value.left, rect_value.bottom - rect_value.top };
+}
+
+void ewin::window::object::filter_styles_(std::pair<common::types::uint *, common::types::uint> &info, bool is_extended) const{
+	info.second = filter_styles_(*info.first, is_extended);
+}
+
+ewin::common::types::uint ewin::window::object::filter_styles_(common::types::uint value, bool is_extended) const{
+	return EWIN_REMOVE_V(value, filtered_styles_(is_extended));
+}
+
+ewin::common::types::uint ewin::window::object::filtered_styles_(bool is_extended) const{
+	return EWIN_REMOVE_V(black_listed_styles_(is_extended), white_listed_styles_(is_extended));
+}
+
+ewin::common::types::uint ewin::window::object::white_listed_styles_(bool is_extended) const{
+	return (is_extended ? 0u : (WS_CLIPCHILDREN | WS_CLIPSIBLINGS | WS_TABSTOP | WS_DISABLED | WS_VISIBLE));
+}
+
+ewin::common::types::uint ewin::window::object::black_listed_styles_(bool is_extended) const{
+	return (is_extended ? WS_EX_LEFTSCROLLBAR : (WS_HSCROLL | WS_VSCROLL));
 }

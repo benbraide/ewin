@@ -13,7 +13,9 @@ namespace ewin::common{
 		no_app,
 		multiple_app,
 		locked_app,
+		app_mismatch,
 		parent_not_created,
+		window_not_created,
 	};
 
 	enum class error_throw_policy_type{

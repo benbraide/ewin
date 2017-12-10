@@ -37,6 +37,9 @@ void ewin::window::object::bind_properties_(){
 	relative_rect.initialize_(nullptr, handler);
 	client_rect.initialize_(nullptr, handler);
 
+	send_message.initialize_(nullptr, handler);
+	post_message.initialize_(nullptr, handler);
+
 	filter_styles.initialize_(nullptr, handler);
 	filter_extended_styles.initialize_(nullptr, handler);
 
@@ -118,6 +121,10 @@ void ewin::window::object::handle_property_(void *prop, void *arg, common::prope
 	}
 	else if (prop == &client_rect)
 		*static_cast<rect_type *>(arg) = get_client_rect_();
+	else if (prop == &send_message)
+		send_message_(*static_cast<std::pair<message_info *, common::types::result> *>(arg));
+	else if (prop == &post_message)
+		post_message_(*static_cast<message_info *>(arg));
 	else if (prop == &filter_styles)
 		filter_styles_(*static_cast<std::pair<common::types::uint *, common::types::uint> *>(arg), false);
 	else if (prop == &filter_extended_styles)
@@ -126,6 +133,14 @@ void ewin::window::object::handle_property_(void *prop, void *arg, common::prope
 		*static_cast<common::types::uint *>(arg) = filtered_styles_(false);
 	else if (prop == &filtered_extended_styles)
 		*static_cast<common::types::uint *>(arg) = filtered_styles_(true);
+	else if (prop == &created){
+		if (access == common::property_access::read)
+			*static_cast<bool *>(arg) = (handle_ != nullptr);
+		else if (access == common::property_access::write)
+			create_(*static_cast<bool *>(arg), nullptr);
+	}
+	else if (prop == &create)
+		create_(true, static_cast<create_info *>(arg));
 }
 
 ewin::window::object::ptr_type ewin::window::object::reflect_(){
@@ -139,30 +154,15 @@ bool ewin::window::object::is_forbidden_(const property_forbidden_info &info){
 }
 
 void ewin::window::object::create_(bool create, const create_info *info){
-	/*if (create == (id_ != static_cast<common::types::atom>(0)))
-		return;//Already created or destroyed
+	if (!create && handle_ != nullptr){
+		app_->task += [this]{
+			if (::DestroyWindow(handle_) == FALSE){
 
-	if (create){
-		if (info != nullptr){//Copy info
-			info_.hInstance = info->instance;
-			info_.lpfnWndProc = info->procedure;
-			info_.lpszClassName = (name_ = info->name).data();
-			info_.lpszMenuName = (menu_ = info->menu).data();
-			info_.style = info->style;
-			info_.hbrBackground = info->background_brush;
-			info_.hIconSm = info->small_icon;
-			info_.hIcon = info->icon;
-			info_.cbWndExtra = info->wnd_extra;
-			info_.cbClsExtra = info->cls_extra;
-		}
-
-		if ((id_ = ::RegisterClassExW(&info_)) == static_cast<common::types::atom>(0))
-			throw ::GetLastError();//Failed to register class
+			}
+			else//Destroyed
+				handle_ = nullptr;
+		};
 	}
-	else if (::UnregisterClassW(info_.lpszClassName, info_.hInstance) == FALSE)
-		throw ::GetLastError();//Failed
-	else//Reset ID
-		id_ = static_cast<common::types::atom>(0);*/
 }
 
 void ewin::window::object::set_error_(error_type value){
@@ -275,4 +275,18 @@ ewin::common::types::uint ewin::window::object::white_listed_styles_(bool is_ext
 
 ewin::common::types::uint ewin::window::object::black_listed_styles_(bool is_extended) const{
 	return (is_extended ? WS_EX_LEFTSCROLLBAR : (WS_HSCROLL | WS_VSCROLL));
+}
+
+void ewin::window::object::send_message_(std::pair<message_info *, common::types::result> &info){
+	if (handle_ == nullptr)
+		error = error_type::window_not_created;
+	else//Send
+		info.second = ::SendMessageW(handle_, info.first->value, info.first->wparam, info.first->lparam);
+}
+
+void ewin::window::object::post_message_(message_info &info){
+	if (handle_ == nullptr)
+		error = error_type::window_not_created;
+	else//Post
+		::PostMessageW(handle_, info.value, info.wparam, info.lparam);
 }

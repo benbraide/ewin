@@ -8,6 +8,7 @@
 #include "../common/type_aliases.h"
 #include "../common/boolean_property.h"
 #include "../common/object_property.h"
+#include "../common/list_property.h"
 
 #include "../window/window_class.h"
 
@@ -27,6 +28,10 @@ namespace ewin::application{
 		typedef common::error_type error_type;
 		typedef window::object window_type;
 
+		typedef std::function<void()> task_type;
+
+		common::list_value_property<task_type, void *, void *, object, common::property_access::list_add> task;
+
 	private:
 		friend class manager;
 		friend class manager_initializer;
@@ -37,7 +42,12 @@ namespace ewin::application{
 
 		void handle_property_(void *prop, void *arg, common::property_access access);
 
+		void task_(task_type &callback);
+
+		window_type &get_message_window_();
+
 		std::thread::id thread_id_;
+		std::shared_ptr<window_type> message_window_;
 	};
 }
 

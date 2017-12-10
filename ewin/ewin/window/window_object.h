@@ -39,6 +39,12 @@ namespace ewin::window{
 			common::property_access access;
 		};
 
+		struct message_info{
+			common::types::uint value;
+			common::types::wparam wparam;
+			common::types::lparam lparam;
+		};
+
 		struct create_info{};
 
 		struct parent_change_info{
@@ -75,6 +81,9 @@ namespace ewin::window{
 		common::rect_value_property<int, object> rect;
 		common::rect_value_property<int, object> relative_rect;
 		common::read_only_rect_value_property<int, object> client_rect;
+
+		common::transformation_property<message_info, common::types::result, object> send_message;
+		common::transformation_property<message_info, void, object> post_message;
 
 		common::transformation_property<common::types::uint, common::types::uint, object> filter_styles;
 		common::transformation_property<common::types::uint, common::types::uint, object> filter_extended_styles;
@@ -130,6 +139,10 @@ namespace ewin::window{
 		virtual common::types::uint white_listed_styles_(bool is_extended) const;
 
 		virtual common::types::uint black_listed_styles_(bool is_extended) const;
+
+		virtual void send_message_(std::pair<message_info *, common::types::result> &info);
+
+		virtual void post_message_(message_info &info);
 
 		application_type *app_;
 		common::types::hwnd handle_;

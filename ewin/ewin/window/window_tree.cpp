@@ -118,9 +118,16 @@ void ewin::window::wnd_tree::set_parent_(object *value, std::size_t index){
 			return;//No changes
 	}
 
-	if (value != nullptr && target_->handle != nullptr && value->handle == nullptr){
-		target_->error = common::error_type::parent_not_created;
-		return;
+	if (value != nullptr && target_->handle != nullptr){//Target window has been created
+		if (value->handle == nullptr){
+			target_->error = common::error_type::parent_not_created;
+			return;
+		}
+
+		if (value->app != target_->app){//Cannot move to parent in a different app
+			target_->error = common::error_type::app_mismatch;
+			return;
+		}
 	}
 
 	auto &parent_children = parent_->tree.children_;

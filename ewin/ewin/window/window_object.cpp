@@ -1,7 +1,7 @@
 #include "window_object.h"
 
 ewin::window::object::object()
-	: tree(*this), view(*this), frame(*this), state(*this), style(*this),
+	: tree(*this), view(*this), frame(*this), state(*this), style(*this), attribute(*this),
 	error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), local_error_value_(ERROR_SUCCESS), auto_destroy_(true){
 	bind_properties_();
 }

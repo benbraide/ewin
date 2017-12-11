@@ -14,10 +14,19 @@ namespace ewin::application{
 
 	class manager{
 	public:
+		typedef std::reference_wrapper<object> object_ref_type;
+		typedef std::list<object_ref_type> object_list_type;
+
+		typedef object_list_type::iterator object_list_iterator_type;
+		typedef object_list_type::const_iterator object_list_const_iterator_type;
+
 		static common::read_only_object_value_property<object, manager> main;
 		static common::read_only_object_value_property<object, manager> current;
 
+		static common::iterator_only_list_value_property<object, object_list_iterator_type, object_list_const_iterator_type, manager> application_list;
+
 	private:
+		friend class object;
 		friend class manager_initializer;
 
 		static void bind_properties_();
@@ -26,6 +35,9 @@ namespace ewin::application{
 
 		static object *main_;
 		static thread_local std::shared_ptr<object> current_;
+
+		static object_list_type application_list_;
+		static object_list_type temp_application_list_;
 	};
 
 	class manager_initializer{

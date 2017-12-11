@@ -4,6 +4,7 @@
 #define EWIN_APPLICATION_OBJECT_H
 
 #include <thread>
+#include <unordered_map>
 
 #include "../common/type_aliases.h"
 #include "../common/boolean_property.h"
@@ -29,8 +30,23 @@ namespace ewin::application{
 		typedef window::object window_type;
 
 		typedef std::function<void()> task_type;
+		typedef std::reference_wrapper<window_type> window_ref_type;
 
-		common::list_value_property<task_type, void *, void *, object, common::property_access::list_add> task;
+		typedef std::list<window_ref_type> window_list_type;
+		typedef std::unordered_map<common::types::hwnd, window_ref_type> window_map_type;
+
+		typedef window_list_type::iterator window_list_iterator_type;
+		typedef window_list_type::const_iterator window_list_const_iterator_type;
+
+		~object();
+
+		object(const object &) = delete;
+		
+		object &operator =(const object &) = delete;
+
+		common::list_value_property<task_type, void *, void *, object, std::size_t, common::property_access::list_add> task;
+		common::access_only_list_value_property<window_type, object, common::types::hwnd> window_handles;
+		common::iterator_only_list_value_property<window_type, window_list_iterator_type, window_list_const_iterator_type, object> top_level_windows;
 
 	private:
 		friend class manager;
@@ -42,7 +58,7 @@ namespace ewin::application{
 
 		void handle_property_(void *prop, void *arg, common::property_access access);
 
-		void task_(task_type &callback);
+		void task_(const task_type &callback);
 
 		static common::types::result CALLBACK entry_(common::types::hwnd hwnd, common::types::uint msg, common::types::wparam wparam, common::types::lparam lparam);
 
@@ -50,6 +66,8 @@ namespace ewin::application{
 
 		std::thread::id thread_id_;
 		std::shared_ptr<window_type> message_window_;
+		window_list_type top_level_windows_;
+		window_map_type window_handles_;
 	};
 }
 

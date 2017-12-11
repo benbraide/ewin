@@ -3,11 +3,23 @@
 #ifndef EWIN_TYPE_ALIASES_H
 #define EWIN_TYPE_ALIASES_H
 
-#define WIN32_LEAN_AND_MEAN
-
 #include <string>
 
 #include "common_headers.h"
+
+#define EWIN_SCALAR_CAST(t, v) (t)(v)
+#define EWIN_OBJECT_CAST(t, v) *(const std::remove_const_t<t> *)(&(v))
+
+#define EWIN_SCALAR_WPARAM_CAST(v) EWIN_SCALAR_CAST(ewin::common::types::wparam, v)
+#define EWIN_SCALAR_LPARAM_CAST(v) EWIN_SCALAR_CAST(ewin::common::types::lparam, v)
+#define EWIN_SCALAR_RESULT_CAST(v) EWIN_SCALAR_CAST(ewin::common::types::result, v)
+
+#define EWIN_OBJECT_WPARAM_CAST(v) EWIN_OBJECT_CAST(ewin::common::types::wparam, v)
+#define EWIN_OBJECT_LPARAM_CAST(v) EWIN_OBJECT_CAST(ewin::common::types::lparam, v)
+#define EWIN_OBJECT_RESULT_CAST(v) EWIN_OBJECT_CAST(ewin::common::types::result, v)
+
+#define EWIN_C_BOOL(v) (v ? TRUE : FALSE)
+#define EWIN_CPP_BOOL(v) (v != FALSE)
 
 namespace ewin::common::types{
 	typedef __int64				int64;

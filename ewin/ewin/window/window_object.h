@@ -19,6 +19,7 @@
 #include "window_view.h"
 #include "window_state.h"
 #include "window_style.h"
+#include "window_attribute.h"
 
 namespace ewin::window{
 	class object : public std::enable_shared_from_this<object>{
@@ -96,6 +97,7 @@ namespace ewin::window{
 		wnd_frame frame;
 		wnd_state state;
 		wnd_style style;
+		wnd_attribute attribute;
 
 		common::boolean_value_property<object> created;
 		common::transformation_property<create_info, void, object> create;

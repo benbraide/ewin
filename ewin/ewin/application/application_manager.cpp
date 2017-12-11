@@ -11,6 +11,7 @@ thread_local std::shared_ptr<ewin::application::object> ewin::application::manag
 void ewin::application::manager::bind_properties_(){
 	main.initialize_(main_, nullptr);
 	current.initialize_(nullptr, &handle_property_);
+	application_list.initialize_(nullptr, &handle_property_);
 }
 
 void ewin::application::manager::handle_property_(void *prop, void *arg, common::property_access access){
@@ -18,6 +19,12 @@ void ewin::application::manager::handle_property_(void *prop, void *arg, common:
 		if (current_ == nullptr)
 			current_.reset(new object);
 		*reinterpret_cast<object **>(arg) = current_.get();
+	}
+	else if (prop == &application_list){
+		if (access == common::property_access::list_begin)
+			*reinterpret_cast<object_list_iterator_type *>(arg) = (temp_application_list_ = application_list_).begin();
+		else if (access == common::property_access::list_end)
+			*reinterpret_cast<object_list_iterator_type *>(arg) = temp_application_list_.end();
 	}
 }
 
@@ -66,3 +73,7 @@ ewin::window::wnd_class ewin::application::manager_initializer::general_window_c
 ewin::window::wnd_class ewin::application::manager_initializer::dialog_window_class;
 
 const ewin::application::manager_initializer ewin::application::manager_initializer::manager_initializer_;
+
+ewin::application::manager::object_list_type ewin::application::manager::application_list_;
+
+ewin::application::manager::object_list_type ewin::application::manager::temp_application_list_;

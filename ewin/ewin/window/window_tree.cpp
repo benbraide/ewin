@@ -118,6 +118,16 @@ void ewin::window::wnd_tree::set_parent_(object *value, std::size_t index){
 			return;//No changes
 	}
 
+	if (target_->attribute.is_message_only){//Cannot change parent
+		target_->error = common::error_type::parent_change_forbidden;
+		return;
+	}
+
+	if (target_->attribute.is_control && value == nullptr){//Parent required
+		target_->error = common::error_type::parent_required;
+		return;
+	}
+
 	if (value != nullptr && target_->handle != nullptr){//Target window has been created
 		if (value->handle == nullptr){
 			target_->error = common::error_type::parent_not_created;
@@ -134,6 +144,7 @@ void ewin::window::wnd_tree::set_parent_(object *value, std::size_t index){
 	object_ptr_type target = target_->reflect;
 	auto old_parent = parent_;
 
+	target_->error = common::error_type::nil;
 	if (parent_ != nullptr){//Remove from current parent
 		auto iter = std::find(parent_children.begin(), parent_children.end(), target);
 		if (iter != parent_children.end()){
@@ -151,8 +162,13 @@ void ewin::window::wnd_tree::set_parent_(object *value, std::size_t index){
 		parent_->changed = object::child_change_info{ target_, ((index < parent_children.size()) ? index : (parent_children.size() - 1u)), false };
 	}
 
-	if (target_->handle != nullptr)//Update
+	if (target_->handle != nullptr){//Update
 		::SetParent(target_->handle, ((parent_ == nullptr) ? nullptr : static_cast<common::types::hwnd>(parent_->handle)));
+		if (old_parent == nullptr && parent_ != nullptr)
+			target_->style.value += WS_CHILD;//Set child style
+		else if (old_parent != nullptr && parent_ == nullptr)
+			target_->style.value -= WS_CHILD;//Remove child style
+	}
 
 	target_->changed = object::parent_change_info{ old_parent.get(), parent_.get() };
 }

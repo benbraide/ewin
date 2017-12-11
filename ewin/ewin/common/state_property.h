@@ -35,12 +35,12 @@ namespace ewin::common{
 				throw error_type::property_access_violation;
 
 			if (linked_ != nullptr){
-				EWIN_SET(*linked_, (value_type)value);
+				EWIN_SET(*linked_, (value_type)rhs);
 				if (callback_ != nullptr)//Alert listener
 					callback_(this, nullptr, access_type::list_add);
 			}
 			else if (callback_ != nullptr){//Call handler
-				auto converted_value = (value_type)value;
+				auto converted_value = (value_type)rhs;
 				callback_(this, &const_cast<value_type &>(converted_value), access_type::list_add);
 			}
 			else//Error
@@ -55,12 +55,12 @@ namespace ewin::common{
 				throw error_type::property_access_violation;
 
 			if (linked_ != nullptr){
-				EWIN_REMOVE(*linked_, (value_type)value);
+				EWIN_REMOVE(*linked_, (value_type)rhs);
 				if (callback_ != nullptr)//Alert listener
 					callback_(this, nullptr, access_type::list_remove);
 			}
 			else if (callback_ != nullptr){//Call handler
-				auto converted_value = (value_type)value;
+				auto converted_value = (value_type)rhs;
 				callback_(this, &const_cast<value_type &>(converted_value), access_type::list_remove);
 			}
 			else//Error

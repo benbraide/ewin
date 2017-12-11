@@ -64,7 +64,7 @@ namespace ewin::window{
 		virtual ~object();
 
 		common::read_only_value_property<ptr_type, object> reflect;
-		common::transformation_property<bool, void *, object> is_forbidden;
+		common::transformation_property<property_forbidden_info, bool, object> is_forbidden;
 
 		common::value_property<error_throw_policy_type, object> error_throw_policy;
 		common::variant_value_property<object, common::property_access::nil, error_type, common::types::dword> error;
@@ -105,7 +105,7 @@ namespace ewin::window{
 
 		common::write_only_variant_value_property<object, parent_change_info, child_change_info> changed;
 
-	private:
+	protected:
 		void bind_properties_();
 
 		virtual void handle_property_(void *prop, void *arg, common::property_access access);
@@ -114,7 +114,11 @@ namespace ewin::window{
 
 		virtual bool is_forbidden_(const property_forbidden_info &info);
 
-		void create_(bool create, const create_info *info);
+		virtual void destruct_();
+
+		virtual void create_(bool create, const create_info *info);
+
+		virtual void low_level_create_(const common::types::create_struct &info);
 
 		virtual void set_error_(common::variant_value_property_arg_info &info);
 
@@ -145,6 +149,8 @@ namespace ewin::window{
 		virtual common::types::uint white_listed_styles_(bool is_extended) const;
 
 		virtual common::types::uint black_listed_styles_(bool is_extended) const;
+
+		virtual common::types::uint persistent_styles_(bool is_extended) const;
 
 		virtual void send_message_(std::pair<message_info *, common::types::result> &info);
 

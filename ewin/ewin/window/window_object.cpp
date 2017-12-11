@@ -1,18 +1,13 @@
 #include "window_object.h"
 
 ewin::window::object::object()
-	: tree(*this), view(*this), frame(*this), state(*this), style(*this), attribute(*this),
+	: tree(*this), view(*this), frame(*this), state(*this), style(*this), attribute(*this), app_(nullptr), handle_(nullptr), procedure_(::DefWindowProcW),
 	error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), local_error_value_(ERROR_SUCCESS), auto_destroy_(true){
 	bind_properties_();
 }
 
 ewin::window::object::~object(){
-	if (auto_destroy_){
-		try{
-			create_(false, nullptr);
-		}
-		catch (...){}
-	}
+	destruct_();
 }
 
 void ewin::window::object::bind_properties_(){
@@ -21,7 +16,7 @@ void ewin::window::object::bind_properties_(){
 	reflect.initialize_(nullptr, handler);
 	is_forbidden.initialize_(nullptr, handler);
 
-	error_throw_policy.initialize_(&error_throw_policy_, nullptr);
+	error_throw_policy.initialize_(nullptr, handler);
 	error.initialize_(nullptr, handler);
 
 	app.initialize_(nullptr, handler);
@@ -63,22 +58,40 @@ void ewin::window::object::handle_property_(void *prop, void *arg, common::prope
 		info->second = is_forbidden_(*info->first);
 		return;
 	}
+	
+	if (prop == &error){
+		if (access == common::property_access::read){
+			auto &info = *static_cast<common::variant_value_property_arg_info *>(arg);
+			switch (info.index){
+			case 0u:
+				*static_cast<error_type *>(info.value) = error_value_;
+				break;
+			case 1u:
+				*static_cast<common::types::dword *>(info.value) = local_error_value_;
+				break;
+			default:
+				break;
+			}
+		}
+		else if (access == common::property_access::write)
+			set_error_(*static_cast<common::variant_value_property_arg_info *>(arg));
+
+		return;
+	}
 
 	if (is_forbidden_(property_forbidden_info{ prop, access })){
 		set_error_(error_type::forbidden_property);
 		return;
 	}
 
-	if (prop == &error){
-		if (access == common::property_access::write)
-			set_error_(*static_cast<error_type *>(arg));
-		else if (access == common::property_access::read)
-			*static_cast<error_type *>(arg) = error_value_;
-		return;
-	}
-
 	error_value_ = error_type::nil;
-	if (prop == &app){
+	if (prop == &error_throw_policy){
+		if (access == common::property_access::read)
+			*static_cast<error_throw_policy_type *>(arg) = error_throw_policy_;
+		else if (access == common::property_access::write)
+			error_throw_policy_ = *static_cast<error_throw_policy_type *>(arg);
+	}
+	else if (prop == &app){
 		if (access == common::property_access::read)
 			*static_cast<application_type **>(arg) = app_;
 		else if (access == common::property_access::write && handle_ == nullptr)
@@ -154,6 +167,15 @@ bool ewin::window::object::is_forbidden_(const property_forbidden_info &info){
 	return false;
 }
 
+void ewin::window::object::destruct_(){
+	if (auto_destroy_){
+		try{
+			create_(false, nullptr);
+		}
+		catch (...){}
+	}
+}
+
 void ewin::window::object::create_(bool create, const create_info *info){
 	if (!create && handle_ != nullptr){//Destroy window
 		app_->task += [this]{
@@ -164,6 +186,59 @@ void ewin::window::object::create_(bool create, const create_info *info){
 				set_error_(::GetLastError());
 		};
 	}
+}
+
+void ewin::window::object::low_level_create_(const common::types::create_struct &info){
+	common::types::uint additional_styles = 0;
+	common::types::hwnd parent_handle = nullptr;
+
+	auto app = app_;
+	if (tree.parent_ != nullptr){//Add child style and use parent's app
+		if (!tree.parent_->created){
+			set_error_(error_type::parent_not_created);
+			return;
+		}
+
+		EWIN_SET(additional_styles, WS_CHILD);
+		app = tree.parent_->app_;
+		parent_handle = tree.parent_->handle_;
+	}
+	else if (app == nullptr)//Use main app
+		app = application::manager::main;
+
+	if (app == nullptr){//App required
+		set_error_(error_type::no_app);
+		return;
+	}
+
+	(app_ = app)->task += [&]{//Create window inside app thread context
+		try{
+			app->window_being_created = this;
+			handle_ = ::CreateWindowExW(
+				(info.dwExStyle | persistent_styles_(true)),
+				((dynamic_cast<object *>(this) != nullptr) ? application::manager::general_window_class.raw_name : application::manager::dialog_window_class.raw_name),
+				info.lpszName,
+				(info.style | persistent_styles_(false)),
+				info.x,
+				info.y,
+				info.cx,
+				info.cy,
+				((parent_handle == nullptr) ? info.hwndParent : parent_handle),
+				info.hMenu,
+				(info.hInstance == nullptr) ? ::GetModuleHandleW(nullptr) : info.hInstance,
+				this
+			);
+
+			if (handle_ == nullptr)//Failed to create window
+				set_error_(::GetLastError());
+		}
+		catch (...){
+			app->window_being_created = nullptr;
+			throw;//Forward exception
+		}
+
+		app->window_being_created = nullptr;
+	};
 }
 
 void ewin::window::object::set_error_(common::variant_value_property_arg_info &info){
@@ -200,8 +275,10 @@ void ewin::window::object::set_error_(error_type value){
 }
 
 void ewin::window::object::set_error_(common::types::dword value){
-	local_error_value_ = value;
-	set_error_(error_type::local_error);
+	if ((local_error_value_ = value) == ERROR_SUCCESS)
+		error_value_ = error_type::nil;
+	else//Signify local error
+		set_error_(error_type::local_error);
 }
 
 void ewin::window::object::set_rect_(const rect_type &value, bool relative){
@@ -294,6 +371,10 @@ ewin::common::types::uint ewin::window::object::white_listed_styles_(bool is_ext
 
 ewin::common::types::uint ewin::window::object::black_listed_styles_(bool is_extended) const{
 	return (is_extended ? WS_EX_LEFTSCROLLBAR : (WS_HSCROLL | WS_VSCROLL));
+}
+
+ewin::common::types::uint ewin::window::object::persistent_styles_(bool is_extended) const{
+	return 0u;
 }
 
 void ewin::window::object::send_message_(std::pair<message_info *, common::types::result> &info){

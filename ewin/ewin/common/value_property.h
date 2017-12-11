@@ -56,6 +56,12 @@ namespace ewin::common{
 		value_property(value_type &linked, callback_type callback)
 			: linked_(&linked), callback_(callback){}
 
+		value_property(const value_property &) = delete;
+		
+		value_property &operator =(const value_property &value){
+			return operator =((value_type)value);
+		}
+
 		template <typename target_type>
 		value_property &operator =(const target_type &value){
 			return operator =((value_type)value);

@@ -24,7 +24,7 @@ void ewin::window::wnd_tree::bind_properties_(){
 }
 
 void ewin::window::wnd_tree::handle_property_(void *prop, void *arg, common::property_access access){
-	if (target_->is_forbidden[prop]){
+	if (target_->is_forbidden[object::property_forbidden_info{ prop, access }]){
 		target_->error = common::error_type::forbidden_property;
 		return;
 	}

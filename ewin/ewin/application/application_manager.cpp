@@ -1,39 +1,57 @@
-#include "application_manager.h"
+#include "../window/message_window.h"
 
 ewin::common::read_only_object_value_property<ewin::application::object, ewin::application::manager> ewin::application::manager::main;
 
 ewin::common::read_only_object_value_property<ewin::application::object, ewin::application::manager> ewin::application::manager::current;
+
+ewin::window::wnd_class ewin::application::manager::general_window_class;
+
+ewin::window::wnd_class ewin::application::manager::dialog_window_class;
 
 ewin::application::object *ewin::application::manager::main_ = nullptr;
 
 thread_local std::shared_ptr<ewin::application::object> ewin::application::manager::current_;
 
 void ewin::application::manager::bind_properties_(){
-	main.initialize_(main_, nullptr);
-	current.initialize_(nullptr, &handle_property_);
-	application_list.initialize_(nullptr, &handle_property_);
+	main.initialize_(nullptr, handle_property_);
+	current.initialize_(nullptr, handle_property_);
+	application_list.initialize_(nullptr, handle_property_);
 }
 
 void ewin::application::manager::handle_property_(void *prop, void *arg, common::property_access access){
 	if (prop == &current){
-		if (current_ == nullptr)
+		if (current_ == nullptr){
 			current_.reset(new object);
+			manager::application_list_.push_back(*manager::current_);
+
+			current_->thread_id_ = std::this_thread::get_id();
+			current_->message_window_ = std::make_shared<window::message>();
+			current_->message_window_->created = true;
+		}
+
 		*reinterpret_cast<object **>(arg) = current_.get();
 	}
 	else if (prop == &application_list){
 		if (access == common::property_access::list_begin)
-			*reinterpret_cast<object_list_iterator_type *>(arg) = (temp_application_list_ = application_list_).begin();
+			*static_cast<object_list_iterator_type *>(arg) = (temp_application_list_ = application_list_).begin();
 		else if (access == common::property_access::list_end)
-			*reinterpret_cast<object_list_iterator_type *>(arg) = temp_application_list_.end();
+			*static_cast<object_list_iterator_type *>(arg) = temp_application_list_.end();
 	}
+	else if (prop == &main)
+		*static_cast<object **>(arg) = main_;
 }
 
 ewin::application::manager_initializer::manager_initializer(){
 	if (manager::main_ == nullptr){
 		initialized_ = true;
 
+		manager::bind_properties_();
 		manager::current_.reset(new object);
 		manager::main_ = manager::current_.get();
+		//manager::application_list_.push_back(*manager::main_);
+
+		auto &dialog_window_class = manager::dialog_window_class;
+		auto &general_window_class = manager::general_window_class;
 
 		common::types::wnd_class info{ sizeof(common::types::wnd_class) };
 		::GetClassInfoExW(nullptr, L"#32770", &info);//Retrieve dialog class info
@@ -57,6 +75,10 @@ ewin::application::manager_initializer::manager_initializer(){
 		general_window_class.cursor = dialog_window_class.cursor;
 		general_window_class.created = true;
 
+		manager::main_->thread_id_ = std::this_thread::get_id();
+		manager::main_->message_window_ = std::make_shared<window::message>();
+		manager::main_->message_window_->created = true;
+
 		::CoInitializeEx(nullptr, ::COINIT::COINIT_APARTMENTTHREADED);
 	}
 	else//Already initialized
@@ -67,10 +89,6 @@ ewin::application::manager_initializer::~manager_initializer(){
 	if (initialized_)
 		::CoUninitialize();
 }
-
-ewin::window::wnd_class ewin::application::manager_initializer::general_window_class;
-
-ewin::window::wnd_class ewin::application::manager_initializer::dialog_window_class;
 
 ewin::common::iterator_only_list_value_property<ewin::application::object, ewin::application::manager::object_list_iterator_type,
 	ewin::application::manager::object_list_const_iterator_type, ewin::application::manager> ewin::application::manager::application_list;

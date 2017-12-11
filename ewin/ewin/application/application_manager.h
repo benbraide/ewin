@@ -23,6 +23,9 @@ namespace ewin::application{
 		static common::read_only_object_value_property<object, manager> main;
 		static common::read_only_object_value_property<object, manager> current;
 
+		static window::wnd_class general_window_class;
+		static window::wnd_class dialog_window_class;
+
 		static common::iterator_only_list_value_property<object, object_list_iterator_type, object_list_const_iterator_type, manager> application_list;
 
 	private:
@@ -45,9 +48,6 @@ namespace ewin::application{
 		manager_initializer();
 
 		~manager_initializer();
-
-		static window::wnd_class general_window_class;
-		static window::wnd_class dialog_window_class;
 
 	private:
 		bool initialized_;

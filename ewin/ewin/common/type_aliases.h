@@ -41,7 +41,9 @@ namespace ewin::common::types{
 
 	typedef ::HANDLE			handle;
 	typedef ::HINSTANCE			hinstance;
+
 	typedef ::WNDPROC			procedure;
+	typedef ::HHOOK				hook;
 
 	typedef ::HWND				hwnd;
 	typedef ::HMENU				hmenu;
@@ -52,6 +54,7 @@ namespace ewin::common::types{
 
 	typedef ::WNDCLASSEXW		wnd_class;
 	typedef ::CREATESTRUCTW		create_struct;
+	typedef ::CBT_CREATEWND		hook_create_window_info;
 	typedef ::WINDOWPLACEMENT	wnd_placement;
 
 	typedef ::POINT				point;

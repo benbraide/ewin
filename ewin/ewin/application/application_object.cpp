@@ -54,11 +54,7 @@ void ewin::application::object::task_(const task_type &callback){
 	if (std::this_thread::get_id() == thread_id_)
 		callback();//Same thread
 	else//Execute in thread
-		get_message_window_().send_message[window_type::message_info{ WM_NULL, EWIN_OBJECT_WPARAM_CAST(callback) }];
-}
-
-ewin::application::object::window_type &ewin::application::object::get_message_window_(){
-	return *message_window_;
+		message_window_->send_message[window_type::message_info{ WM_NULL, EWIN_OBJECT_WPARAM_CAST(callback) }];
 }
 
 ewin::common::types::result CALLBACK ewin::application::object::entry_(common::types::hwnd hwnd, common::types::uint msg, common::types::wparam wparam, common::types::lparam lparam){

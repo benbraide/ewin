@@ -62,8 +62,6 @@ namespace ewin::application{
 
 		static common::types::result CALLBACK entry_(common::types::hwnd hwnd, common::types::uint msg, common::types::wparam wparam, common::types::lparam lparam);
 
-		window_type &get_message_window_();
-
 		std::thread::id thread_id_;
 		std::shared_ptr<window_type> message_window_;
 		window_list_type top_level_windows_;

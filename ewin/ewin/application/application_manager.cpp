@@ -72,6 +72,9 @@ ewin::window::wnd_class ewin::application::manager_initializer::general_window_c
 
 ewin::window::wnd_class ewin::application::manager_initializer::dialog_window_class;
 
+ewin::common::iterator_only_list_value_property<ewin::application::object, ewin::application::manager::object_list_iterator_type,
+	ewin::application::manager::object_list_const_iterator_type, ewin::application::manager> ewin::application::manager::application_list;
+
 const ewin::application::manager_initializer ewin::application::manager_initializer::manager_initializer_;
 
 ewin::application::manager::object_list_type ewin::application::manager::application_list_;

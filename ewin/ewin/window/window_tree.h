@@ -14,6 +14,8 @@
 #include "window_iterators.h"
 
 namespace ewin::window{
+	class external;
+
 	class wnd_tree{
 	public:
 		typedef std::shared_ptr<object> object_ptr_type;
@@ -49,6 +51,7 @@ namespace ewin::window{
 
 	private:
 		friend class object;
+		friend class external;
 
 		void bind_properties_();
 

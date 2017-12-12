@@ -8,10 +8,7 @@
 namespace ewin::window{
 	class external : public object{
 	public:
-		explicit external(common::types::hwnd value){
-			handle_ = value;
-			auto_destroy_ = false;//Prevent destruction
-		}
+		explicit external(common::types::hwnd value);
 	};
 }
 

@@ -9,14 +9,14 @@
 #include "numeric_property.h"
 
 namespace ewin::common{
-	template <class value_type, class iterator_type, class const_iterator_type, class manager_type = void, class size_type = std::size_t, property_access access = property_access::nil>
+	template <class value_type, class iterator_type, class const_iterator_type, class manager_type = void, class index_type = std::size_t, property_access access = property_access::nil>
 	class list_value_property{
 	public:
 		typedef value_type value_type;
 		typedef iterator_type iterator_type;
 		typedef const_iterator_type const_iterator_type;
 		typedef manager_type manager_type;
-		typedef size_type size_type;
+		typedef index_type index_type;
 		typedef property_access access_type;
 
 		typedef std::vector<value_type> list_type;
@@ -54,7 +54,7 @@ namespace ewin::common{
 		}
 
 		template <typename unused = value_type>
-		std::enable_if_t<!std::is_same_v<unused, size_type>, list_value_property> &operator -=(size_type index){
+		std::enable_if_t<!std::is_same_v<unused, index_type>, list_value_property> &operator -=(index_type index){
 			if (access != access_type::nil && !EWIN_IS(access, access_type::list_remove_index))
 				throw error_type::property_access_violation;
 
@@ -66,11 +66,11 @@ namespace ewin::common{
 			return *this;
 		}
 
-		value_type *operator [](size_type index) const{
+		value_type *operator [](index_type index) const{
 			if (access != access_type::nil && !EWIN_IS(access, access_type::list_at))
 				throw error_type::property_access_violation;
 
-			auto info = std::make_pair<size_type, value_type *>(index, nullptr);
+			std::pair<index_type, value_type *> info{ index, nullptr };
 			if (callback_ != nullptr)//Call handler
 				callback_(const_cast<list_value_property *>(this), &info, access_type::list_at);
 			else//Error
@@ -79,11 +79,11 @@ namespace ewin::common{
 			return info.second;
 		}
 
-		size_type operator [](const value_type &value) const{
+		index_type operator [](const value_type &value) const{
 			if (access != access_type::nil && !EWIN_IS(access, access_type::list_find))
 				throw error_type::property_access_violation;
 
-			auto info = std::make_pair<size_type, value_type *>(size_type(), &const_cast<value_type &>(value));
+			std::pair<index_type, value_type *> info{ index_type(), &const_cast<value_type &>(value) };
 			if (callback_ != nullptr)//Call handler
 				callback_(const_cast<list_value_property *>(this), &info, access_type::list_find);
 			else//Error
@@ -158,43 +158,43 @@ namespace ewin::common{
 		callback_type callback_;
 	};
 
-	template <class value_type, class iterator_type, class const_iterator_type, class manager_type = void, class size_type = std::size_t>
+	template <class value_type, class iterator_type, class const_iterator_type, class manager_type = void, class index_type = std::size_t>
 	using read_only_list_value_property = list_value_property<
 		value_type,
 		iterator_type,
 		const_iterator_type,
 		manager_type,
-		size_type,
+		index_type,
 		property_access::list_at | property_access::list_find | property_access::list_begin | property_access::list_end | property_access::list_size
 	>;
 
-	template <class value_type, class manager_type = void, class size_type = std::size_t>
+	template <class value_type, class manager_type = void, class index_type = std::size_t>
 	using write_only_list_value_property = list_value_property<
 		value_type,
 		void *,
 		void *,
 		manager_type,
-		size_type,
+		index_type,
 		property_access::list_add | property_access::list_remove | property_access::list_remove_index
 	>;
 
-	template <class value_type, class manager_type = void, class size_type = std::size_t>
+	template <class value_type, class manager_type = void, class index_type = std::size_t>
 	using access_only_list_value_property = list_value_property<
 		value_type,
 		void *,
 		void *,
 		manager_type,
-		size_type,
+		index_type,
 		property_access::list_at | property_access::list_find | property_access::list_size
 	>;
 
-	template <class value_type, class iterator_type, class const_iterator_type, class manager_type = void, class size_type = std::size_t>
+	template <class value_type, class iterator_type, class const_iterator_type, class manager_type = void, class index_type = std::size_t>
 	using iterator_only_list_value_property = list_value_property<
 		value_type,
 		iterator_type,
 		const_iterator_type,
 		manager_type,
-		size_type,
+		index_type,
 		property_access::list_begin | property_access::list_end
 	>;
 }

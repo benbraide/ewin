@@ -11,13 +11,13 @@ namespace ewin::window{
 		virtual ~message();
 
 	protected:
-		virtual bool is_forbidden_(const property_forbidden_info &info);
+		virtual bool is_forbidden_(const property_forbidden_info &info) override;
 
-		virtual void create_(bool create, const create_info *info);
+		virtual void create_(bool create, const create_info *info) override;
 
-		virtual common::types::uint white_listed_styles_(bool is_extended) const;
+		virtual common::types::uint white_listed_styles_(bool is_extended) const override;
 
-		virtual common::types::uint black_listed_styles_(bool is_extended) const;
+		virtual common::types::uint black_listed_styles_(bool is_extended) const override;
 	};
 }
 

@@ -38,6 +38,11 @@ namespace ewin::application{
 		typedef window_list_type::iterator window_list_iterator_type;
 		typedef window_list_type::const_iterator window_list_const_iterator_type;
 
+		struct object_state{
+			window_type *focused;
+			window_type *moused;
+		};
+
 		~object();
 
 		object(const object &) = delete;
@@ -48,6 +53,7 @@ namespace ewin::application{
 		common::access_only_list_value_property<window_type, object, common::types::hwnd> window_handles;
 		common::iterator_only_list_value_property<window_type, window_list_iterator_type, window_list_const_iterator_type, object> top_level_windows;
 		common::write_only_value_property<window_type *, object> window_being_created;
+		common::read_only_value_property<int, object> run;
 
 	private:
 		friend class manager;
@@ -63,12 +69,25 @@ namespace ewin::application{
 
 		window_type *find_(common::types::hwnd handle);
 
+		int run_();
+
+		bool is_filtered_message_(const common::types::msg &msg) const;
+
+		bool is_dialog_message_(const common::types::msg &msg);
+
+		void dispatch_message_(const common::types::msg &msg);
+
+		void dispatch_thread_message_(const common::types::msg &msg);
+
+		void translate_message_(const common::types::msg &msg);
+
 		static common::types::result CALLBACK entry_(common::types::hwnd hwnd, common::types::uint msg, common::types::wparam wparam, common::types::lparam lparam);
 
 		static common::types::result CALLBACK hook_(int code, common::types::wparam wparam, common::types::lparam lparam);
 
 		std::thread::id thread_id_;
 		std::shared_ptr<window_type> message_window_;
+		object_state object_state_{};
 		window_list_type top_level_windows_;
 		window_map_type window_handles_;
 		std::pair<common::types::hwnd, window_type *> cached_window_handle_;

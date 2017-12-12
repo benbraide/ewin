@@ -23,6 +23,7 @@ void ewin::application::object::bind_properties_(){
 	window_handles.initialize_(nullptr, handler);
 	top_level_windows.initialize_(nullptr, handler);
 	window_being_created.initialize_(nullptr, handler);
+	run.initialize_(nullptr, handler);
 }
 
 void ewin::application::object::handle_property_(void *prop, void *arg, common::property_access access){
@@ -49,6 +50,9 @@ void ewin::application::object::handle_property_(void *prop, void *arg, common::
 		});
 	}
 	else if (prop == &window_being_created){
+		if (std::this_thread::get_id() != thread_id_)//Can only be accessed from same thread
+			throw common::error_type::cross_thread;
+
 		window_being_created_ = *static_cast<window_type **>(arg);
 		if (window_being_created_ == nullptr && hook_id_ != nullptr){//Remove hook
 			::UnhookWindowsHookEx(hook_id_);
@@ -56,6 +60,12 @@ void ewin::application::object::handle_property_(void *prop, void *arg, common::
 		}
 		else if (window_being_created_ != nullptr && hook_id_ == nullptr)//Install hook to intercept certain events
 			hook_id_ = ::SetWindowsHookExW(WH_CBT, hook_, nullptr, ::GetCurrentThreadId());
+	}
+	else if (prop == &run){
+		if (std::this_thread::get_id() == thread_id_)
+			*static_cast<int *>(arg) = run_();
+		else//Can only be accessed from same thread
+			throw common::error_type::cross_thread;
 	}
 	else if (prop == &task)
 		task_(*static_cast<task_type *>(arg));
@@ -79,6 +89,51 @@ ewin::application::object::window_type *ewin::application::object::find_(common:
 		cached_window_handle_ = std::make_pair(handle, value);
 
 	return value;
+}
+
+int ewin::application::object::run_(){
+	common::types::msg msg;
+	while (!top_level_windows_.empty()){
+		if (!EWIN_CPP_BOOL(::GetMessageW(&msg, nullptr, 0u, 0u)))
+			throw common::error_type::failed_to_retrieve_message;
+
+		if (msg.message == WM_QUIT)//Quit message posted
+			return static_cast<int>(msg.wParam);
+
+		if (is_filtered_message_(msg))
+			continue;//Ignore filtered message
+
+		if (msg.hwnd == nullptr)
+			dispatch_thread_message_(msg);
+		else//Message to target
+			dispatch_message_(msg);
+	}
+
+	return 0;
+}
+
+bool ewin::application::object::is_filtered_message_(const common::types::msg &msg) const{
+	return false;
+}
+
+bool ewin::application::object::is_dialog_message_(const common::types::msg &msg){
+	return ((object_state_.focused == nullptr) ? false : object_state_.focused->is_dialog_message[msg]);
+}
+
+void ewin::application::object::dispatch_message_(const common::types::msg &msg){
+	if (!is_dialog_message_(msg)){//Not dialog message --> dispatch
+		translate_message_(msg);
+		::DispatchMessageW(&msg);
+	}
+}
+
+void ewin::application::object::dispatch_thread_message_(const common::types::msg &msg){
+	translate_message_(msg);
+	::DispatchMessageW(&msg);
+}
+
+void ewin::application::object::translate_message_(const common::types::msg &msg){
+	::TranslateMessage(&msg);
 }
 
 ewin::common::types::result CALLBACK ewin::application::object::entry_(common::types::hwnd hwnd, common::types::uint msg, common::types::wparam wparam, common::types::lparam lparam){

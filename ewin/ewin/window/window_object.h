@@ -92,6 +92,9 @@ namespace ewin::window{
 		common::read_only_size_value_property<common::types::uint, object> filtered_styles;
 		common::read_only_size_value_property<common::types::uint, object> filtered_extended_styles;
 
+		common::transformation_property<common::types::msg, bool, object> is_dialog_message;
+		common::transformation_property<common::types::msg, common::types::result, object> dispatch_message;
+
 		wnd_tree tree;
 		wnd_view view;
 		wnd_frame frame;

@@ -75,7 +75,7 @@ void ewin::application::object::task_(const task_type &callback){
 	if (std::this_thread::get_id() == thread_id_)
 		callback();//Same thread
 	else//Execute in thread
-		message_window_->send_message[window_type::message_info{ WM_NULL, EWIN_OBJECT_WPARAM_CAST(callback) }];
+		message_window_->send_message[window_type::message_info{ EWIN_WM_TASK, EWIN_OBJECT_WPARAM_CAST(callback) }];
 }
 
 ewin::application::object::window_type *ewin::application::object::find_(common::types::hwnd handle){
@@ -140,7 +140,7 @@ ewin::common::types::result CALLBACK ewin::application::object::entry_(common::t
 	auto current = manager::current_;
 	if (hwnd == current->message_window_->handle){//Tunneled message
 		switch (msg){
-		case WM_NULL://Execute task
+		case EWIN_WM_TASK://Execute task
 			(*reinterpret_cast<task_type *>(wparam))();
 			break;
 		default:
@@ -154,7 +154,7 @@ ewin::common::types::result CALLBACK ewin::application::object::entry_(common::t
 	if (target == nullptr)//Unknown window
 		return ::CallWindowProcW(::DefWindowProcW, hwnd, msg, wparam, lparam);
 
-	return ::CallWindowProcW(::DefWindowProcW, hwnd, msg, wparam, lparam);
+	return target->dispatch_message[common::types::msg{ hwnd, msg, wparam, lparam }];
 }
 
 ewin::common::types::result CALLBACK ewin::application::object::hook_(int code, common::types::wparam wparam, common::types::lparam lparam){

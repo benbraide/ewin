@@ -18,8 +18,8 @@
 #define EWIN_OBJECT_LPARAM_CAST(v) EWIN_OBJECT_CAST(ewin::common::types::lparam, v)
 #define EWIN_OBJECT_RESULT_CAST(v) EWIN_OBJECT_CAST(ewin::common::types::result, v)
 
-#define EWIN_C_BOOL(v) (v ? TRUE : FALSE)
-#define EWIN_CPP_BOOL(v) (v != FALSE)
+#define EWIN_C_BOOL(v) ((v) ? TRUE : FALSE)
+#define EWIN_CPP_BOOL(v) ((v) != FALSE)
 
 namespace ewin::common::types{
 	typedef __int64				int64;

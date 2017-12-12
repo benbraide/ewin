@@ -13,8 +13,10 @@
 
 #include "../window/window_class.h"
 
-#define EWIN_UUID	 "{DABED3E8-D8A5-48FC-B80B-B17C167FA9B0}"
-#define EWIN_WUUID	L"{DABED3E8-D8A5-48FC-B80B-B17C167FA9B0}"
+#define EWIN_UUID		 "{DABED3E8-D8A5-48FC-B80B-B17C167FA9B0}"
+#define EWIN_WUUID		L"{DABED3E8-D8A5-48FC-B80B-B17C167FA9B0}"
+
+#define EWIN_WM_TASK	(WM_APP + 1)
 
 namespace ewin::window{
 	class object;

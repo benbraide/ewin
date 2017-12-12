@@ -390,3 +390,11 @@ void ewin::window::object::post_message_(message_info &info){
 	else//Post
 		::PostMessageW(handle_, info.value, info.wparam, info.lparam);
 }
+
+bool ewin::window::object::is_dialog_message_(const common::types::msg &msg) const{
+	return EWIN_CPP_BOOL(::IsDialogMessageW(handle_, &const_cast<common::types::msg &>(msg)));
+}
+
+ewin::common::types::result ewin::window::object::dispatch_message_(const common::types::msg &msg){
+	return 0u;
+}

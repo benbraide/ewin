@@ -159,6 +159,10 @@ namespace ewin::window{
 
 		virtual void post_message_(message_info &info);
 
+		virtual bool is_dialog_message_(const common::types::msg &msg) const;
+
+		virtual common::types::result dispatch_message_(const common::types::msg &msg);
+
 		application_type *app_;
 		common::types::hwnd handle_;
 		common::types::procedure procedure_;

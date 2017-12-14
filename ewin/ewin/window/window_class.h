@@ -75,7 +75,7 @@ namespace ewin::window{
 
 	private:
 		void bind_properties_(){
-			auto handler = std::bind(&wnd_class::handle_property_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+			auto handler = EWIN_PROP_HANDLER(wnd_class);
 
 			id.initialize_(&id_, nullptr);
 			raw_name.initialize_(&info_.lpszClassName, nullptr);

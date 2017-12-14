@@ -6,7 +6,7 @@ ewin::window::wnd_style::wnd_style(object &target)
 }
 
 void ewin::window::wnd_style::bind_properties_(){
-	auto handler = std::bind(&wnd_style::handle_property_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+	auto handler = EWIN_PROP_HANDLER(wnd_style);
 
 	value.initialize_(nullptr, handler);
 	extended_value.initialize_(nullptr, handler);

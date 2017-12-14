@@ -6,7 +6,7 @@ ewin::window::wnd_frame::wnd_frame(object &target)
 }
 
 void ewin::window::wnd_frame::bind_properties_(){
-	auto handler = std::bind(&wnd_frame::handle_property_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+	auto handler = EWIN_PROP_HANDLER(wnd_frame);
 
 	visible.initialize_(nullptr, handler);
 	show_caption.initialize_(nullptr, handler);

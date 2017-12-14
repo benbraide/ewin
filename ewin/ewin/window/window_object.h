@@ -69,7 +69,7 @@ namespace ewin::window{
 		common::value_property<error_throw_policy_type, object> error_throw_policy;
 		common::variant_value_property<object, common::property_access::nil, error_type, common::types::dword> error;
 
-		common::extended_value_property<application_type, application_type *, object> app;
+		common::object_value_property<application_type, object> app;
 		common::read_only_value_property<common::types::hwnd, object> handle;
 		common::read_only_value_property<common::types::procedure, object> procedure;
 

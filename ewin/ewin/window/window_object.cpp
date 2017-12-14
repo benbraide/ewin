@@ -11,7 +11,7 @@ ewin::window::object::~object(){
 }
 
 void ewin::window::object::bind_properties_(){
-	auto handler = std::bind(&object::handle_property_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+	auto handler = EWIN_PROP_HANDLER(object);
 
 	reflect.initialize_(nullptr, handler);
 	is_forbidden.initialize_(nullptr, handler);

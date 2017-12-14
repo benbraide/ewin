@@ -137,7 +137,7 @@ namespace ewin::common{
 		friend std::conditional_t<std::is_void_v<manager_type>, list_value_property, manager_type>;
 
 		void initialize_(value_type *linked, callback_type callback){
-			auto handler = std::bind(&list_value_property::handle_property_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+			auto handler = EWIN_PROP_HANDLER(list_value_property);
 
 			callback_ = callback;
 			size.initialize_(nullptr, handler);

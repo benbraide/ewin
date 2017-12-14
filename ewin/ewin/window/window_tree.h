@@ -9,7 +9,7 @@
 #include "../common/type_aliases.h"
 #include "../common/boolean_property.h"
 #include "../common/list_property.h"
-#include "../common/extended_value_property.h"
+#include "../common/object_property.h"
 
 #include "window_iterators.h"
 

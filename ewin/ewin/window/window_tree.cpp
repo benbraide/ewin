@@ -6,7 +6,7 @@ ewin::window::wnd_tree::wnd_tree(object &target)
 }
 
 void ewin::window::wnd_tree::bind_properties_(){
-	auto handler = std::bind(&wnd_tree::handle_property_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+	auto handler = EWIN_PROP_HANDLER(wnd_tree);
 
 	owner.initialize_(target_, nullptr);
 	parent.initialize_(nullptr, handler);

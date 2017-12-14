@@ -6,7 +6,7 @@ ewin::window::wnd_view::wnd_view(object &target)
 }
 
 void ewin::window::wnd_view::bind_properties_(){
-	auto handler = std::bind(&wnd_view::handle_property_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+	auto handler = EWIN_PROP_HANDLER(wnd_view);
 
 	visible.initialize_(nullptr, handler);
 	show.initialize_(nullptr, handler);

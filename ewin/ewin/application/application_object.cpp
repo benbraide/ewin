@@ -17,7 +17,7 @@ ewin::application::object::~object(){
 }
 
 void ewin::application::object::bind_properties_(){
-	auto handler = std::bind(&object::handle_property_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+	auto handler = EWIN_PROP_HANDLER(object);
 
 	task.initialize_(nullptr, handler);
 	window_handles.initialize_(nullptr, handler);

@@ -5,7 +5,7 @@ ewin::window::wnd_attribute::wnd_attribute(object &target) : target_(&target){
 }
 
 void ewin::window::wnd_attribute::bind_properties_(){
-	auto handler = std::bind(&wnd_attribute::handle_property_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+	auto handler = EWIN_PROP_HANDLER(wnd_attribute);
 
 	owner.initialize_(target_, nullptr);
 

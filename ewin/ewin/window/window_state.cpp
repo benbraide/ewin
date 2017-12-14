@@ -6,7 +6,7 @@ ewin::window::wnd_state::wnd_state(object &target)
 }
 
 void ewin::window::wnd_state::bind_properties_(){
-	auto handler = std::bind(&wnd_state::handle_property_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+	auto handler = EWIN_PROP_HANDLER(wnd_state);
 
 	enabled.initialize_(nullptr, handler);
 	top_most.initialize_(nullptr, handler);

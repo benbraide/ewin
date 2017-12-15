@@ -1,7 +1,7 @@
 #include "window_object.h"
 
 ewin::window::object::object()
-	: tree(*this), view(*this), frame(*this), state(*this), style(*this), attribute(*this), app_(nullptr), handle_(nullptr), procedure_(::DefWindowProcW),
+	: tree(*this), view(*this), frame(*this), state(*this), style(*this), attribute(*this), app_(nullptr), handle_(nullptr),
 	error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), local_error_value_(ERROR_SUCCESS), auto_destroy_(true){
 	bind_properties_();
 }
@@ -393,8 +393,4 @@ void ewin::window::object::post_message_(message_info &info){
 
 bool ewin::window::object::is_dialog_message_(const common::types::msg &msg) const{
 	return EWIN_CPP_BOOL(::IsDialogMessageW(handle_, &const_cast<common::types::msg &>(msg)));
-}
-
-ewin::common::types::result ewin::window::object::dispatch_message_(const common::types::msg &msg){
-	return 0u;
 }

@@ -8,7 +8,7 @@
 #include "macro.h"
 #include "error.h"
 
-#define EWIN_PROP_HANDLER(t) std::bind(&t::handle_property_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+#define EWIN_PROP_HANDLER(t) std::bind(&t::handle_property_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)
 
 namespace ewin::common{
 	enum class property_access : unsigned int{

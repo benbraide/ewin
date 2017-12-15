@@ -23,8 +23,8 @@ namespace ewin::events{
 		typedef return_type(target_type::*callback_type)(parameter_type &);
 		typedef std::function<common::types::result(const std::conditional_t<std::is_void_v<return_type>, void *, return_type> &)> converter_type;
 
-		explicit typed_callback(callback_type callback, converter_type converter = nullptr)
-			: callback_(callback), converter_(converter){}
+		explicit typed_callback(target_type &target, callback_type callback, converter_type converter = nullptr)
+			: target_(target), callback_(callback), converter_(converter){}
 
 		virtual common::types::result operator()(object &e) override{
 			return call_(e);
@@ -32,25 +32,26 @@ namespace ewin::events{
 
 	protected:
 		template <typename unused_type = return_type>
-		std::enable_if<std::is_void_v<unused_type>, common::types::result> call_(object &e){
-			callback_(*dynamic_cast<parameter_type *>(&e));
+		std::enable_if_t<std::is_void_v<unused_type>, common::types::result> call_(object &e){
+			(target_.*callback_)(*dynamic_cast<parameter_type *>(&e));
 			return 0u;
 		}
 
 		template <typename unused_type = return_type>
-		std::enable_if<std::is_same_v<unused_type, bool>, common::types::result> call_(object &e){
+		std::enable_if_t<std::is_same_v<unused_type, bool>, common::types::result> call_(object &e){
 			if (converter_ == nullptr)
-				return EWIN_C_BOOL(callback_(*dynamic_cast<parameter_type *>(&e)));
-			return converter_(callback_(*dynamic_cast<parameter_type *>(&e)));
+				return EWIN_C_BOOL((target_.*callback_)(*dynamic_cast<parameter_type *>(&e)));
+			return converter_((target_.*callback_)(*dynamic_cast<parameter_type *>(&e)));
 		}
 
 		template <typename unused_type = return_type>
-		std::enable_if<!std::is_void_v<unused_type> && !std::is_same_v<unused_type, bool>, common::types::result> call_(object &e){
+		std::enable_if_t<!std::is_void_v<unused_type> && !std::is_same_v<unused_type, bool>, common::types::result> call_(object &e){
 			if (converter_ == nullptr)
-				return (return_type)callback_(*dynamic_cast<parameter_type *>(&e));
-			return converter_(callback_(*dynamic_cast<parameter_type *>(&e)));
+				return (common::types::result)(target_.*callback_)(*dynamic_cast<parameter_type *>(&e));
+			return converter_((target_.*callback_)(*dynamic_cast<parameter_type *>(&e)));
 		}
 
+		target_type &target_;
 		callback_type callback_;
 		converter_type converter_;
 	};

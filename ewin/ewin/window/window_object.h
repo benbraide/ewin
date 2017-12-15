@@ -11,6 +11,8 @@
 #include "../common/transformation_property.h"
 #include "../common/variant_property.h"
 
+#include "../message/message_target.h"
+
 #include "../application/application_manager.h"
 
 #include "window_class.h"
@@ -22,7 +24,7 @@
 #include "window_attribute.h"
 
 namespace ewin::window{
-	class object : public std::enable_shared_from_this<object>{
+	class object : public std::enable_shared_from_this<object>, public ewin::message::target{
 	public:
 		typedef application::object application_type;
 
@@ -93,7 +95,6 @@ namespace ewin::window{
 		common::read_only_size_value_property<common::types::uint, object> filtered_extended_styles;
 
 		common::transformation_property<common::types::msg, bool, object> is_dialog_message;
-		common::transformation_property<common::types::msg, common::types::result, object> dispatch_message;
 
 		wnd_tree tree;
 		wnd_view view;
@@ -161,11 +162,8 @@ namespace ewin::window{
 
 		virtual bool is_dialog_message_(const common::types::msg &msg) const;
 
-		virtual common::types::result dispatch_message_(const common::types::msg &msg);
-
 		application_type *app_;
 		common::types::hwnd handle_;
-		common::types::procedure procedure_;
 
 		error_throw_policy_type error_throw_policy_;
 		error_type error_value_;

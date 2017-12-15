@@ -1,6 +1,6 @@
-#include "event_callback.h"
+#include "../window/window_object.h"
 
-ewin::events::object::object(window_type *target)
+ewin::events::object::object(target_type *target)
 	: target_(target), states_(state_type::nil){
 	bind_properties_();
 }
@@ -39,27 +39,24 @@ void ewin::events::object::prevent_default_(){
 	EWIN_SET(states_, state_type::default_prevented);
 }
 
-ewin::events::message::~message(){}
+ewin::events::message::~message() = default;
 
 void ewin::events::message::handle_property_(void *prop, void *arg, common::property_access access){
 	if (prop == &result){
-		if (access == common::property_access::read){
-			if (EWIN_IS(states_, state_type::default_prevented))
-				*static_cast<common::types::result *>(arg) = result_;
-			else//Call default
-				*static_cast<common::types::result *>(arg) = call_default_();
-		}
-		else if (access == common::property_access::write){
+		if (access == common::property_access::write){
 			result_ = *static_cast<common::types::result *>(arg);
-			EWIN_SET(states_, state_type::default_prevented);
+			EWIN_SET(states_, state_type::default_called);
 		}
+		else if (access == common::property_access::read)
+			*static_cast<common::types::result *>(arg) = call_default_();
 	}
 }
 
 ewin::common::types::result ewin::events::message::call_default_(){
-	if (EWIN_IS_ANY(states_, state_type::default_prevented | state_type::bubbled))
-		return result_;//Return previous result
-	return (result_ = callback_(*this));
+	if (!EWIN_IS_ANY(states_, state_type::default_called | state_type::default_prevented | state_type::bubbled))
+		result_ = callback_(*this);//Call
+	EWIN_SET(states_, state_type::default_called);
+	return result_;
 }
 
 void ewin::events::mouse_activate::handle_property_(void *prop, void *arg, common::property_access access){
@@ -69,4 +66,60 @@ void ewin::events::mouse_activate::handle_property_(void *prop, void *arg, commo
 		*static_cast<common::types::uint *>(arg) = HIWORD(msg_->lParam);
 	else//Forward
 		message::handle_property_(prop, arg, access);
+}
+
+void ewin::events::pre_activate::handle_property_(void *prop, void *arg, common::property_access access){
+	if (prop == &is_activating)
+		*static_cast<bool *>(arg) = EWIN_CPP_BOOL(msg_->wParam);
+	else//Forward
+		message::handle_property_(prop, arg, access);
+}
+
+void ewin::events::activate::handle_property_(void *prop, void *arg, common::property_access access){
+	if (prop == &is_activated)
+		*static_cast<common::types::uint *>(arg) = (msg_->wParam != WA_INACTIVE);
+	else if (prop == &is_click_activated)
+		*static_cast<common::types::uint *>(arg) = (msg_->wParam == WA_CLICKACTIVE);
+	else//Forward
+		message::handle_property_(prop, arg, access);
+}
+
+void ewin::events::enable::handle_property_(void *prop, void *arg, common::property_access access){
+	if (prop == &is_enabled)
+		*static_cast<bool *>(arg) = EWIN_CPP_BOOL(msg_->wParam);
+	else//Forward
+		message::handle_property_(prop, arg, access);
+}
+
+void ewin::events::hit_test::handle_property_(void *prop, void *arg, common::property_access access){
+	if (prop == &mouse_position)
+		*static_cast<common::types::point *>(arg) = common::types::point{ GET_X_LPARAM(msg_->lParam), GET_Y_LPARAM(msg_->lParam) };
+	else//Forward
+		message::handle_property_(prop, arg, access);
+}
+
+ewin::events::style_change::~style_change(){
+	auto info = reinterpret_cast<common::types::style_struct *>(msg_->lParam);
+	if (info->styleNew != info->styleOld){//Filter styles
+		auto window_target = dynamic_cast<window_type *>(target_);
+		if (msg_->wParam == GWL_EXSTYLE){
+			auto styles_removed = window_target->filter_extended_styles[EWIN_REMOVE_V(info->styleOld, info->styleNew)];
+			auto styles_added = window_target->filter_extended_styles[EWIN_REMOVE_V(info->styleNew, info->styleOld)];
+			info->styleNew = EWIN_REMOVE_V(EWIN_SET_V(info->styleOld, styles_added), styles_removed);
+		}
+		else{//Normal styles
+			auto styles_removed = window_target->filter_styles[EWIN_REMOVE_V(info->styleOld, info->styleNew)];
+			auto styles_added = window_target->filter_styles[EWIN_REMOVE_V(info->styleNew, info->styleOld)];
+			info->styleNew = EWIN_REMOVE_V(EWIN_SET_V(info->styleOld, styles_added), styles_removed);
+		}
+	}
+}
+
+void ewin::events::style_change::handle_property_(void *prop, void *arg, common::property_access access){
+	if (prop == &is_extended)
+		*static_cast<common::types::uint *>(arg) = (msg_->wParam == GWL_EXSTYLE);
+	else if (prop == &styles)
+		*static_cast<common::types::style_struct **>(arg) = reinterpret_cast<common::types::style_struct *>(msg_->lParam);
+	else//Forward
+		base_type::handle_property_(prop, arg, access);
 }

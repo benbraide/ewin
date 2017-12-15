@@ -19,10 +19,12 @@ namespace ewin::events{
 		typedef target_type target_type;
 		typedef return_type return_type;
 		typedef parameter_type parameter_type;
-		typedef return_type(target_type::*callback_type)(parameter_type &);
 
-		explicit typed_callback(callback_type callback)
-			: callback_(callback){}
+		typedef return_type(target_type::*callback_type)(parameter_type &);
+		typedef std::function<common::types::result(const std::conditional_t<std::is_void_v<return_type>, void *, return_type> &)> converter_type;
+
+		explicit typed_callback(callback_type callback, converter_type converter = nullptr)
+			: callback_(callback), converter_(converter){}
 
 		virtual common::types::result operator()(object &e) override{
 			return call_(e);
@@ -37,15 +39,20 @@ namespace ewin::events{
 
 		template <typename unused_type = return_type>
 		std::enable_if<std::is_same_v<unused_type, bool>, common::types::result> call_(object &e){
-			return EWIN_C_BOOL(callback_(*dynamic_cast<parameter_type *>(&e)));
+			if (converter_ == nullptr)
+				return EWIN_C_BOOL(callback_(*dynamic_cast<parameter_type *>(&e)));
+			return converter_(callback_(*dynamic_cast<parameter_type *>(&e)));
 		}
 
 		template <typename unused_type = return_type>
 		std::enable_if<!std::is_void_v<unused_type> && !std::is_same_v<unused_type, bool>, common::types::result> call_(object &e){
-			return (return_type)callback_(*dynamic_cast<parameter_type *>(&e));
+			if (converter_ == nullptr)
+				return (return_type)callback_(*dynamic_cast<parameter_type *>(&e));
+			return converter_(callback_(*dynamic_cast<parameter_type *>(&e)));
 		}
 
 		callback_type callback_;
+		converter_type converter_;
 	};
 }
 

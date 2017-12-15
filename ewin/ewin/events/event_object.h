@@ -56,6 +56,8 @@ namespace ewin::events{
 			result.initialize_(nullptr, EWIN_PROP_HANDLER(message));
 		}
 
+		virtual ~message();
+
 		common::read_only_object_value_property<common::types::msg, message> info;
 		common::value_property<common::types::result, object> result;
 

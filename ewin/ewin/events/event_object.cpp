@@ -39,6 +39,8 @@ void ewin::events::object::prevent_default_(){
 	EWIN_SET(states_, state_type::default_prevented);
 }
 
+ewin::events::message::~message(){}
+
 void ewin::events::message::handle_property_(void *prop, void *arg, common::property_access access){
 	if (prop == &result){
 		if (access == common::property_access::read){

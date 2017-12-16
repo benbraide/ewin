@@ -55,9 +55,13 @@ namespace ewin::common::types{
 	typedef ::WNDCLASSEXW		wnd_class;
 	typedef ::CREATESTRUCTW		create_struct;
 	typedef ::STYLESTRUCT		style_struct;
-	typedef ::CBT_CREATEWND		hook_create_window_info;
-	typedef ::WINDOWPLACEMENT	wnd_placement;
 	typedef ::MSG				msg;
+
+	typedef ::WINDOWPLACEMENT	wnd_placement;
+	typedef ::WINDOWPOS			wnd_position;
+
+	typedef ::CBT_CREATEWND		hook_create_window_info;
+	typedef ::CBTACTIVATESTRUCT	hook_activate_info;
 
 	typedef ::POINT				point;
 	typedef ::SIZE				size;

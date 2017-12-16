@@ -41,8 +41,8 @@ namespace ewin::application{
 		typedef window_list_type::const_iterator window_list_const_iterator_type;
 
 		struct object_state{
-			window_type *focused;
-			window_type *moused;
+			common::types::hwnd focused;
+			common::types::hwnd moused;
 		};
 
 		~object();
@@ -82,6 +82,16 @@ namespace ewin::application{
 		void dispatch_thread_message_(const common::types::msg &msg);
 
 		void translate_message_(const common::types::msg &msg);
+
+		void create_window_(common::types::hwnd handle, common::types::hook_create_window_info &info);
+
+		void destroy_window_(common::types::hwnd handle);
+
+		void focus_window_(common::types::hwnd handle);
+
+		void size_window_(window_type &window_object);
+
+		void move_window_(window_type &window_object);
 
 		static common::types::result CALLBACK entry_(common::types::hwnd hwnd, common::types::uint msg, common::types::wparam wparam, common::types::lparam lparam);
 

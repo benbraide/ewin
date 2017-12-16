@@ -1,11 +1,15 @@
 #include "../window/message_window.h"
 
 ewin::application::object::object()
-	: cached_window_handle_(std::make_pair<common::types::hwnd, window_type *>(nullptr, nullptr)), window_being_created_(nullptr), hook_id_(nullptr){
+	: cached_window_handle_(std::make_pair<common::types::hwnd, window_type *>(nullptr, nullptr)), window_being_created_(nullptr){
+	hook_id_ = ::SetWindowsHookExW(WH_CBT, hook_, nullptr, ::GetCurrentThreadId());
 	bind_properties_();
 }
 
 ewin::application::object::~object(){
+	if (hook_id_ != nullptr)//Remove hook
+		::UnhookWindowsHookEx(hook_id_);
+
 	if (!manager::application_list_.empty()){
 		for (auto iter = manager::application_list_.begin(); iter != manager::application_list_.end(); ++iter){
 			if (&iter->get() == this){
@@ -50,16 +54,10 @@ void ewin::application::object::handle_property_(void *prop, void *arg, common::
 		});
 	}
 	else if (prop == &window_being_created){
-		if (std::this_thread::get_id() != thread_id_)//Can only be accessed from same thread
+		if (std::this_thread::get_id() == thread_id_)
+			window_being_created_ = *static_cast<window_type **>(arg);
+		else//Can only be accessed from same thread
 			throw common::error_type::cross_thread;
-
-		window_being_created_ = *static_cast<window_type **>(arg);
-		if (window_being_created_ == nullptr && hook_id_ != nullptr){//Remove hook
-			::UnhookWindowsHookEx(hook_id_);
-			hook_id_ = nullptr;
-		}
-		else if (window_being_created_ != nullptr && hook_id_ == nullptr)//Install hook to intercept certain events
-			hook_id_ = ::SetWindowsHookExW(WH_CBT, hook_, nullptr, ::GetCurrentThreadId());
 	}
 	else if (prop == &run){
 		if (std::this_thread::get_id() == thread_id_)
@@ -81,6 +79,9 @@ void ewin::application::object::task_(const task_type &callback){
 ewin::application::object::window_type *ewin::application::object::find_(common::types::hwnd handle){
 	if (handle == cached_window_handle_.first)//Use cached value
 		return cached_window_handle_.second;
+
+	if (handle == nullptr || window_handles_.empty())
+		return nullptr;
 
 	auto entry = window_handles_.find(handle);
 	auto value = ((entry == window_handles_.end()) ? nullptr : entry->second);
@@ -117,7 +118,8 @@ bool ewin::application::object::is_filtered_message_(const common::types::msg &m
 }
 
 bool ewin::application::object::is_dialog_message_(const common::types::msg &msg){
-	return ((object_state_.focused == nullptr) ? false : object_state_.focused->is_dialog_message[msg]);
+	auto focused = find_(object_state_.focused);
+	return ((focused == nullptr) ? false : focused->is_dialog_message[msg]);
 }
 
 void ewin::application::object::dispatch_message_(const common::types::msg &msg){
@@ -134,6 +136,44 @@ void ewin::application::object::dispatch_thread_message_(const common::types::ms
 
 void ewin::application::object::translate_message_(const common::types::msg &msg){
 	::TranslateMessage(&msg);
+}
+
+void ewin::application::object::create_window_(common::types::hwnd handle, common::types::hook_create_window_info &info){
+	if (window_being_created_ == nullptr || info.lpcs->lpCreateParams != window_being_created_)
+		return;//Different window
+
+	if (window_being_created_->attribute.is_control)//Replace procedure
+		::SetWindowLongPtrW(handle, GWLP_WNDPROC, *reinterpret_cast<common::types::ptr *>(entry_));
+
+	window_being_created_ = nullptr;
+	cached_window_handle_ = std::make_pair(handle, window_being_created_);
+	window_handles_[handle] = window_being_created_;
+}
+
+void ewin::application::object::destroy_window_(common::types::hwnd handle){
+	if (!window_handles_.empty())//Remove from map
+		window_handles_.erase(handle);
+
+	if (object_state_.focused == handle){//Reset focused
+		if (object_state_.moused = object_state_.focused)
+			object_state_.moused = nullptr;//Reset moused
+		object_state_.focused = nullptr;
+	}
+
+	if (cached_window_handle_.first == handle)
+		cached_window_handle_ = {};//Reset cache
+}
+
+void ewin::application::object::focus_window_(common::types::hwnd handle){
+	object_state_.focused = handle;
+}
+
+void ewin::application::object::size_window_(window_type &window_object){
+	//#TODO: Update drawing objects; Alert size watchers
+}
+
+void ewin::application::object::move_window_(window_type &window_object){
+	//#TODO: Alert position watchers
 }
 
 ewin::common::types::result CALLBACK ewin::application::object::entry_(common::types::hwnd hwnd, common::types::uint msg, common::types::wparam wparam, common::types::lparam lparam){
@@ -154,22 +194,37 @@ ewin::common::types::result CALLBACK ewin::application::object::entry_(common::t
 	if (target == nullptr)//Unknown window
 		return ::CallWindowProcW(::DefWindowProcW, hwnd, msg, wparam, lparam);
 
-	return target->dispatch_message[common::types::msg{ hwnd, msg, wparam, lparam }];
+	auto result = target->dispatch_message[common::types::msg{ hwnd, msg, wparam, lparam }];
+	switch (msg){
+	case WM_WINDOWPOSCHANGED:
+	{//Check for size and position changes
+		auto info = reinterpret_cast<common::types::wnd_position *>(lparam);
+		if (!EWIN_IS(info->flags, SWP_NOSIZE))
+			current->size_window_(*target);
+
+		if (!EWIN_IS(info->flags, SWP_NOMOVE))
+			current->move_window_(*target);
+	}
+	default:
+		break;
+	}
+
+	return result;
 }
 
 ewin::common::types::result CALLBACK ewin::application::object::hook_(int code, common::types::wparam wparam, common::types::lparam lparam){
-	auto current = manager::current_;
-	if (code == HCBT_CREATEWND){//Respond to window creation
-		auto info = reinterpret_cast<common::types::hook_create_window_info *>(lparam)->lpcs;
-		if (info->lpCreateParams != current->window_being_created_)
-			return ::CallNextHookEx(nullptr, code, wparam, lparam);//Different window
-
-		auto handle = reinterpret_cast<common::types::hwnd>(wparam);
-		if (current->window_being_created_->attribute.is_control)//Replace procedure
-			::SetWindowLongPtrW(handle, GWLP_WNDPROC, *reinterpret_cast<common::types::ptr *>(entry_));
-
-		current->cached_window_handle_ = std::make_pair(handle, current->window_being_created_);
-		current->window_handles_[handle] = current->window_being_created_;
+	switch (code){
+	case HCBT_CREATEWND:
+		manager::current_->create_window_(reinterpret_cast<common::types::hwnd>(wparam), *reinterpret_cast<common::types::hook_create_window_info *>(lparam));
+		break;
+	case HCBT_DESTROYWND:
+		manager::current_->destroy_window_(reinterpret_cast<common::types::hwnd>(wparam));
+		break;
+	case HCBT_SETFOCUS:
+		manager::current_->focus_window_(reinterpret_cast<common::types::hwnd>(wparam));
+		break;
+	default:
+		break;
 	}
 
 	return ::CallNextHookEx(nullptr, code, wparam, lparam);

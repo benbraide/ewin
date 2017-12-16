@@ -71,7 +71,7 @@ namespace ewin::window{
 
 		std::size_t ancestor_count_() const;
 
-		void add_child_(object *value);
+		std::size_t add_child_(object *value);
 
 		void remove_child_(object *value);
 

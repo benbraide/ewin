@@ -13,7 +13,7 @@ namespace ewin::message{
 	class target{
 	public:
 		typedef std::pair<common::types::result, common::types::result> result_pair_type;
-		typedef std::function<void(events::message &)> default_prevented_callback_type;
+		typedef std::function<void(events::message &)> dispatch_callback_type;
 
 		target();
 
@@ -26,33 +26,33 @@ namespace ewin::message{
 
 		template <typename event_type, typename return_type>
 		common::types::result dispatch_message_to_(return_type(target::*callback)(event_type &), common::types::msg &msg,
-			default_prevented_callback_type default_prevented_callback = nullptr){
+			dispatch_callback_type dispatch_callback = nullptr){
 			events::typed_callback<target, return_type, event_type> event_callback(*this, callback);
 			event_type e(msg, event_callback, this);
-			if (e.prevent_default && default_prevented_callback != nullptr)
-				default_prevented_callback(e);
+			if (dispatch_callback != nullptr)
+				dispatch_callback(e);
 			return e.result;
 		}
 
 		template <typename event_type>
 		common::types::result dispatch_message_to_boolean_(bool(target::*callback)(event_type &), common::types::msg &msg, const result_pair_type &result,
-			default_prevented_callback_type default_prevented_callback = nullptr){
+			dispatch_callback_type dispatch_callback = nullptr){
 			events::typed_callback<target, bool, event_type> event_callback(*this, callback, [&result](const bool &value) -> common::types::result{
 				return (value ? result.second : result.first);
 			});
 			event_type e(msg, event_callback, this);
-			if (e.prevent_default && default_prevented_callback != nullptr)
-				default_prevented_callback(e);
+			if (dispatch_callback != nullptr)
+				dispatch_callback(e);
 			return e.result;
 		}
 
 		template <typename event_type>
 		common::types::result dispatch_message_to_boolean_(bool(target::*callback)(event_type &), common::types::msg &msg,
-			default_prevented_callback_type default_prevented_callback = nullptr){
+			dispatch_callback_type dispatch_callback = nullptr){
 			events::typed_callback<target, bool, event_type> event_callback(*this, callback);
 			event_type e(msg, event_callback, this);
-			if (e.prevent_default && default_prevented_callback != nullptr)
-				default_prevented_callback(e);
+			if (dispatch_callback != nullptr)
+				dispatch_callback(e);
 			return e.result;
 		}
 

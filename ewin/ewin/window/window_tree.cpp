@@ -53,7 +53,11 @@ void ewin::window::wnd_tree::handle_property_(void *prop, void *arg, common::pro
 			*reinterpret_cast<object **>(arg) = sibling_(false);
 	}
 	else if (prop == &children){
-		if (access == common::property_access::list_at){
+		if (access == common::property_access::list_add){
+			auto &info = *reinterpret_cast<std::pair<std::size_t, object *> *>(arg);
+			info.first = add_child_(info.second);
+		}
+		else if (access == common::property_access::list_at){
 			auto &info = *reinterpret_cast<std::pair<std::size_t, object *> *>(arg);
 			info.second = at_(info.first, list_target_type::children);
 		}
@@ -67,8 +71,6 @@ void ewin::window::wnd_tree::handle_property_(void *prop, void *arg, common::pro
 			*reinterpret_cast<object_list_iterator_type *>(arg) = children_.begin();
 		else if (access == common::property_access::list_end)
 			*reinterpret_cast<object_list_iterator_type *>(arg) = children_.end();
-		else if (access == common::property_access::list_add)
-			add_child_(reinterpret_cast<object *>(arg));
 		else if (access == common::property_access::list_remove)
 			remove_child_(reinterpret_cast<object *>(arg));
 		else if (access == common::property_access::list_remove_index)
@@ -270,9 +272,10 @@ std::size_t ewin::window::wnd_tree::ancestor_count_() const{
 	return count;
 }
 
-void ewin::window::wnd_tree::add_child_(object *value){
+std::size_t ewin::window::wnd_tree::add_child_(object *value){
 	if (value->tree.parent_.get() != target_)
 		value->tree.set_parent_(target_, children_.size());
+	return find_(*value, list_target_type::children);
 }
 
 void ewin::window::wnd_tree::remove_child_(object *value){

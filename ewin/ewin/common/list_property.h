@@ -29,16 +29,17 @@ namespace ewin::common{
 		explicit list_value_property(callback_type callback)
 			: callback_(callback){}
 
-		list_value_property &operator +=(const value_type &value){
+		index_type operator +=(const value_type &value){
 			if (access != access_type::nil && !EWIN_IS(access, access_type::list_add))
 				throw error_type::property_access_violation;
 
-			if (callback_ != nullptr)//Call handler
-				callback_(this, &const_cast<value_type &>(value), access_type::list_add);
-			else//Error
+			if (callback_ == nullptr)//Error
 				throw error_type::uninitialized_property;
 
-			return *this;
+			std::pair<index_type, value_type *> info{ index_type(), &const_cast<value_type &>(value) };
+			callback_(this, &info, access_type::list_add);
+
+			return info.first;
 		}
 
 		list_value_property &operator -=(const value_type &value){

@@ -68,7 +68,7 @@ void ewin::application::object::handle_property_(void *prop, void *arg, common::
 			throw common::error_type::cross_thread;
 	}
 	else if (prop == &task)
-		task_(*static_cast<task_type *>(arg));
+		task_(*reinterpret_cast<std::pair<void *, task_type *> *>(arg)->second);
 }
 
 void ewin::application::object::task_(const task_type &callback){

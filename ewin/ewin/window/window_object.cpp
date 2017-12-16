@@ -1,7 +1,7 @@
 #include "window_object.h"
 
 ewin::window::object::object()
-	: tree(*this), view(*this), frame(*this), state(*this), style(*this), attribute(*this), app_(nullptr), handle_(nullptr),
+	: tree(*this), view(*this), frame(*this), state(*this), style(*this), attribute(*this), events(*this), app_(nullptr), handle_(nullptr),
 	error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), local_error_value_(ERROR_SUCCESS), auto_destroy_(true){
 	bind_properties_();
 }
@@ -41,6 +41,9 @@ void ewin::window::object::bind_properties_(){
 
 	filtered_styles.initialize_(nullptr, handler);
 	filtered_extended_styles.initialize_(nullptr, handler);
+
+	is_dialog_message.initialize_(nullptr, handler);
+	bubble_event.initialize_(nullptr, handler);
 
 	created.initialize_(nullptr, handler);
 	create.initialize_(nullptr, handler);
@@ -96,6 +99,16 @@ void ewin::window::object::handle_property_(void *prop, void *arg, common::prope
 			*static_cast<application_type **>(arg) = app_;
 		else if (access == common::property_access::write && handle_ == nullptr)
 			app_ = *static_cast<application_type **>(arg);
+	}
+	else if (prop == &is_dialog_message){
+		auto info = static_cast<std::pair<common::types::msg *, bool> *>(arg);
+		info->second = is_dialog_message_(*info->first);
+		return;
+	}
+	else if (prop == &bubble_event){
+		auto info = static_cast<std::pair<events::basic *, events::basic *> *>(arg);
+		info->second = bubble_event_(*info->first);
+		return;
 	}
 	else if (prop == &size){
 		if (access == common::property_access::read)
@@ -393,4 +406,8 @@ void ewin::window::object::post_message_(message_info &info){
 
 bool ewin::window::object::is_dialog_message_(const common::types::msg &msg) const{
 	return EWIN_CPP_BOOL(::IsDialogMessageW(handle_, &const_cast<common::types::msg &>(msg)));
+}
+
+ewin::events::basic *ewin::window::object::bubble_event_(const events::basic &e) const{
+	return nullptr;
 }

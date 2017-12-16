@@ -22,6 +22,7 @@
 #include "window_state.h"
 #include "window_style.h"
 #include "window_attribute.h"
+#include "window_event.h"
 
 namespace ewin::window{
 	class object : public std::enable_shared_from_this<object>, public ewin::message::target{
@@ -95,6 +96,7 @@ namespace ewin::window{
 		common::read_only_size_value_property<common::types::uint, object> filtered_extended_styles;
 
 		common::transformation_property<common::types::msg, bool, object> is_dialog_message;
+		common::transformation_property<events::basic, events::basic *, object> bubble_event;
 
 		wnd_tree tree;
 		wnd_view view;
@@ -102,6 +104,7 @@ namespace ewin::window{
 		wnd_state state;
 		wnd_style style;
 		wnd_attribute attribute;
+		wnd_event events;
 
 		common::boolean_value_property<object> created;
 		common::transformation_property<create_info, void, object> create;
@@ -161,6 +164,8 @@ namespace ewin::window{
 		virtual void post_message_(message_info &info);
 
 		virtual bool is_dialog_message_(const common::types::msg &msg) const;
+
+		virtual events::basic *bubble_event_(const events::basic &e) const;
 
 		application_type *app_;
 		common::types::hwnd handle_;

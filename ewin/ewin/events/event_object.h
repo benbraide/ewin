@@ -20,6 +20,9 @@ namespace ewin::window{
 namespace ewin::events{
 	class callback;
 
+	template <class object_type, class target_type, bool can_be_propagated>
+	class typed_basic;
+
 	class object{
 	public:
 		typedef ewin::message::target target_type;
@@ -68,9 +71,14 @@ namespace ewin::events{
 		common::value_property<common::types::result, message> result;
 
 	protected:
+		friend class ewin::message::target;
+		template <class, class, bool> friend class typed_basic;
+
 		virtual void handle_property_(void *prop, void *arg, common::property_access access) override;
 
 		virtual common::types::result call_default_();
+
+		virtual void remove_bubble_();
 
 		common::types::msg *msg_;
 		callback_type &callback_;

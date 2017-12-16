@@ -59,6 +59,10 @@ ewin::common::types::result ewin::events::message::call_default_(){
 	return result_;
 }
 
+void ewin::events::message::remove_bubble_(){
+	EWIN_SET(states_, state_type::bubbled);
+}
+
 void ewin::events::mouse_activate::handle_property_(void *prop, void *arg, common::property_access access){
 	if (prop == &hit_target)
 		*static_cast<common::types::uint *>(arg) = LOWORD(msg_->lParam);

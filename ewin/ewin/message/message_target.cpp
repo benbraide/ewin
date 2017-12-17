@@ -15,19 +15,17 @@ ewin::message::target::~target() = default;
 ewin::common::types::result ewin::message::target::dispatch_message_(common::types::msg &msg){
 	switch (msg.message){
 	case WM_NCCREATE:
-		return dispatch_message_to_(&target::on_pre_create_, msg);
-	case WM_CREATE:
-		return dispatch_message_to_boolean_(&target::on_create_, msg, result_pair_type{ -1, 0 }, [this](events::message &e){
+		return dispatch_message_to_boolean_(&target::on_pre_create_, msg, [this](events::message &e){
 			reinterpret_cast<window::object *>(this)->events.create.fire_(e);
-			if (e.prevent_default)//Prevent creation
-				e.result = -1;
 		});
+	case WM_CREATE:
+		return dispatch_message_to_boolean_(&target::on_create_, msg, result_pair_type{ -1, 0 });
 	case WM_DESTROY:
-		return dispatch_message_to_(&target::on_destroy_, msg, [this](events::message &e){
+		return dispatch_message_to_(&target::on_destroy_, msg);
+	case WM_NCDESTROY:
+		return dispatch_message_to_(&target::on_post_destroy_, msg, [this](events::message &e){
 			reinterpret_cast<window::object *>(this)->events.destroy.fire_(e);
 		});
-	case WM_NCDESTROY:
-		return dispatch_message_to_(&target::on_post_destroy_, msg);
 	case WM_CLOSE:
 		if (EWIN_CPP_BOOL(dispatch_message_to_boolean_(&target::on_close_, msg, [this](events::message &e){
 			reinterpret_cast<window::object *>(this)->events.close.fire_(e);

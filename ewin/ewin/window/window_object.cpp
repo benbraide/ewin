@@ -1,4 +1,4 @@
-#include "window_object.h"
+#include "external_window.h"
 
 ewin::window::object::object()
 	: tree(*this), view(*this), frame(*this), state(*this), style(*this), attribute(*this), events(*this), app_(nullptr), handle_(nullptr),
@@ -201,20 +201,25 @@ void ewin::window::object::create_(bool create, const create_info *info){
 	}
 }
 
-void ewin::window::object::low_level_create_(const common::types::create_struct &info){
+void ewin::window::object::low_level_create_(const common::types::create_struct &info, object *parent, application_type *app, attribute_option_type options){
 	common::types::uint additional_styles = 0;
 	common::types::hwnd parent_handle = nullptr;
 
-	auto app = app_;
-	if (tree.parent_ != nullptr){//Add child style and use parent's app
-		if (!tree.parent_->created){
+	if (app == nullptr)//Use internal app
+		app = app_;
+
+	if (parent == nullptr)
+		parent = tree.parent_.get();
+
+	if (parent != nullptr){//Add child style and use parent's app
+		if (!parent->created){
 			set_error_(error_type::parent_not_created);
 			return;
 		}
 
 		EWIN_SET(additional_styles, WS_CHILD);
-		app = tree.parent_->app_;
-		parent_handle = tree.parent_->handle_;
+		app = parent->app_;
+		parent_handle = parent->handle_;
 	}
 	else if (app == nullptr)//Use main app
 		app = application::manager::main;
@@ -223,6 +228,17 @@ void ewin::window::object::low_level_create_(const common::types::create_struct 
 		set_error_(error_type::no_app);
 		return;
 	}
+
+	if (parent == nullptr){
+		if (info.hwndParent != nullptr){//Resolve parent
+			if ((tree.parent_ = app->window_handles[info.hwndParent]->reflect) == nullptr)
+				tree.parent_ = std::make_shared<external>(info.hwndParent);
+		}
+		else//No parent
+			tree.parent_ = nullptr;
+	}
+	else//Use parent
+		tree.parent_ = parent->reflect_();
 
 	(app_ = app)->task += [&]{//Create window inside app thread context
 		try{

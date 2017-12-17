@@ -37,6 +37,12 @@ namespace ewin::window{
 		typedef common::rect_value_property_backend<int> rect_type;
 
 		typedef std::shared_ptr<object> ptr_type;
+
+		enum class attribute_option_type : unsigned int{
+			nil					= (0 << 0x0000),
+			client_size			= (1 << 0x0000),
+			absolute_offset		= (1 << 0x0001),
+		};
 		
 		struct property_forbidden_info{
 			void *value;
@@ -50,6 +56,11 @@ namespace ewin::window{
 		};
 
 		struct create_info{};
+
+		struct cache_info{
+			common::types::create_struct info;
+			attribute_option_type options;
+		};
 
 		struct parent_change_info{
 			object *old;
@@ -125,7 +136,7 @@ namespace ewin::window{
 
 		virtual void create_(bool create, const create_info *info);
 
-		virtual void low_level_create_(const common::types::create_struct &info);
+		virtual void low_level_create_(const common::types::create_struct &info, object *parent, application_type *app, attribute_option_type options);
 
 		virtual void set_error_(common::variant_value_property_arg_info &info);
 
@@ -169,12 +180,15 @@ namespace ewin::window{
 
 		application_type *app_;
 		common::types::hwnd handle_;
+		cache_info cache_;
 
 		error_throw_policy_type error_throw_policy_;
 		error_type error_value_;
 		common::types::dword local_error_value_;
 		bool auto_destroy_;
 	};
+
+	EWIN_MAKE_OPERATORS(object::attribute_option_type);
 }
 
 #endif /* !EWIN_WINDOW_OBJECT_H */

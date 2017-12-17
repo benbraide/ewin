@@ -42,7 +42,7 @@ void ewin::window::message::create_(bool create, const create_info *info){
 			nullptr,
 			nullptr,
 			HWND_MESSAGE
-		});
+		}, nullptr, nullptr, attribute_option_type::nil);
 	}
 	else//Pass to base type
 		object::create_(create, info);

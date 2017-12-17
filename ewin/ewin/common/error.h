@@ -19,6 +19,7 @@ namespace ewin::common{
 		cross_thread,
 		window_not_created,
 		parent_not_created,
+		parent_not_found,
 		parent_change_forbidden,
 		parent_required,
 	};

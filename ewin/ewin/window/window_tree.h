@@ -19,7 +19,7 @@ namespace ewin::window{
 	class wnd_tree{
 	public:
 		typedef std::shared_ptr<object> object_ptr_type;
-		typedef std::list<object_ptr_type> object_list_type;
+		typedef std::list<object *> object_list_type;
 
 		typedef object_list_type::iterator object_list_iterator_type;
 
@@ -78,7 +78,7 @@ namespace ewin::window{
 		void remove_child_(std::size_t index);
 
 		object *target_;
-		object_ptr_type parent_;
+		object *parent_;
 		object_list_type children_;
 	};
 }

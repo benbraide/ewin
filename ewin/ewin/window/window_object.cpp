@@ -1,4 +1,4 @@
-#include "external_window.h"
+#include "window_object.h"
 
 ewin::window::object::object()
 	: tree(*this), view(*this), frame(*this), state(*this), style(*this), attribute(*this), events(*this), app_(nullptr), handle_(nullptr),
@@ -209,7 +209,7 @@ void ewin::window::object::low_level_create_(const common::types::create_struct 
 		app = app_;
 
 	if (parent == nullptr)
-		parent = tree.parent_.get();
+		parent = tree.parent_;
 
 	if (parent != nullptr){//Add child style and use parent's app
 		if (!parent->created){
@@ -231,14 +231,16 @@ void ewin::window::object::low_level_create_(const common::types::create_struct 
 
 	if (parent == nullptr){
 		if (info.hwndParent != nullptr){//Resolve parent
-			if ((tree.parent_ = app->window_handles[info.hwndParent]->reflect) == nullptr)
-				tree.parent_ = std::make_shared<external>(info.hwndParent);
+			if ((tree.parent_ = app->window_handles[info.hwndParent]) == nullptr){
+				set_error_(error_type::parent_not_found);
+				return;
+			}
 		}
 		else//No parent
 			tree.parent_ = nullptr;
 	}
 	else//Use parent
-		tree.parent_ = parent->reflect_();
+		tree.parent_ = parent;
 
 	(app_ = app)->task += [&]{//Create window inside app thread context
 		try{

@@ -88,33 +88,34 @@ namespace ewin::window{
 				return;
 			}
 
-			if (info != nullptr){
-				auto converted_info = reinterpret_cast<create_info *>(info);
-				object *parent = nullptr;
-				application_type *app = nullptr;
-
-				if (std::holds_alternative<application_type *>(converted_info->app_or_parent))
-					app = std::get<application_type *>(converted_info->app_or_parent);
-				else//Parent
-					parent = &std::get<std::reference_wrapper<object>>(converted_info->app_or_parent).get();
-
-				window_type::low_level_create_(common::types::create_struct{
-					nullptr,
-					nullptr,
-					nullptr,
-					nullptr,
-					converted_info->size.cy,
-					converted_info->size.cx,
-					converted_info->offset.y,
-					converted_info->offset.x,
-					0,
-					converted_info->caption.data(),
-					nullptr,
-					0u
-				}, parent, app, converted_info->options);
-			}
-			else//Use cache
+			if (info == nullptr){//Use cache
 				window_type::low_level_create_(window_type::cache_.info, nullptr, nullptr, window_type::cache_.options);
+				return;
+			}
+
+			auto converted_info = reinterpret_cast<create_info *>(info);
+			object *parent = nullptr;
+			application_type *app = nullptr;
+
+			if (std::holds_alternative<application_type *>(converted_info->app_or_parent))
+				app = std::get<application_type *>(converted_info->app_or_parent);
+			else//Parent
+				parent = &std::get<std::reference_wrapper<object>>(converted_info->app_or_parent).get();
+
+			window_type::low_level_create_(common::types::create_struct{
+				nullptr,
+				nullptr,
+				nullptr,
+				nullptr,
+				converted_info->size.cy,
+				converted_info->size.cx,
+				converted_info->offset.y,
+				converted_info->offset.x,
+				0,
+				converted_info->caption.data(),
+				nullptr,
+				0u
+			}, parent, app, converted_info->options);
 		}
 
 		std::wstring caption_;

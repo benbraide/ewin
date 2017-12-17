@@ -178,6 +178,10 @@ namespace ewin::window{
 
 		virtual events::basic *bubble_event_(const events::basic &e) const;
 
+		virtual void screen_to_client_(common::types::point &point) const;
+
+		virtual void client_to_screen_(common::types::point &point) const;
+
 		application_type *app_;
 		common::types::hwnd handle_;
 		cache_info cache_;

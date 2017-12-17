@@ -211,6 +211,7 @@ void ewin::window::object::low_level_create_(const common::types::create_struct 
 	if (parent == nullptr)
 		parent = tree.parent_;
 
+	common::types::point offset{};
 	if (parent != nullptr){//Add child style and use parent's app
 		if (!parent->created){
 			set_error_(error_type::parent_not_created);
@@ -219,7 +220,12 @@ void ewin::window::object::low_level_create_(const common::types::create_struct 
 
 		EWIN_SET(additional_styles, WS_CHILD);
 		app = parent->app_;
-		parent_handle = parent->handle_;
+
+		parent_handle = parent->handle;
+		if (EWIN_IS(options, attribute_option_type::absolute_offset)){//Convert absolute value to parent relative
+			offset = common::types::point{ info.x, info.y };
+			parent->screen_to_client_(offset);
+		}
 	}
 	else if (app == nullptr)//Use main app
 		app = application::manager::main;
@@ -243,32 +249,34 @@ void ewin::window::object::low_level_create_(const common::types::create_struct 
 		tree.parent_ = parent;
 
 	(app_ = app)->task += [&]{//Create window inside app thread context
-		try{
-			app->window_being_created = this;
-			handle_ = ::CreateWindowExW(
-				(info.dwExStyle | persistent_styles_(true)),
-				((dynamic_cast<object *>(this) != nullptr) ? application::manager::general_window_class.raw_name : application::manager::dialog_window_class.raw_name),
-				info.lpszName,
-				(info.style | persistent_styles_(false)),
-				info.x,
-				info.y,
-				info.cx,
-				info.cy,
-				((parent_handle == nullptr) ? info.hwndParent : parent_handle),
-				info.hMenu,
-				(info.hInstance == nullptr) ? ::GetModuleHandleW(nullptr) : info.hInstance,
-				this
-			);
+		auto styles = (info.style | persistent_styles_(false));
+		auto extended_styles = (info.dwExStyle | persistent_styles_(true));
 
-			if (handle_ == nullptr)//Failed to create window
-				set_error_(::GetLastError());
-		}
-		catch (...){
-			app->window_being_created = nullptr;
-			throw;//Forward exception
+		common::types::size size{};
+		common::types::rect rect{ 0, 0, info.cx, info.cy };
+		if (handle_ != nullptr && EWIN_IS(options, attribute_option_type::client_size)){//Adjust size
+			::AdjustWindowRectEx(&rect, styles, EWIN_C_BOOL(info.hMenu != nullptr), extended_styles);
+			size = common::types::size{ (rect.right - rect.left), (rect.bottom - rect.top) };
 		}
 
-		app->window_being_created = nullptr;
+		app->window_being_created = this;
+		handle_ = ::CreateWindowExW(
+			extended_styles,
+			((dynamic_cast<object *>(this) != nullptr) ? application::manager::general_window_class.raw_name : application::manager::dialog_window_class.raw_name),
+			info.lpszName,
+			styles,
+			(EWIN_IS(options, attribute_option_type::absolute_offset) ? offset.x : info.x),
+			(EWIN_IS(options, attribute_option_type::absolute_offset) ? offset.y : info.y),
+			(EWIN_IS(options, attribute_option_type::client_size) ? size.cx : info.cx),
+			(EWIN_IS(options, attribute_option_type::client_size) ? size.cy : info.cy),
+			((parent_handle == nullptr) ? info.hwndParent : parent_handle),
+			info.hMenu,
+			(info.hInstance == nullptr) ? ::GetModuleHandleW(nullptr) : info.hInstance,
+			this
+		);
+
+		if (handle_ == nullptr)//Failed to create window
+			set_error_(::GetLastError());
 	};
 }
 
@@ -325,6 +333,15 @@ void ewin::window::object::set_rect_(const rect_type &value, bool relative){
 }
 
 ewin::window::object::rect_type ewin::window::object::get_rect_(bool relative) const{
+	if (handle_ == nullptr){//Use cache value
+		return rect_type{
+			(cache_.info.x),
+			(cache_.info.y),
+			(cache_.info.x + cache_.info.cx),
+			(cache_.info.y + cache_.info.cy)
+		};
+	}
+
 	common::types::rect value{};
 	::GetWindowRect(handle_, &value);
 	if (relative && tree.parent != nullptr){//Convert value from screen
@@ -339,22 +356,62 @@ ewin::window::object::rect_type ewin::window::object::get_rect_(bool relative) c
 }
 
 ewin::window::object::rect_type ewin::window::object::get_client_rect_() const{
+	if (handle_ == nullptr){//Use cache value
+		return rect_type{
+			(cache_.info.x),
+			(cache_.info.y),
+			(cache_.info.x + cache_.info.cx),
+			(cache_.info.y + cache_.info.cy)
+		};
+	}
+
 	common::types::rect value{};
 	::GetClientRect(handle_, &value);
 	return rect_type{ value.left, value.top, value.right, value.bottom };
 }
 
 void ewin::window::object::set_position_(const point_type &value, bool relative){
+	if (handle_ == nullptr){//Cache value
+		cache_.info.x = value.x;
+		cache_.info.y = value.y;
+
+		if (relative)
+			EWIN_REMOVE(cache_.options, attribute_option_type::absolute_offset);
+		else//Absolute
+			EWIN_SET(cache_.options, attribute_option_type::absolute_offset);
+
+		return;
+	}
+
 	auto size = get_size_(false);
 	set_rect_(rect_type{ value.x, value.y, (value.x + size.width), (value.y + size.height) }, relative);
 }
 
 ewin::window::object::point_type ewin::window::object::get_position_(bool relative) const{
+	if (handle_ == nullptr){//Use cache value
+		return point_type{
+			cache_.info.x,
+			cache_.info.y
+		};
+	}
+
 	auto rect_value = get_rect_(relative);
 	return point_type{ rect_value.left, rect_value.top };
 }
 
 void ewin::window::object::set_size_(const size_type &value, bool client){
+	if (handle_ == nullptr){//Cache value
+		cache_.info.cx = value.width;
+		cache_.info.cy = value.height;
+
+		if (client)
+			EWIN_SET(cache_.options, attribute_option_type::client_size);
+		else//Non-client
+			EWIN_REMOVE(cache_.options, attribute_option_type::client_size);
+
+		return;
+	}
+
 	auto position = get_position_(true);
 	if (client){//Convert
 		auto rect = get_rect_(false), relative_rect = get_rect_(true);
@@ -375,6 +432,13 @@ void ewin::window::object::set_size_(const size_type &value, bool client){
 }
 
 ewin::window::object::size_type ewin::window::object::get_size_(bool client) const{
+	if (handle_ == nullptr){//Use cache value
+		return size_type{
+			cache_.info.cx,
+			cache_.info.cy
+		};
+	}
+
 	if (client){//Client size
 		auto rect_value = get_client_rect_();
 		return size_type{ rect_value.right - rect_value.left, rect_value.bottom - rect_value.top };
@@ -428,4 +492,14 @@ bool ewin::window::object::is_dialog_message_(const common::types::msg &msg) con
 
 ewin::events::basic *ewin::window::object::bubble_event_(const events::basic &e) const{
 	return nullptr;
+}
+
+void ewin::window::object::screen_to_client_(common::types::point &point) const{
+	if (handle_ != nullptr)
+		::ScreenToClient(handle_, &point);
+}
+
+void ewin::window::object::client_to_screen_(common::types::point &point) const{
+	if (handle_ != nullptr)
+		::ClientToScreen(handle_, &point);
 }

@@ -1,6 +1,8 @@
-#include "window_object.h"
+#include "dialog_window.h"
+#include "message_window.h"
 
-ewin::window::wnd_attribute::wnd_attribute(object &target) : target_(&target){
+ewin::window::wnd_attribute::wnd_attribute(object &target)
+	: target_(&target){
 	bind_properties_();
 }
 
@@ -26,4 +28,8 @@ void ewin::window::wnd_attribute::handle_property_(void *prop, void *arg, common
 	}
 
 	target_->error = common::error_type::nil;//Clear error
+	if (prop == &is_dialog)
+		*static_cast<bool *>(arg) = (dynamic_cast<dialog *>(target_) != nullptr);
+	else if (prop == &is_message_only)
+		*static_cast<bool *>(arg) = (dynamic_cast<message *>(target_) != nullptr);
 }

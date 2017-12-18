@@ -33,9 +33,9 @@ void ewin::window::wnd_frame::handle_property_(void *prop, void *arg, common::pr
 	target_->error = common::error_type::nil;//Clear error
 	if (prop == &visible){
 		if (access == common::property_access::write)
-			set_or_remove_((WS_CAPTION | WS_SYSMENU | WS_BORDER), *reinterpret_cast<bool *>(arg));
+			set_or_remove_(WS_OVERLAPPEDWINDOW, *reinterpret_cast<bool *>(arg));
 		else if (access == common::property_access::read)
-			*reinterpret_cast<bool *>(arg) = EWIN_IS_ANY(get_(), (WS_CAPTION | WS_BORDER));
+			*reinterpret_cast<bool *>(arg) = EWIN_IS_ANY(get_(), (WS_CAPTION | WS_BORDER | WS_THICKFRAME));
 	}
 	else if (prop == &show_caption){
 		if (access == common::property_access::write){

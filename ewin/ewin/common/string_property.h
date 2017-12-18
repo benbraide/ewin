@@ -15,6 +15,7 @@ namespace ewin::common{
 		typedef manager_type manager_type;
 		typedef property_access access_type;
 
+		typedef typename value_type::traits_type::char_type char_type;
 		typedef typename value_type::iterator iterator_type;
 		typedef typename value_type::const_iterator const_iterator_type;
 
@@ -33,9 +34,13 @@ namespace ewin::common{
 		string_value_property(value_type &linked, callback_type callback)
 			: linked_(&linked), callback_(callback){}
 
-		template <typename target_type>
+		template <typename target_type, typename unused = value_type>
 		string_value_property &operator =(const target_type &value){
 			return operator =((value_type)value);
+		}
+
+		string_value_property &operator =(const char_type *value){
+			return operator =(value_type(value));
 		}
 
 		string_value_property &operator =(const value_type &value){

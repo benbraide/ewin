@@ -1,8 +1,11 @@
-#include "window_object.h"
+#include "../application/main_application.h"
+
+#include "dialog_window.h"
 
 ewin::window::object::object()
 	: tree(*this), view(*this), frame(*this), state(*this), style(*this), attribute(*this), events(*this), app_(nullptr), handle_(nullptr),
 	error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), local_error_value_(ERROR_SUCCESS), auto_destroy_(true){
+	cache_ = cache_info{};
 	bind_properties_();
 }
 
@@ -235,7 +238,7 @@ void ewin::window::object::low_level_create_(const common::types::create_struct 
 		return;
 	}
 
-	if (parent == nullptr){
+	if (parent == nullptr && info.hwndParent != HWND_MESSAGE){
 		if (info.hwndParent != nullptr){//Resolve parent
 			if ((tree.parent_ = app->window_handles[info.hwndParent]) == nullptr){
 				set_error_(error_type::parent_not_found);
@@ -249,8 +252,9 @@ void ewin::window::object::low_level_create_(const common::types::create_struct 
 		tree.parent_ = parent;
 
 	(app_ = app)->task += [&]{//Create window inside app thread context
-		auto styles = (info.style | persistent_styles_(false));
-		auto extended_styles = (info.dwExStyle | persistent_styles_(true));
+		auto styles = (info.style | persistent_styles_(false) | view.cached_value_ | frame.cached_value_ | state.cached_value_ | style.cached_value_);
+		auto extended_styles = (info.dwExStyle | persistent_styles_(true) | view.cached_extended_value_ | frame.cached_extended_value_ |
+			state.cached_extended_value_ | style.cached_extended_value_);
 
 		common::types::size size{};
 		common::types::rect rect{ 0, 0, info.cx, info.cy };
@@ -262,7 +266,7 @@ void ewin::window::object::low_level_create_(const common::types::create_struct 
 		app->window_being_created = this;
 		handle_ = ::CreateWindowExW(
 			extended_styles,
-			((dynamic_cast<object *>(this) != nullptr) ? application::manager::general_window_class.raw_name : application::manager::dialog_window_class.raw_name),
+			((dynamic_cast<dialog *>(this) == nullptr) ? application::manager::main->general_window_class.raw_name : application::manager::main->dialog_window_class.raw_name),
 			info.lpszName,
 			styles,
 			(EWIN_IS(options, attribute_option_type::absolute_offset) ? offset.x : info.x),
@@ -275,7 +279,11 @@ void ewin::window::object::low_level_create_(const common::types::create_struct 
 			this
 		);
 
-		if (handle_ == nullptr)//Failed to create window
+		if (handle_ != nullptr){//Reset cached styles
+			view.cached_value_ = frame.cached_value_ = state.cached_value_ = style.cached_value_ = 0;
+			view.cached_extended_value_ = frame.cached_extended_value_ = state.cached_extended_value_ = style.cached_extended_value_ = 0;
+		}
+		else//Failed to create window
 			set_error_(::GetLastError());
 	};
 }

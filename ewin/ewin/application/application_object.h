@@ -24,7 +24,6 @@ namespace ewin::window{
 
 namespace ewin::application{
 	class manager;
-	class manager_initializer;
 
 	class object{
 	public:
@@ -34,16 +33,18 @@ namespace ewin::application{
 		typedef std::function<void()> task_type;
 		typedef std::reference_wrapper<window_type> window_ref_type;
 
-		typedef std::list<window_ref_type> window_list_type;
+		typedef std::list<common::types::hwnd> hwnd_list_type;
 		typedef std::unordered_map<common::types::hwnd, window_type *> window_map_type;
 
-		typedef window_list_type::iterator window_list_iterator_type;
-		typedef window_list_type::const_iterator window_list_const_iterator_type;
+		typedef hwnd_list_type::iterator window_list_iterator_type;
+		typedef hwnd_list_type::const_iterator window_list_const_iterator_type;
 
 		struct object_state{
 			common::types::hwnd focused;
 			common::types::hwnd moused;
 		};
+
+		object();
 
 		~object();
 
@@ -52,22 +53,27 @@ namespace ewin::application{
 		object &operator =(const object &) = delete;
 
 		common::list_value_property<task_type, void *, void *, object, std::size_t, common::property_access::list_add> task;
+		common::list_value_property<task_type, void *, void *, object, std::size_t, common::property_access::list_add> async_task;
+
 		common::access_only_list_value_property<window_type, object, common::types::hwnd> window_handles;
-		common::iterator_only_list_value_property<window_type, window_list_iterator_type, window_list_const_iterator_type, object> top_level_windows;
+		common::iterator_only_list_value_property<window_type, window_list_iterator_type, window_list_const_iterator_type, object> top_level_handles;
 		common::write_only_value_property<window_type *, object> window_being_created;
 		common::read_only_value_property<int, object> run;
 
-	private:
+	protected:
 		friend class manager;
-		friend class manager_initializer;
 
-		object();
+		explicit object(bool is_main);
 
 		void bind_properties_();
 
 		void handle_property_(void *prop, void *arg, common::property_access access);
 
 		void task_(const task_type &callback);
+
+		void async_task_(const task_type &callback);
+
+		void execute_task_(task_type *callback, bool is_async);
 
 		window_type *find_(common::types::hwnd handle);
 
@@ -93,6 +99,8 @@ namespace ewin::application{
 
 		void move_window_(window_type &window_object);
 
+		common::types::result app_message_(common::types::uint msg, common::types::wparam wparam, common::types::lparam lparam);
+
 		static common::types::result CALLBACK entry_(common::types::hwnd hwnd, common::types::uint msg, common::types::wparam wparam, common::types::lparam lparam);
 
 		static common::types::result CALLBACK hook_(int code, common::types::wparam wparam, common::types::lparam lparam);
@@ -100,7 +108,7 @@ namespace ewin::application{
 		std::thread::id thread_id_;
 		std::shared_ptr<window_type> message_window_;
 		object_state object_state_{};
-		window_list_type top_level_windows_;
+		hwnd_list_type top_level_handles_;
 		window_map_type window_handles_;
 		std::pair<common::types::hwnd, window_type *> cached_window_handle_;
 		window_type *window_being_created_;

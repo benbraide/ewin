@@ -17,14 +17,18 @@ namespace ewin::window{
 		struct create_info : public window_type::create_info{
 			std::variant<std::reference_wrapper<object>, application_type *> app_or_parent;
 			std::wstring caption;
-			point_type offset;
-			size_type size;
+			common::types::point offset;
+			common::types::size size;
 			attribute_option_type options;
 		};
 
-		basic_form(){}
+		basic_form(){
+			bind_properties_();
+		}
 
-		basic_form(const std::wstring &caption, const point_type &offset, const size_type &size, attribute_option_type options = attribute_option_type::nil){
+		basic_form(const std::wstring &caption, const common::types::point &offset, const common::types::size &size,
+			attribute_option_type options = attribute_option_type::nil){
+			bind_properties_();
 			create_info info{
 				nullptr,
 				caption,
@@ -41,7 +45,9 @@ namespace ewin::window{
 			}
 		}
 
-		basic_form(object &parent, const std::wstring &caption, const point_type &offset, const size_type &size, attribute_option_type options = attribute_option_type::nil){
+		basic_form(object &parent, const std::wstring &caption, const common::types::point &offset, const common::types::size &size,
+			attribute_option_type options = attribute_option_type::nil){
+			bind_properties_();
 			create_info info{
 				parent,
 				caption,
@@ -58,7 +64,9 @@ namespace ewin::window{
 			}
 		}
 
-		basic_form(application_type &app, const std::wstring &caption, const point_type &offset, const size_type &size, attribute_option_type options = attribute_option_type::nil){
+		basic_form(application_type &app, const std::wstring &caption, const common::types::point &offset, const common::types::size &size,
+			attribute_option_type options = attribute_option_type::nil){
+			bind_properties_();
 			create_info info{
 				&app,
 				caption,
@@ -82,6 +90,23 @@ namespace ewin::window{
 		common::string_value_property<std::wstring, basic_form> caption;
 
 	protected:
+		void bind_properties_(){
+			caption.initialize_(&caption_, EWIN_PROP_HANDLER(basic_form<window_type>));
+		}
+
+		virtual void handle_property_(void *prop, void *arg, common::property_access access) override{
+			if (prop == &caption){
+				if (access == common::property_access::write){
+					if (window_type::handle_ == nullptr)
+						window_type::cache_.info.lpszName = caption_.data();
+					else//Update
+						::SetWindowTextW(window_type::handle_, caption_.data());
+				}
+			}
+			else//Forward
+				window_type::handle_property_(prop, arg, access);
+		}
+
 		virtual void create_(bool create, const typename window_type::create_info *info) override{
 			if (!create){//Forward message
 				window_type::create_(create, info);
@@ -93,7 +118,7 @@ namespace ewin::window{
 				return;
 			}
 
-			auto converted_info = reinterpret_cast<create_info *>(info);
+			auto converted_info = reinterpret_cast<const create_info *>(info);
 			object *parent = nullptr;
 			application_type *app = nullptr;
 
@@ -120,6 +145,9 @@ namespace ewin::window{
 
 		std::wstring caption_;
 	};
+
+	using form			= basic_form<object>;
+	using dialog_form	= basic_form<dialog>;
 }
 
 #endif /* !EWIN_WINDOW_FORM_H */

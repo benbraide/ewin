@@ -112,7 +112,18 @@ bool ewin::message::target::on_pre_create_(events::message &e){
 }
 
 bool ewin::message::target::on_create_(events::message &e){
-	return (::CallWindowProcW(procedure_, e.info->hwnd, e.info->message, e.info->wParam, e.info->lParam) == 0u);
+	if (::CallWindowProcW(procedure_, e.info->hwnd, e.info->message, e.info->wParam, e.info->lParam) != 0u)
+		return false;//Rejected
+
+	/*auto window_self = dynamic_cast<window::object *>(this);
+	if (window_self->view.visible && !window_self->attribute.is_control && !window_self->attribute.is_message_only){
+		dynamic_cast<window::object *>(this)->app->async_task += [window_self]{//Schedule show
+			if (window_self->handle != nullptr)
+				::ShowWindow(window_self->handle, SW_SHOWNORMAL);
+		};
+	}*/
+
+	return true;
 }
 
 void ewin::message::target::on_destroy_(events::message &e){

@@ -3,7 +3,7 @@
 #include "dialog_window.h"
 
 ewin::window::object::object()
-	: tree(*this), view(*this), frame(*this), state(*this), style(*this), attribute(*this), events(*this), app_(nullptr), handle_(nullptr),
+	: message_target_type(events_), tree(*this), view(*this), frame(*this), state(*this), style(*this), attribute(*this), events_(*this), app_(nullptr), handle_(nullptr),
 	error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), local_error_value_(ERROR_SUCCESS), auto_destroy_(true){
 	cache_ = cache_info{};
 	bind_properties_();
@@ -47,6 +47,7 @@ void ewin::window::object::bind_properties_(){
 
 	is_dialog_message.initialize_(nullptr, handler);
 	bubble_event.initialize_(nullptr, handler);
+	events.initialize_(&events_, nullptr);
 
 	created.initialize_(nullptr, handler);
 	create.initialize_(nullptr, handler);

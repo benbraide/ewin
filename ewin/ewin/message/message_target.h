@@ -10,13 +10,17 @@
 #include "../events/event_callback.h"
 #include "../events/basic_event.h"
 
+namespace ewin::window{
+	class wnd_event;
+}
+
 namespace ewin::message{
 	class target{
 	public:
 		typedef std::pair<common::types::result, common::types::result> result_pair_type;
 		typedef std::function<void(events::message &)> dispatch_callback_type;
 
-		target();
+		explicit target(window::wnd_event &events);
 
 		virtual ~target();
 
@@ -94,6 +98,7 @@ namespace ewin::message{
 		virtual void on_unknown_message_(events::message &e);
 
 		common::types::procedure procedure_;
+		window::wnd_event *events_;
 	};
 }
 

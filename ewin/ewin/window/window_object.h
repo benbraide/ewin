@@ -27,6 +27,7 @@
 namespace ewin::window{
 	class object : public std::enable_shared_from_this<object>, public ewin::message::target{
 	public:
+		typedef ewin::message::target message_target_type;
 		typedef application::object application_type;
 
 		typedef common::error_type error_type;
@@ -115,7 +116,7 @@ namespace ewin::window{
 		wnd_state state;
 		wnd_style style;
 		wnd_attribute attribute;
-		wnd_event events;
+		common::read_only_object_value_property<wnd_event, object> events;
 
 		common::boolean_value_property<object> created;
 		common::transformation_property<create_info, void, object> create;
@@ -184,6 +185,7 @@ namespace ewin::window{
 
 		application_type *app_;
 		common::types::hwnd handle_;
+		wnd_event events_;
 		cache_info cache_;
 
 		error_throw_policy_type error_throw_policy_;

@@ -11,6 +11,10 @@
 #include "../common/object_property.h"
 #include "../common/list_property.h"
 
+#include "../common/random_bool.h"
+#include "../common/random_number.h"
+#include "../common/random_string.h"
+
 #include "../window/window_class.h"
 
 #define EWIN_UUID		 "{DABED3E8-D8A5-48FC-B80B-B17C167FA9B0}"
@@ -59,6 +63,11 @@ namespace ewin::application{
 		common::iterator_only_list_value_property<window_type, window_list_iterator_type, window_list_const_iterator_type, object> top_level_handles;
 		common::write_only_value_property<window_type *, object> window_being_created;
 		common::read_only_value_property<int, object> run;
+
+		static thread_local common::random_bool bool_generator;
+		static thread_local common::random_integral_number integer_generator;
+		static thread_local common::random_real_number real_generator;
+		static thread_local common::random_string string_generator;
 
 	protected:
 		friend class manager;

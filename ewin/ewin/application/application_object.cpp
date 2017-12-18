@@ -278,3 +278,11 @@ ewin::common::types::result CALLBACK ewin::application::object::hook_(int code, 
 
 	return ::CallNextHookEx(nullptr, code, wparam, lparam);
 }
+
+thread_local ewin::common::random_bool ewin::application::object::bool_generator;
+
+thread_local ewin::common::random_integral_number ewin::application::object::integer_generator;
+
+thread_local ewin::common::random_real_number ewin::application::object::real_generator;
+
+thread_local ewin::common::random_string ewin::application::object::string_generator;

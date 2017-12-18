@@ -7,6 +7,8 @@
 #include <functional>
 #include <unordered_map>
 
+#include "../application/application_object.h"
+
 #include "event_object.h"
 
 namespace ewin::events{
@@ -30,10 +32,7 @@ namespace ewin::events{
 		typedef std::function<void(object_type &)> callback_type;
 		typedef std::function<void()> no_arg_callback_type;
 
-		typedef void(*raw_callback_type)(object_type &);
-		typedef void(*no_arg_raw_callback_type)();
-
-		typedef std::variant<raw_callback_type, no_arg_raw_callback_type, callback_type, no_arg_callback_type> generic_callback_type;
+		typedef std::variant<callback_type, no_arg_callback_type> generic_callback_type;
 		typedef std::unordered_map<std::size_t, generic_callback_type> map_type;
 
 		struct callback_visitor{
@@ -48,28 +47,18 @@ namespace ewin::events{
 				callback();
 			}
 
-			void operator()(const raw_callback_type &callback) const{
-				callback(*e_);
-			}
-
-			void operator()(const no_arg_raw_callback_type &callback) const{
-				callback();
-			}
-
 			object_type *e_;
 		};
 
 		explicit typed_basic(target_type &target)
 			: target_(&target){}
 
-		template <typename function_type>
-		std::size_t operator +=(function_type callback){
-			std::size_t id = 0u;
-			target_->app->task += [&]{//Execute in target's thread
-				map_[id] = callback;
-			};
+		std::size_t operator +=(callback_type callback){
+			return add_(callback);
+		}
 
-			return id;
+		std::size_t operator +=(no_arg_callback_type callback){
+			return add_(callback);
 		}
 
 		void operator -=(std::size_t id){
@@ -82,6 +71,20 @@ namespace ewin::events{
 
 	private:
 		friend class ewin::message::target;
+
+		template <typename function_type>
+		std::size_t add_(const function_type &callback){
+			std::size_t id = 0u;
+			if (target_->created && target_->app != nullptr){//Execute in target's thread
+				target_->app->task += [&]{
+					map_[id = target_->app->integer_generator(static_cast<std::size_t>(0), std::numeric_limits<std::size_t>::max())] = callback;
+				};
+			}
+			else//Execute in current context
+				map_[id = application::object::integer_generator(static_cast<std::size_t>(0), std::numeric_limits<std::size_t>::max())] = callback;
+
+			return id;
+		}
 
 		virtual void fire_(message &e) override{
 			callback_visitor visitor(*dynamic_cast<object_type *>(&e));

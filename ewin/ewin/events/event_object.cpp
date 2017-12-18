@@ -50,6 +50,8 @@ void ewin::events::message::handle_property_(void *prop, void *arg, common::prop
 		else if (access == common::property_access::read)
 			*static_cast<common::types::result *>(arg) = call_default_();
 	}
+	else//Forward
+		object::handle_property_(prop, arg, access);
 }
 
 ewin::common::types::result ewin::events::message::call_default_(){

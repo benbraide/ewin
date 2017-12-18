@@ -136,6 +136,8 @@ namespace ewin::window{
 		common::write_only_variant_value_property<object, parent_change_info, child_change_info> changed;
 
 	protected:
+		friend class application::object;
+
 		void bind_properties_();
 
 		virtual void handle_property_(void *prop, void *arg, common::property_access access);

@@ -245,17 +245,28 @@ ewin::common::types::result CALLBACK ewin::application::object::entry_(common::t
 
 	auto result = target->dispatch_message[common::types::msg{ hwnd, msg, wparam, lparam }];
 	switch (msg){
+	case WM_CREATE:
+		if (result == 0u){
+			target->handle_ = hwnd;
+			target->cache_dimensions_();
+		}
+		break;
 	case WM_NCDESTROY:
 		current->destroy_window_(hwnd);
 		break;
 	case WM_WINDOWPOSCHANGED:
 	{//Check for size and position changes
 		auto info = reinterpret_cast<common::types::wnd_position *>(lparam);
+		if (!EWIN_IS(info->flags, (SWP_NOSIZE | SWP_NOMOVE)))
+			target->cache_dimensions_();
+
 		if (!EWIN_IS(info->flags, SWP_NOSIZE))
 			current->size_window_(*target);
 
 		if (!EWIN_IS(info->flags, SWP_NOMOVE))
 			current->move_window_(*target);
+
+		break;
 	}
 	case WM_SETFOCUS:
 		current->focus_window_(hwnd);

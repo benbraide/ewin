@@ -223,12 +223,7 @@ void ewin::window::object::low_level_create_(const common::types::create_struct 
 
 		EWIN_SET(additional_styles, WS_CHILD);
 		app = parent->app_;
-
 		parent_handle = parent->handle;
-		if (EWIN_IS(options, attribute_option_type::absolute_offset)){//Convert absolute value to parent relative
-			offset = common::types::point{ info.x, info.y };
-			parent->screen_to_client_(offset);
-		}
 	}
 	else if (app == nullptr)//Use main app
 		app = application::manager::main;
@@ -236,6 +231,12 @@ void ewin::window::object::low_level_create_(const common::types::create_struct 
 	if (app == nullptr){//App required
 		set_error_(error_type::no_app);
 		return;
+	}
+
+	if (EWIN_IS(options, attribute_option_type::absolute_offset)){
+		offset = common::types::point{ info.x, info.y };
+		if (parent != nullptr)//Convert absolute value to parent relative
+			parent->screen_to_client_(offset);
 	}
 
 	if (parent == nullptr && info.hwndParent != HWND_MESSAGE){

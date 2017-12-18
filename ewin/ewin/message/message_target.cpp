@@ -81,15 +81,30 @@ ewin::common::types::result ewin::message::target::dispatch_message_(common::typ
 	case WM_SIZE:
 		return dispatch_message_to_(&target::on_size_, msg, [this](events::message &e){
 			reinterpret_cast<window::object *>(this)->events.size.fire_(e);
-			if (e.info->message == WM_SIZING && e.prevent_default)//Prevent
-				*reinterpret_cast<common::types::rect *>(e.info->lParam) = common::types::rect{};
+			if (e.info->message == WM_SIZING && e.prevent_default){//Prevent
+				auto rect = reinterpret_cast<common::types::rect *>(e.info->lParam);
+				window::object::size_type size = reinterpret_cast<window::object *>(this)->size;
+				*rect = common::types::rect{//Restore values
+					(rect->left),
+					(rect->top),
+					(rect->left + size.width),
+					(rect->top + size.height)
+				};
+			}
 		});
 	case WM_MOVING:
 	case WM_MOVE:
 		return dispatch_message_to_(&target::on_move_, msg, [this](events::message &e){
 			reinterpret_cast<window::object *>(this)->events.move.fire_(e);
-			if (e.info->message == WM_MOVING && e.prevent_default)//Prevent
-				*reinterpret_cast<common::types::rect *>(e.info->lParam) = common::types::rect{};
+			if (e.info->message == WM_MOVING && e.prevent_default){//Prevent
+				window::object::rect_type old_rect = reinterpret_cast<window::object *>(this)->rect;
+				*reinterpret_cast<common::types::rect *>(e.info->lParam) = common::types::rect{//Restore values
+					old_rect.left,
+					old_rect.top,
+					old_rect.right,
+					old_rect.bottom
+				};
+			}
 		});
 	case WM_STYLECHANGING:
 	case WM_STYLECHANGED:
@@ -112,18 +127,7 @@ bool ewin::message::target::on_pre_create_(events::message &e){
 }
 
 bool ewin::message::target::on_create_(events::message &e){
-	if (::CallWindowProcW(procedure_, e.info->hwnd, e.info->message, e.info->wParam, e.info->lParam) != 0u)
-		return false;//Rejected
-
-	/*auto window_self = dynamic_cast<window::object *>(this);
-	if (window_self->view.visible && !window_self->attribute.is_control && !window_self->attribute.is_message_only){
-		dynamic_cast<window::object *>(this)->app->async_task += [window_self]{//Schedule show
-			if (window_self->handle != nullptr)
-				::ShowWindow(window_self->handle, SW_SHOWNORMAL);
-		};
-	}*/
-
-	return true;
+	return (::CallWindowProcW(procedure_, e.info->hwnd, e.info->message, e.info->wParam, e.info->lParam) == 0u);
 }
 
 void ewin::message::target::on_destroy_(events::message &e){

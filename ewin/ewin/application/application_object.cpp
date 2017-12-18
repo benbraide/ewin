@@ -179,13 +179,9 @@ void ewin::application::object::create_window_(common::types::hwnd handle, commo
 	if (window_being_created_ == nullptr || info.lpcs->lpCreateParams != window_being_created_)
 		return;//Different window
 
-	bool is_control = window_being_created_->attribute.is_control;
-	bool is_message_only = window_being_created_->attribute.is_message_only;
-
-	if (is_control)//Replace procedure
+	if (window_being_created_->attribute.is_control)//Replace procedure
 		::SetWindowLongPtrW(handle, GWLP_WNDPROC, *reinterpret_cast<common::types::ptr *>(entry_));
-
-	if (!is_control && !is_message_only && window_being_created_->tree.parent == nullptr)
+	else if (!window_being_created_->attribute.is_message_only && window_being_created_->tree.parent == nullptr)
 		top_level_handles_.push_back(handle);//Add to top-level list
 
 	cached_window_handle_ = std::make_pair(handle, window_being_created_);
@@ -249,10 +245,6 @@ ewin::common::types::result CALLBACK ewin::application::object::entry_(common::t
 
 	auto result = target->dispatch_message[common::types::msg{ hwnd, msg, wparam, lparam }];
 	switch (msg){
-	case WM_CREATE:
-		if (result == 0u && !target->attribute.is_control && !target->attribute.is_message_only && target->view.visible)
-			::ShowWindow(hwnd, SW_SHOWNORMAL);
-		break;
 	case WM_NCDESTROY:
 		current->destroy_window_(hwnd);
 		break;

@@ -83,12 +83,12 @@ ewin::common::types::result ewin::message::target::dispatch_message_(common::typ
 			events_->size.fire_(e);
 			if (e.info->message == WM_SIZING && e.prevent_default){//Prevent
 				auto rect = reinterpret_cast<common::types::rect *>(e.info->lParam);
-				window::object::size_type size = reinterpret_cast<window::object *>(this)->size;
+				common::types::size size = reinterpret_cast<window::object *>(this)->size;
 				*rect = common::types::rect{//Restore values
 					(rect->left),
 					(rect->top),
-					(rect->left + size.width),
-					(rect->top + size.height)
+					(rect->left + size.cx),
+					(rect->top + size.cy)
 				};
 			}
 		});
@@ -96,15 +96,8 @@ ewin::common::types::result ewin::message::target::dispatch_message_(common::typ
 	case WM_MOVE:
 		return dispatch_message_to_(&target::on_move_, msg, [this](events::message &e){
 			events_->move.fire_(e);
-			if (e.info->message == WM_MOVING && e.prevent_default){//Prevent
-				window::object::rect_type old_rect = reinterpret_cast<window::object *>(this)->rect;
-				*reinterpret_cast<common::types::rect *>(e.info->lParam) = common::types::rect{//Restore values
-					old_rect.left,
-					old_rect.top,
-					old_rect.right,
-					old_rect.bottom
-				};
-			}
+			if (e.info->message == WM_MOVING && e.prevent_default)//Prevent
+				*reinterpret_cast<common::types::rect *>(e.info->lParam) = reinterpret_cast<window::object *>(this)->rect;
 		});
 	case WM_STYLECHANGING:
 	case WM_STYLECHANGED:

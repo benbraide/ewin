@@ -33,16 +33,12 @@ namespace ewin::window{
 		typedef common::error_type error_type;
 		typedef common::error_throw_policy_type error_throw_policy_type;
 
-		typedef common::point_value_property_backend<int> point_type;
-		typedef common::size_value_property_backend<int> size_type;
-		typedef common::rect_value_property_backend<int> rect_type;
-
 		typedef std::shared_ptr<object> ptr_type;
 
 		enum class attribute_option_type : unsigned int{
 			nil					= (0 << 0x0000),
 			client_size			= (1 << 0x0000),
-			absolute_offset		= (1 << 0x0001),
+			absolute_position	= (1 << 0x0001),
 		};
 		
 		struct property_forbidden_info{
@@ -59,8 +55,13 @@ namespace ewin::window{
 		struct create_info{};
 
 		struct cache_info{
-			common::types::create_struct info;
-			attribute_option_type options;
+			common::types::rect rect;
+			common::types::rect relative_rect;
+			common::types::rect client_rect;
+			common::types::point position;
+			common::types::point relative_position;
+			common::types::size size;
+			common::types::size client_size;
 		};
 
 		struct parent_change_info{
@@ -72,6 +73,16 @@ namespace ewin::window{
 			object *value;
 			std::size_t index;
 			bool removed;
+		};
+
+		enum class dimension_type{
+			rect,
+			relative_rect,
+			client_rect,
+			position,
+			relative_position,
+			size,
+			client_size,
 		};
 
 		object();
@@ -88,15 +99,15 @@ namespace ewin::window{
 		common::read_only_value_property<common::types::hwnd, object> handle;
 		common::read_only_value_property<common::types::procedure, object> procedure;
 
-		common::size_value_property<int, object> size;
-		common::size_value_property<int, object> client_size;
+		common::size_value_property<common::types::size, object> size;
+		common::size_value_property<common::types::size, object> client_size;
 
-		common::point_value_property<int, object> position;
-		common::point_value_property<int, object> relative_position;
+		common::point_value_property<common::types::point, object> position;
+		common::point_value_property<common::types::point, object> relative_position;
 
-		common::rect_value_property<int, object> rect;
-		common::rect_value_property<int, object> relative_rect;
-		common::read_only_rect_value_property<int, object> client_rect;
+		common::rect_value_property<common::types::rect, object> rect;
+		common::rect_value_property<common::types::rect, object> relative_rect;
+		common::read_only_rect_value_property<common::types::rect, object> client_rect;
 
 		common::transformation_property<message_info, common::types::result, object> send_message;
 		common::transformation_property<message_info, void, object> post_message;
@@ -104,8 +115,8 @@ namespace ewin::window{
 		common::transformation_property<common::types::uint, common::types::uint, object> filter_styles;
 		common::transformation_property<common::types::uint, common::types::uint, object> filter_extended_styles;
 
-		common::read_only_size_value_property<common::types::uint, object> filtered_styles;
-		common::read_only_size_value_property<common::types::uint, object> filtered_extended_styles;
+		common::read_only_state_value_property<common::types::uint, object> filtered_styles;
+		common::read_only_state_value_property<common::types::uint, object> filtered_extended_styles;
 
 		common::transformation_property<common::types::msg, bool, object> is_dialog_message;
 		common::transformation_property<events::basic, events::basic *, object> bubble_event;
@@ -145,19 +156,9 @@ namespace ewin::window{
 
 		virtual void set_error_(common::types::dword value);
 
-		virtual void set_rect_(const rect_type &value, bool relative);
+		virtual void update_dimension_(dimension_type type);
 
-		virtual rect_type get_rect_(bool relative) const;
-
-		virtual rect_type get_client_rect_() const;
-
-		virtual void set_position_(const point_type &value, bool relative);
-
-		virtual point_type get_position_(bool relative) const;
-
-		virtual void set_size_(const size_type &value, bool client);
-
-		virtual size_type get_size_(bool client) const;
+		virtual void cache_dimensions_();
 
 		virtual void filter_styles_(std::pair<common::types::uint *, common::types::uint> &info, bool is_extended) const;
 

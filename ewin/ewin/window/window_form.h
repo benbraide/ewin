@@ -17,7 +17,7 @@ namespace ewin::window{
 		struct create_info : public window_type::create_info{
 			std::variant<std::reference_wrapper<object>, application_type *> app_or_parent;
 			std::wstring caption;
-			common::types::point offset;
+			common::types::point position;
 			common::types::size size;
 			attribute_option_type options;
 		};
@@ -96,12 +96,8 @@ namespace ewin::window{
 
 		virtual void handle_property_(void *prop, void *arg, common::property_access access) override{
 			if (prop == &caption){
-				if (access == common::property_access::write){
-					if (window_type::handle_ == nullptr)
-						window_type::cache_.info.lpszName = caption_.data();
-					else//Update
-						::SetWindowTextW(window_type::handle_, caption_.data());
-				}
+				if (access == common::property_access::write && window_type::handle_ != nullptr)
+					::SetWindowTextW(window_type::handle_, caption_.data());
 			}
 			else//Forward
 				window_type::handle_property_(prop, arg, access);
@@ -114,7 +110,39 @@ namespace ewin::window{
 			}
 
 			if (info == nullptr){//Use cache
-				window_type::low_level_create_(window_type::cache_.info, nullptr, nullptr, window_type::cache_.options);
+				common::types::size size{};
+				common::types::point position{};
+
+				auto options = attribute_option_type::nil;
+				if (cache_.position.x != 0 || cache_.position.y != 0){
+					options = attribute_option_type::absolute_position;
+					position = cache_.position;
+				}
+				else//Relative position
+					position = cache_.relative_position;
+
+				if (cache_.size.cx == 0 && cache_.size.cy == 0){
+					EWIN_SET(options, attribute_option_type::client_size);
+					size = cache_.client_size;
+				}
+				else//Full size
+					size = cache_.size;
+
+				window_type::low_level_create_(common::types::create_struct{
+					nullptr,
+					nullptr,
+					nullptr,
+					nullptr,
+					size.cy,
+					size.cx,
+					position.y,
+					position.x,
+					0,
+					caption_.data(),
+					nullptr,
+					0u
+				}, nullptr, nullptr, options);
+
 				return;
 			}
 
@@ -134,8 +162,8 @@ namespace ewin::window{
 				nullptr,
 				converted_info->size.cy,
 				converted_info->size.cx,
-				converted_info->offset.y,
-				converted_info->offset.x,
+				converted_info->position.y,
+				converted_info->position.x,
 				0,
 				converted_info->caption.data(),
 				nullptr,

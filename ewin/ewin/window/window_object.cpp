@@ -2,6 +2,8 @@
 
 #include "dialog_window.h"
 
+#pragma warning(disable: 4312)
+
 ewin::window::object::object()
 	: message_target_type(events_), tree(*this), view(*this), frame(*this), state(*this), style(*this), attribute(*this), events_(*this), app_(nullptr), handle_(nullptr),
 	error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), local_error_value_(ERROR_SUCCESS), auto_destroy_(true){
@@ -26,15 +28,15 @@ void ewin::window::object::bind_properties_(){
 	handle.initialize_(&handle_, nullptr);
 	procedure.initialize_(&procedure_, nullptr);
 
-	size.initialize_(nullptr, handler);
-	client_size.initialize_(nullptr, handler);
+	size.initialize_(&cache_.size, handler);
+	client_size.initialize_(&cache_.client_size, handler);
 
-	position.initialize_(nullptr, handler);
-	relative_position.initialize_(nullptr, handler);
+	position.initialize_(&cache_.position, handler);
+	relative_position.initialize_(&cache_.relative_position, handler);
 
-	rect.initialize_(nullptr, handler);
-	relative_rect.initialize_(nullptr, handler);
-	client_rect.initialize_(nullptr, handler);
+	rect.initialize_(&cache_.rect, handler);
+	relative_rect.initialize_(&cache_.relative_rect, handler);
+	client_rect.initialize_(&cache_.client_rect, nullptr);
 
 	send_message.initialize_(nullptr, handler);
 	post_message.initialize_(nullptr, handler);
@@ -114,44 +116,18 @@ void ewin::window::object::handle_property_(void *prop, void *arg, common::prope
 		info->second = bubble_event_(*info->first);
 		return;
 	}
-	else if (prop == &size){
-		if (access == common::property_access::read)
-			*static_cast<size_type *>(arg) = get_size_(false);
-		else if (access == common::property_access::write)
-			set_size_(*static_cast<size_type *>(arg), false);
-	}
-	else if (prop == &client_size){
-		if (access == common::property_access::read)
-			*static_cast<size_type *>(arg) = get_size_(true);
-		else if (access == common::property_access::write)
-			set_size_(*static_cast<size_type *>(arg), true);
-	}
-	else if (prop == &position){
-		if (access == common::property_access::read)
-			*static_cast<point_type *>(arg) = get_position_(false);
-		else if (access == common::property_access::write)
-			set_position_(*static_cast<point_type *>(arg), false);
-	}
-	else if (prop == &relative_position){
-		if (access == common::property_access::read)
-			*static_cast<point_type *>(arg) = get_position_(true);
-		else if (access == common::property_access::write)
-			set_position_(*static_cast<point_type *>(arg), true);
-	}
-	else if (prop == &rect){
-		if (access == common::property_access::read)
-			*static_cast<rect_type *>(arg) = get_rect_(false);
-		else if (access == common::property_access::write)
-			set_rect_(*static_cast<rect_type *>(arg), false);
-	}
-	else if (prop == &relative_rect){
-		if (access == common::property_access::read)
-			*static_cast<rect_type *>(arg) = get_rect_(true);
-		else if (access == common::property_access::write)
-			set_rect_(*static_cast<rect_type *>(arg), true);
-	}
-	else if (prop == &client_rect)
-		*static_cast<rect_type *>(arg) = get_client_rect_();
+	else if (prop == &size && access == common::property_access::write)
+		update_dimension_(dimension_type::size);
+	else if (prop == &client_size && access == common::property_access::write)
+		update_dimension_(dimension_type::client_size);
+	else if (prop == &position && access == common::property_access::write)
+		update_dimension_(dimension_type::position);
+	else if (prop == &relative_position && access == common::property_access::write)
+		update_dimension_(dimension_type::relative_position);
+	else if (prop == &rect && access == common::property_access::write)
+		update_dimension_(dimension_type::rect);
+	else if (prop == &relative_rect && access == common::property_access::write)
+		update_dimension_(dimension_type::relative_rect);
 	else if (prop == &send_message)
 		send_message_(*static_cast<std::pair<message_info *, common::types::result> *>(arg));
 	else if (prop == &post_message)
@@ -234,7 +210,7 @@ void ewin::window::object::low_level_create_(const common::types::create_struct 
 		return;
 	}
 
-	if (EWIN_IS(options, attribute_option_type::absolute_offset)){
+	if (EWIN_IS(options, attribute_option_type::absolute_position)){
 		offset = common::types::point{ info.x, info.y };
 		if (parent != nullptr)//Convert absolute value to parent relative
 			parent->screen_to_client_(offset);
@@ -271,8 +247,8 @@ void ewin::window::object::low_level_create_(const common::types::create_struct 
 			((dynamic_cast<dialog *>(this) == nullptr) ? application::manager::main->general_window_class.raw_name : application::manager::main->dialog_window_class.raw_name),
 			info.lpszName,
 			styles,
-			(EWIN_IS(options, attribute_option_type::absolute_offset) ? offset.x : info.x),
-			(EWIN_IS(options, attribute_option_type::absolute_offset) ? offset.y : info.y),
+			(EWIN_IS(options, attribute_option_type::absolute_position) ? offset.x : info.x),
+			(EWIN_IS(options, attribute_option_type::absolute_position) ? offset.y : info.y),
 			(EWIN_IS(options, attribute_option_type::client_size) ? size.cx : info.cx),
 			(EWIN_IS(options, attribute_option_type::client_size) ? size.cy : info.cy),
 			((parent_handle == nullptr) ? info.hwndParent : parent_handle),
@@ -330,132 +306,137 @@ void ewin::window::object::set_error_(common::types::dword value){
 		set_error_(error_type::local_error);
 }
 
-void ewin::window::object::set_rect_(const rect_type &value, bool relative){
-	if (!relative && tree.parent != nullptr){
-		common::types::size size{ (value.right - value.left), (value.bottom - value.top) };
-		common::types::point relative_pos{ value.left, value.top };
+void ewin::window::object::update_dimension_(dimension_type type){
+	switch (type){
+	case dimension_type::rect:
+		if (handle_ != nullptr){
+			cache_.position.x = cache_.relative_rect.left = cache_.rect.left;
+			cache_.position.y = cache_.relative_rect.top = cache_.rect.top;
 
-		::ScreenToClient(tree.parent->handle_, &relative_pos);
-		::SetWindowPos(handle_, nullptr, relative_pos.x, relative_pos.y, (relative_pos.x + size.cx), (relative_pos.y + size.cy), SWP_NOZORDER | SWP_NOACTIVATE);
+			cache_.size.cx = (cache_.rect.right - cache_.rect.left);
+			cache_.size.cy = (cache_.rect.bottom - cache_.rect.top);
+
+			if (tree.parent_ != nullptr){//Convert from screen
+				tree.parent_->screen_to_client_(*reinterpret_cast<common::types::point *>(cache_.relative_rect.left));
+				cache_.relative_rect.right = (cache_.relative_rect.left + cache_.size.cx);
+				cache_.relative_rect.bottom = (cache_.relative_rect.top + cache_.size.cy);
+			}
+			else//No conversion necessary
+				cache_.relative_rect = cache_.rect;
+
+			::SetWindowPos(handle_, nullptr, cache_.relative_rect.left, cache_.relative_rect.top, cache_.size.cx, cache_.size.cy, (SWP_NOZORDER | SWP_NOACTIVATE));
+			::GetClientRect(handle_, &cache_.client_rect);
+
+			cache_.relative_position.x = cache_.relative_rect.left;
+			cache_.relative_position.y = cache_.relative_rect.top;
+
+			cache_.client_size.cx = (cache_.client_rect.right - cache_.client_rect.left);
+			cache_.client_size.cy = (cache_.client_rect.bottom - cache_.client_rect.top);
+		}
+		else{//Invalidate others
+			cache_.relative_rect = cache_.client_rect = common::types::rect{};
+			cache_.position.x = cache_.rect.left;
+			cache_.position.y = cache_.rect.top;
+		}
+		break;
+	case dimension_type::relative_rect:
+		if (handle_ != nullptr){
+			cache_.relative_position.x = cache_.rect.left = cache_.relative_rect.left;
+			cache_.relative_position.y = cache_.rect.top = cache_.relative_rect.top;
+
+			cache_.size.cx = (cache_.relative_rect.right - cache_.relative_rect.left);
+			cache_.size.cy = (cache_.relative_rect.bottom - cache_.relative_rect.top);
+
+			if (tree.parent_ != nullptr){//Convert from screen
+				tree.parent_->client_to_screen_(*reinterpret_cast<common::types::point *>(cache_.rect.left));
+				cache_.rect.right = (cache_.rect.left + cache_.size.cx);
+				cache_.rect.bottom = (cache_.rect.top + cache_.size.cy);
+			}
+			else//No conversion necessary
+				cache_.rect = cache_.relative_rect;
+
+			cache_.position.x = cache_.rect.left;
+			cache_.position.y = cache_.rect.top;
+
+			::SetWindowPos(handle_, nullptr, cache_.relative_rect.left, cache_.relative_rect.top, cache_.size.cx, cache_.size.cy, (SWP_NOZORDER | SWP_NOACTIVATE));
+			::GetClientRect(handle_, &cache_.client_rect);
+
+			cache_.client_size.cx = (cache_.client_rect.right - cache_.client_rect.left);
+			cache_.client_size.cy = (cache_.client_rect.bottom - cache_.client_rect.top);
+		}
+		else{//Invalidate others
+			cache_.rect = cache_.client_rect = common::types::rect{};
+			cache_.position = common::types::point{};
+			cache_.relative_position.x = cache_.rect.left;
+			cache_.relative_position.y = cache_.rect.top;
+		}
+		break;
+	case dimension_type::position:
+		cache_.rect.right = ((cache_.rect.left = cache_.position.x) + cache_.size.cx);
+		cache_.rect.bottom = ((cache_.rect.top = cache_.position.y) + cache_.size.cy);
+		update_dimension_(dimension_type::rect);
+		break;
+	case dimension_type::relative_position:
+		cache_.relative_rect.right = ((cache_.relative_rect.left = cache_.relative_position.x) + cache_.size.cx);
+		cache_.relative_rect.bottom = ((cache_.relative_rect.top = cache_.relative_position.y) + cache_.size.cy);
+		update_dimension_(dimension_type::relative_rect);
+		break;
+	case dimension_type::size:
+		cache_.rect.right = (cache_.rect.left + cache_.size.cx);
+		cache_.rect.bottom = (cache_.rect.top + cache_.size.cy);
+		update_dimension_(dimension_type::rect);
+		break;
+	case dimension_type::client_size:
+	{
+		if (handle_ != nullptr){
+			common::types::point client_position{ cache_.client_rect.left, cache_.client_rect.top };
+			client_to_screen_(client_position);//Convert to screen
+
+			common::types::point client_position_extent{
+				client_position.x + (cache_.client_rect.right - cache_.client_rect.left),
+				client_position.y + (cache_.client_rect.bottom - cache_.client_rect.top)
+			};
+
+			cache_.rect.right = (cache_.rect.left + cache_.client_size.cx + (client_position.x - cache_.rect.left) + (cache_.rect.right - client_position_extent.x));
+			cache_.rect.bottom = (cache_.rect.top + cache_.client_size.cy + (client_position.y - cache_.rect.top) + (cache_.rect.bottom - client_position_extent.y));
+
+			update_dimension_(dimension_type::rect);
+		}
+		else//Invalidate rects
+			cache_.rect = cache_.relative_rect = cache_.client_rect = common::types::rect{};
+		break;
 	}
-	else//No conversion
-		::SetWindowPos(handle_, nullptr, value.left, value.top, (value.right - value.left), (value.bottom - value.top), SWP_NOZORDER | SWP_NOACTIVATE);
+	default:
+		break;
+	}
 }
 
-ewin::window::object::rect_type ewin::window::object::get_rect_(bool relative) const{
-	if (handle_ == nullptr){//Use cache value
-		return rect_type{
-			(cache_.info.x),
-			(cache_.info.y),
-			(cache_.info.x + cache_.info.cx),
-			(cache_.info.y + cache_.info.cy)
-		};
+void ewin::window::object::cache_dimensions_(){
+	if (handle_ == nullptr)
+		return;//Ignore
+
+	::GetWindowRect(handle_, &cache_.rect);
+	::GetClientRect(handle_, &cache_.client_rect);
+
+	cache_.position.x = cache_.relative_rect.left = cache_.rect.left;
+	cache_.position.y = cache_.relative_rect.top = cache_.rect.top;
+
+	cache_.size.cx = (cache_.rect.right - cache_.rect.left);
+	cache_.size.cy = (cache_.rect.bottom - cache_.rect.top);
+
+	if (tree.parent_ != nullptr){//Convert from screen
+		tree.parent_->screen_to_client_(*reinterpret_cast<common::types::point *>(cache_.relative_rect.left));
+		cache_.relative_rect.right = (cache_.relative_rect.left + cache_.size.cx);
+		cache_.relative_rect.bottom = (cache_.relative_rect.top + cache_.size.cy);
 	}
+	else//No conversion necessary
+		cache_.relative_rect = cache_.rect;
 
-	common::types::rect value{};
-	::GetWindowRect(handle_, &value);
-	if (relative && tree.parent != nullptr){//Convert value from screen
-		common::types::size size{ (value.right - value.left), (value.bottom - value.top) };
-		common::types::point relative_pos{ value.left, value.top };
+	cache_.relative_position.x = cache_.relative_rect.left;
+	cache_.relative_position.y = cache_.relative_rect.top;
 
-		::ScreenToClient(tree.parent->handle_, &relative_pos);
-		value = common::types::rect{ relative_pos.x, relative_pos.y, (relative_pos.x + size.cx), (relative_pos.y + size.cy) };
-	}
-
-	return rect_type{ value.left, value.top, value.right, value.bottom };
-}
-
-ewin::window::object::rect_type ewin::window::object::get_client_rect_() const{
-	if (handle_ == nullptr){//Use cache value
-		return rect_type{
-			(cache_.info.x),
-			(cache_.info.y),
-			(cache_.info.x + cache_.info.cx),
-			(cache_.info.y + cache_.info.cy)
-		};
-	}
-
-	common::types::rect value{};
-	::GetClientRect(handle_, &value);
-	return rect_type{ value.left, value.top, value.right, value.bottom };
-}
-
-void ewin::window::object::set_position_(const point_type &value, bool relative){
-	if (handle_ == nullptr){//Cache value
-		cache_.info.x = value.x;
-		cache_.info.y = value.y;
-
-		if (relative)
-			EWIN_REMOVE(cache_.options, attribute_option_type::absolute_offset);
-		else//Absolute
-			EWIN_SET(cache_.options, attribute_option_type::absolute_offset);
-
-		return;
-	}
-
-	auto size = get_size_(false);
-	set_rect_(rect_type{ value.x, value.y, (value.x + size.width), (value.y + size.height) }, relative);
-}
-
-ewin::window::object::point_type ewin::window::object::get_position_(bool relative) const{
-	if (handle_ == nullptr){//Use cache value
-		return point_type{
-			cache_.info.x,
-			cache_.info.y
-		};
-	}
-
-	auto rect_value = get_rect_(relative);
-	return point_type{ rect_value.left, rect_value.top };
-}
-
-void ewin::window::object::set_size_(const size_type &value, bool client){
-	if (handle_ == nullptr){//Cache value
-		cache_.info.cx = value.width;
-		cache_.info.cy = value.height;
-
-		if (client)
-			EWIN_SET(cache_.options, attribute_option_type::client_size);
-		else//Non-client
-			EWIN_REMOVE(cache_.options, attribute_option_type::client_size);
-
-		return;
-	}
-
-	auto position = get_position_(true);
-	if (client){//Convert
-		auto rect = get_rect_(false), relative_rect = get_rect_(true);
-		auto padding = rect_type{
-			(relative_rect.left - rect.left),
-			(relative_rect.top - rect.top),
-			(rect.right - relative_rect.right),
-			(rect.bottom - relative_rect.bottom)
-		};
-
-		set_rect_(
-			rect_type{ position.x, position.y, (position.x + value.width + padding.left + padding.right), (position.y + value.height + padding.top + padding.bottom) },
-			true
-		);
-	}
-	else//No conversion
-		set_rect_(rect_type{ position.x, position.y, (position.x + value.width), (position.y + value.height) }, true);
-}
-
-ewin::window::object::size_type ewin::window::object::get_size_(bool client) const{
-	if (handle_ == nullptr){//Use cache value
-		return size_type{
-			cache_.info.cx,
-			cache_.info.cy
-		};
-	}
-
-	if (client){//Client size
-		auto rect_value = get_client_rect_();
-		return size_type{ rect_value.right - rect_value.left, rect_value.bottom - rect_value.top };
-	}
-
-	auto rect_value = get_rect_(false);
-	return size_type{ rect_value.right - rect_value.left, rect_value.bottom - rect_value.top };
+	cache_.client_size.cx = (cache_.client_rect.right - cache_.client_rect.left);
+	cache_.client_size.cy = (cache_.client_rect.bottom - cache_.client_rect.top);
 }
 
 void ewin::window::object::filter_styles_(std::pair<common::types::uint *, common::types::uint> &info, bool is_extended) const{

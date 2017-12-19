@@ -9,9 +9,11 @@ void ewin::events::object::bind_properties_(){
 	auto handler = EWIN_PROP_HANDLER(object);
 
 	target.initialize_(target_, nullptr);
+	do_default.initialize_(nullptr, handler);
 	prevent_default.initialize_(nullptr, handler);
 	stop_propagation.initialize_(nullptr, handler);
-	bubble.initialize_(nullptr, handler);
+	bubbled.initialize_(nullptr, handler);
+	handled.initialize_(nullptr, handler);
 }
 
 void ewin::events::object::handle_property_(void *prop, void *arg, common::property_access access){
@@ -27,16 +29,20 @@ void ewin::events::object::handle_property_(void *prop, void *arg, common::prope
 		else if (access == common::property_access::write && *static_cast<bool *>(arg))
 			EWIN_SET(states_, state_type::propagation_stopped);
 	}
-	else if (prop == &bubble){
-		if (access == common::property_access::read)
-			*static_cast<bool *>(arg) = EWIN_IS(states_, state_type::bubbled);
-		else if (access == common::property_access::write && *static_cast<bool *>(arg))
-			EWIN_SET(states_, state_type::bubbled);
-	}
+	else if (prop == &bubbled)
+		*static_cast<bool *>(arg) = EWIN_IS(states_, state_type::bubbled);
+	else if (prop == &handled)
+		*static_cast<bool *>(arg) = EWIN_IS_ANY(states_, state_type::default_called | state_type::default_prevented | state_type::bubbled);
+}
+
+void ewin::events::object::do_default_(){
+	if (!EWIN_IS_ANY(states_, state_type::default_called | state_type::default_prevented | state_type::bubbled))
+		EWIN_SET(states_, state_type::default_called);
 }
 
 void ewin::events::object::prevent_default_(){
-	EWIN_SET(states_, state_type::default_prevented);
+	if (!EWIN_IS_ANY(states_, state_type::default_called | state_type::default_prevented | state_type::bubbled))
+		EWIN_SET(states_, state_type::default_prevented);
 }
 
 ewin::events::message::~message() = default;
@@ -54,15 +60,27 @@ void ewin::events::message::handle_property_(void *prop, void *arg, common::prop
 		object::handle_property_(prop, arg, access);
 }
 
+void ewin::events::message::do_default_(){
+	call_default_();
+}
+
 ewin::common::types::result ewin::events::message::call_default_(){
-	if (!EWIN_IS_ANY(states_, state_type::default_called | state_type::default_prevented | state_type::bubbled))
-		result_ = callback_(*this);//Call
-	EWIN_SET(states_, state_type::default_called);
+	if (EWIN_IS_ANY(states_, state_type::default_called | state_type::default_prevented | state_type::bubbled))
+		return result_;
+
+	result_ = callback_(*this);//Call
+	if (!EWIN_IS(states_, state_type::default_prevented))
+		EWIN_SET(states_, state_type::default_called);
+	
 	return result_;
 }
 
-void ewin::events::message::remove_bubble_(){
+void ewin::events::message::bubble_(){
 	EWIN_SET(states_, state_type::bubbled);
+}
+
+void ewin::events::message::remove_bubble_(){
+	EWIN_REMOVE(states_, state_type::bubbled);
 }
 
 void ewin::events::mouse_activate::handle_property_(void *prop, void *arg, common::property_access access){

@@ -33,7 +33,8 @@ namespace ewin::window{
 		ewin::events::typed_basic<ewin::events::focus_change, object, false> focus_change;
 		ewin::events::typed_basic<ewin::events::enable, object, false> enable;
 
-		ewin::events::typed_basic<ewin::events::set_cursor, object, false> set_cursor;
+		ewin::events::typed_basic<ewin::events::cursor, object, false> set_cursor;
+		ewin::events::typed_basic<ewin::events::cursor, object, false> get_cursor;
 		ewin::events::typed_basic<ewin::events::hit_test, object, false> hit_test;
 
 		ewin::events::typed_basic<ewin::events::position_change, object, false> position_change;

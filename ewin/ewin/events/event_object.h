@@ -39,14 +39,19 @@ namespace ewin::events{
 		explicit object(target_type *target);
 
 		common::read_only_object_value_property<target_type, object> target;
+		common::boolean_value_property<object> do_default;
 		common::boolean_value_property<object> prevent_default;
 		common::boolean_value_property<object> stop_propagation;
-		common::boolean_value_property<object> bubble;
+
+		common::read_only_boolean_value_property<object> bubbled;
+		common::read_only_boolean_value_property<object> handled;
 
 	protected:
 		void bind_properties_();
 
 		virtual void handle_property_(void *prop, void *arg, common::property_access access);
+
+		virtual void do_default_();
 
 		virtual void prevent_default_();
 
@@ -76,7 +81,11 @@ namespace ewin::events{
 
 		virtual void handle_property_(void *prop, void *arg, common::property_access access) override;
 
+		virtual void do_default_() override;
+
 		virtual common::types::result call_default_();
+
+		virtual void bubble_();
 
 		virtual void remove_bubble_();
 
@@ -103,7 +112,7 @@ namespace ewin::events{
 		virtual void handle_property_(void *prop, void *arg, common::property_access access) override;
 	};
 
-	using set_cursor = mouse_activate;
+	using cursor = mouse_activate;
 
 	class pre_activate : public message{
 	public:

@@ -96,7 +96,7 @@ namespace ewin::events{
 
 			auto bubbled = target_->bubble_event[*this];
 			if (bubbled != nullptr){//Bubble event
-				e.bubble = true;
+				e.bubble_();
 				bubbled->fire_(e);
 				e.remove_bubble_();
 			}

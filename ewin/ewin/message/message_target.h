@@ -18,7 +18,7 @@ namespace ewin::message{
 	class target{
 	public:
 		typedef std::pair<common::types::result, common::types::result> result_pair_type;
-		typedef std::function<void(events::message &)> dispatch_callback_type;
+		typedef std::function<void(events::message &, bool)> dispatch_callback_type;
 
 		explicit target(window::wnd_event &events);
 
@@ -34,30 +34,70 @@ namespace ewin::message{
 			dispatch_callback_type dispatch_callback = nullptr){
 			events::typed_callback<target, return_type, event_type> event_callback(*this, callback);
 			event_type e(msg, event_callback, this);
-			if (dispatch_callback != nullptr)
-				dispatch_callback(e);
+
+			if (dispatch_callback != nullptr){
+				dispatch_callback(e, true);
+				if (!e.handled){
+					auto result = (this->*callback)(e);
+					if (!e.handled)
+						e.result = result;
+					dispatch_callback(e, false);
+				}
+			}
+			else{//No dispatch callback
+				auto result = (this->*callback)(e);
+				if (!e.handled)
+					e.result = result;
+			}
+
 			return e.result;
 		}
 
 		template <typename event_type>
-		common::types::result dispatch_message_to_boolean_(bool(target::*callback)(event_type &), common::types::msg &msg, const result_pair_type &result,
+		common::types::result dispatch_message_to_(void(target::*callback)(event_type &), common::types::msg &msg,
 			dispatch_callback_type dispatch_callback = nullptr){
-			events::typed_callback<target, bool, event_type> event_callback(*this, callback, [&result](const bool &value) -> common::types::result{
-				return (value ? result.second : result.first);
-			});
+			events::typed_callback<target, void, event_type> event_callback(*this, callback);
 			event_type e(msg, event_callback, this);
-			if (dispatch_callback != nullptr)
-				dispatch_callback(e);
+
+			if (dispatch_callback != nullptr){
+				dispatch_callback(e, true);
+				if (!e.handled){
+					(this->*callback)(e);
+					dispatch_callback(e, false);
+
+					if (!e.handled)
+						e.result = call_procedure_(e);
+				}
+			}
+			else{//No dispatch callback
+				(this->*callback)(e);
+				if (!e.handled)
+					e.result = call_procedure_(e);
+			}
+
 			return e.result;
 		}
 
 		template <typename event_type>
-		common::types::result dispatch_message_to_boolean_(bool(target::*callback)(event_type &), common::types::msg &msg,
+		common::types::result dispatch_message_to_(bool(target::*callback)(event_type &), common::types::msg &msg,
 			dispatch_callback_type dispatch_callback = nullptr){
 			events::typed_callback<target, bool, event_type> event_callback(*this, callback);
 			event_type e(msg, event_callback, this);
-			if (dispatch_callback != nullptr)
-				dispatch_callback(e);
+
+			if (dispatch_callback != nullptr){
+				dispatch_callback(e, true);
+				if (!e.handled){
+					if (!(this->*callback)(e) || e.handled)
+						e.prevent_default = true;
+
+					dispatch_callback(e, false);
+					if (!e.handled)
+						e.result = call_procedure_(e);
+				}
+			}
+			else if ((this->*callback)(e) && !e.handled)
+				e.result = call_procedure_(e);
+
 			return e.result;
 		}
 
@@ -83,7 +123,9 @@ namespace ewin::message{
 
 		virtual void on_enable_(events::enable &e);
 
-		virtual common::types::hcursor on_set_cursor_(events::set_cursor &e);
+		virtual void on_set_cursor_(events::cursor &e);
+
+		virtual common::types::hcursor on_get_cursor_(events::cursor &e);
 
 		virtual common::types::uint on_hit_test_(events::hit_test &e);
 
@@ -96,6 +138,8 @@ namespace ewin::message{
 		virtual void on_style_change_(events::move &e);
 
 		virtual void on_unknown_message_(events::message &e);
+
+		virtual common::types::result call_procedure_(events::message &e);
 
 		common::types::procedure procedure_;
 		window::wnd_event *events_;

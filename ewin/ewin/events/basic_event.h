@@ -77,11 +77,11 @@ namespace ewin::events{
 			std::size_t id = 0u;
 			if (target_->created && target_->app != nullptr){//Execute in target's thread
 				target_->app->task += [&]{
-					map_[id = target_->app->integer_generator(static_cast<std::size_t>(0), std::numeric_limits<std::size_t>::max())] = callback;
+					map_[id = target_->app->integer_generator(static_cast<std::size_t>(1), std::numeric_limits<std::size_t>::max())] = callback;
 				};
 			}
 			else//Execute in current context
-				map_[id = application::object::integer_generator(static_cast<std::size_t>(0), std::numeric_limits<std::size_t>::max())] = callback;
+				map_[id = application::object::integer_generator(static_cast<std::size_t>(1), std::numeric_limits<std::size_t>::max())] = callback;
 
 			return id;
 		}

@@ -15,6 +15,8 @@
 
 #include "../application/application_manager.h"
 
+#include "../drawing/hwnd_drawing_object.h"
+
 #include "window_class.h"
 #include "window_frame.h"
 #include "window_tree.h"
@@ -133,6 +135,7 @@ namespace ewin::window{
 		common::transformation_property<create_info, void, object> create;
 		common::boolean_value_property<object> auto_destroy;
 
+		common::read_only_object_value_property<drawing::hwnd_object, object> drawer;
 		common::write_only_variant_value_property<object, parent_change_info, child_change_info> changed;
 
 	protected:
@@ -195,6 +198,7 @@ namespace ewin::window{
 		error_type error_value_;
 		common::types::dword local_error_value_;
 		bool auto_destroy_;
+		drawing::hwnd_object drawer_;
 	};
 
 	EWIN_MAKE_OPERATORS(object::attribute_option_type);

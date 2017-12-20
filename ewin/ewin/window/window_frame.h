@@ -1,7 +1,7 @@
 #pragma once
 
-#ifndef ELANG_WINDOW_FRAME_H
-#define ELANG_WINDOW_FRAME_H
+#ifndef EWIN_WINDOW_FRAME_H
+#define EWIN_WINDOW_FRAME_H
 
 #include "../common/type_aliases.h"
 #include "../common/boolean_property.h"
@@ -42,4 +42,4 @@ namespace ewin::window{
 	};
 }
 
-#endif /* !ELANG_WINDOW_FRAME_H */
+#endif /* !EWIN_WINDOW_FRAME_H */

@@ -40,12 +40,7 @@ namespace ewin::common{
 			if (access != access_type::nil && !EWIN_IS(access, access_type::write))
 				throw error_type::property_access_violation;
 
-			if (linked_ != nullptr){
-				*linked_ = value;
-				if (callback_ != nullptr)//Alert listener
-					callback_(this, nullptr, access_type::write);
-			}
-			else if (callback_ != nullptr)//Call handler
+			if (callback_ != nullptr)//Call handler
 				callback_(this, &const_cast<value_type &>(value), access_type::write);
 			else//Error
 				throw error_type::uninitialized_property;

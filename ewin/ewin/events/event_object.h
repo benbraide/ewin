@@ -152,14 +152,14 @@ namespace ewin::events{
 		template <typename... args_types>
 		explicit change(args_types &&... args)
 			: message(std::forward<args_types>(args)...){
-			is_focused.initialize_(nullptr, EWIN_PROP_HANDLER(change));
+			is_changing.initialize_(nullptr, EWIN_PROP_HANDLER(change));
 		}
 
-		common::read_only_boolean_value_property<change> is_focused;
+		common::read_only_boolean_value_property<change> is_changing;
 
 	protected:
 		virtual void handle_property_(void *prop, void *arg, common::property_access access) override{
-			if (prop == &is_focused)
+			if (prop == &is_changing)
 				*static_cast<common::types::uint *>(arg) = (msg_->message == changing_message);
 			else//Forward
 				message::handle_property_(prop, arg, access);

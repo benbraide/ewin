@@ -6,27 +6,35 @@
 #include "numeric_property.h"
 
 namespace ewin::common{
-	template <class value_type, class manager_type = void, property_access access = property_access::nil>
-	class size_value_property : public value_property<value_type, manager_type, access>{
+	namespace detail{
+		template <class type, class unused_type = void>
+		struct has_cx : std::false_type{};
+
+		template <class type>
+		struct has_cx<type, decltype((void)type::cx)> : std::true_type{};
+	}
+
+	template <class value_type, class manager_type, property_access access, bool has_cx>
+	class basic_size_value_property : public value_property<value_type, manager_type, access>{
 	public:
 		typedef value_type value_type;
 		typedef decltype(value_type::cx) backend_value_type;
 
 		typedef value_property<value_type, manager_type, access> base_type;
-		typedef numeric_value_property<backend_value_type, size_value_property, access> numeric_value_property_type;
+		typedef numeric_value_property<backend_value_type, basic_size_value_property, access> numeric_value_property_type;
 
 		using base_type::operator value_type;
 
 		template <typename... args_types>
-		explicit size_value_property(args_types &&... args)
+		explicit basic_size_value_property(args_types &&... args)
 			: base_type(std::forward<args_types>(args)...){
-			auto handler = EWIN_PROP_HANDLER(size_value_property);
+			auto handler = EWIN_PROP_HANDLER(basic_size_value_property);
 			width.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->cx), handler);
 			height.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->cy), handler);
 		}
 
 		template <typename target_type>
-		size_value_property &operator =(const target_type &value){
+		basic_size_value_property &operator =(const target_type &value){
 			base_type::operator =(value);
 			return *this;
 		}
@@ -48,12 +56,12 @@ namespace ewin::common{
 		}
 
 		template <typename target_type, typename unused_type = value_type>
-		friend std::enable_if_t<!std::is_same_v<target_type, size_value_property>, bool> operator ==(const target_type &lhs, const size_value_property &rhs){
+		friend std::enable_if_t<!std::is_same_v<target_type, basic_size_value_property>, bool> operator ==(const target_type &lhs, const basic_size_value_property &rhs){
 			return (rhs == lhs);
 		}
 
 		template <typename target_type, typename unused_type = value_type>
-		friend std::enable_if_t<!std::is_same_v<target_type, size_value_property>, bool> operator !=(const target_type &lhs, const size_value_property &rhs){
+		friend std::enable_if_t<!std::is_same_v<target_type, basic_size_value_property>, bool> operator !=(const target_type &lhs, const basic_size_value_property &rhs){
 			return (rhs != lhs);
 		}
 
@@ -67,7 +75,7 @@ namespace ewin::common{
 		void initialize_(value_type *linked, callback_type callback){
 			base_type::initialize_(linked, callback);
 			if (linked != nullptr){//Update linked
-				auto handler = EWIN_PROP_HANDLER(size_value_property);
+				auto handler = EWIN_PROP_HANDLER(basic_size_value_property);
 				width.initialize_(&linked->cx, handler);
 				height.initialize_(&linked->cy, handler);
 			}
@@ -99,6 +107,103 @@ namespace ewin::common{
 				base_type::callback_(this, nullptr, access);
 		}
 	};
+
+	template <class value_type, class manager_type, property_access access>
+	class basic_size_value_property<value_type, manager_type, access, false> : public value_property<value_type, manager_type, access>{
+	public:
+		typedef value_type value_type;
+		typedef decltype(value_type::width) backend_value_type;
+
+		typedef value_property<value_type, manager_type, access> base_type;
+		typedef numeric_value_property<backend_value_type, basic_size_value_property, access> numeric_value_property_type;
+
+		using base_type::operator value_type;
+
+		template <typename... args_types>
+		explicit basic_size_value_property(args_types &&... args)
+			: base_type(std::forward<args_types>(args)...){
+			auto handler = EWIN_PROP_HANDLER(basic_size_value_property);
+			width.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->width), handler);
+			height.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->height), handler);
+		}
+
+		template <typename target_type>
+		basic_size_value_property &operator =(const target_type &value){
+			base_type::operator =(value);
+			return *this;
+		}
+
+		template <typename target_type>
+		bool operator ==(const target_type &rhs) const{
+			return (*this == (value_type)rhs);
+		}
+
+		bool operator ==(const value_type &rhs) const{
+			if (base_type::linked_ != nullptr)//Use linked value
+				return (base_type::linked_->width == rhs.width && base_type::linked_->height == rhs.height);
+			auto left = (value_type)(*this);
+			return (left.width == rhs.width && left.height == rhs.height);
+		}
+
+		bool operator !=(const value_type &rhs) const{
+			return !(*this == rhs);
+		}
+
+		template <typename target_type, typename unused_type = value_type>
+		friend std::enable_if_t<!std::is_same_v<target_type, basic_size_value_property>, bool> operator ==(const target_type &lhs, const basic_size_value_property &rhs){
+			return (rhs == lhs);
+		}
+
+		template <typename target_type, typename unused_type = value_type>
+		friend std::enable_if_t<!std::is_same_v<target_type, basic_size_value_property>, bool> operator !=(const target_type &lhs, const basic_size_value_property &rhs){
+			return (rhs != lhs);
+		}
+
+		numeric_value_property_type width;
+		numeric_value_property_type height;
+
+	protected:
+		friend class property_manager;
+		friend std::conditional_t<std::is_void_v<manager_type>, value_property, manager_type>;
+
+		void initialize_(value_type *linked, callback_type callback){
+			base_type::initialize_(linked, callback);
+			if (linked != nullptr){//Update linked
+				auto handler = EWIN_PROP_HANDLER(basic_size_value_property);
+				width.initialize_(&linked->width, handler);
+				height.initialize_(&linked->height, handler);
+			}
+		}
+
+		void handle_property_(void *prop, void *arg, property_access access){
+			if (arg != nullptr && base_type::linked_ == nullptr){
+				if (base_type::callback_ == nullptr)
+					throw error_type::uninitialized_property;
+
+				if (prop == &width){
+					if (access == property_access::write){
+						auto value = value_type{ *reinterpret_cast<backend_value_type *>(arg), (operator value_type()).height };
+						base_type::callback_(this, &value, access);
+					}
+					else if (access == property_access::read)
+						*reinterpret_cast<backend_value_type *>(arg) = (operator value_type()).width;
+				}
+				else if (prop == &height){
+					if (access == property_access::write){
+						auto value = value_type{ (operator value_type()).width, *reinterpret_cast<backend_value_type *>(arg) };
+						base_type::callback_(this, &value, access);
+					}
+					else if (access == property_access::read)
+						*reinterpret_cast<backend_value_type *>(arg) = (operator value_type()).height;
+				}
+			}
+			else//Alert
+				base_type::callback_(this, nullptr, access);
+		}
+	};
+
+	template <class value_type, class manager_type = void, property_access access = property_access::nil>
+	using size_value_property = basic_size_value_property<value_type, manager_type, access, detail::has_cx<value_type>::value>;
 
 	template <class value_type, class manager_type = void>
 	using read_only_size_value_property = size_value_property<value_type, manager_type, property_access::read>;

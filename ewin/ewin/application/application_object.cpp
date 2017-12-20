@@ -53,6 +53,7 @@ void ewin::application::object::bind_properties_(){
 	window_being_created.initialize_(nullptr, handler);
 
 	run.initialize_(nullptr, handler);
+	drawing_factory.initialize_(nullptr, handler);
 }
 
 void ewin::application::object::handle_property_(void *prop, void *arg, common::property_access access){
@@ -89,6 +90,13 @@ void ewin::application::object::handle_property_(void *prop, void *arg, common::
 			*static_cast<int *>(arg) = run_();
 		else//Can only be accessed from same thread
 			throw common::error_type::cross_thread;
+	}
+	else if (prop == &drawing_factory){
+		*static_cast<drawing::factory **>(arg) = &drawing_factory_;
+		if (!drawing_factory_.created){//Create
+			drawing_factory_.app_ = this;
+			drawing_factory_.created = true;
+		}
 	}
 	else if (prop == &task)
 		task_(*reinterpret_cast<std::pair<void *, task_type *> *>(arg)->second);

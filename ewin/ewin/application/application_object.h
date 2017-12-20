@@ -17,6 +17,8 @@
 
 #include "../window/window_class.h"
 
+#include "../drawing/drawing_factory.h"
+
 #define EWIN_UUID		 "{DABED3E8-D8A5-48FC-B80B-B17C167FA9B0}"
 #define EWIN_WUUID		L"{DABED3E8-D8A5-48FC-B80B-B17C167FA9B0}"
 
@@ -63,6 +65,8 @@ namespace ewin::application{
 		common::iterator_only_list_value_property<window_type, window_list_iterator_type, window_list_const_iterator_type, object> top_level_handles;
 		common::write_only_value_property<window_type *, object> window_being_created;
 		common::read_only_value_property<int, object> run;
+
+		common::read_only_object_value_property<drawing::factory, object> drawing_factory;
 
 		static thread_local common::random_bool bool_generator;
 		static thread_local common::random_integral_number integer_generator;
@@ -122,6 +126,7 @@ namespace ewin::application{
 		std::pair<common::types::hwnd, window_type *> cached_window_handle_;
 		window_type *window_being_created_;
 		common::types::hook hook_id_;
+		drawing::factory drawing_factory_;
 	};
 }
 

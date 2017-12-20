@@ -7,6 +7,8 @@
 ewin::window::object::object()
 	: message_target_type(events_), tree(*this), view(*this), frame(*this), state(*this), style(*this), attribute(*this), events_(*this), app_(nullptr), handle_(nullptr),
 	error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), local_error_value_(ERROR_SUCCESS), auto_destroy_(true){
+	drawer_.target = *this;
+	drawer_.lock_target = true;
 	cache_ = cache_info{};
 	bind_properties_();
 }
@@ -54,6 +56,8 @@ void ewin::window::object::bind_properties_(){
 	created.initialize_(nullptr, handler);
 	create.initialize_(nullptr, handler);
 	auto_destroy.initialize_(&auto_destroy_, nullptr);
+
+	drawer.initialize_(nullptr, handler);
 }
 
 void ewin::window::object::handle_property_(void *prop, void *arg, common::property_access access){
@@ -104,12 +108,16 @@ void ewin::window::object::handle_property_(void *prop, void *arg, common::prope
 		if (access == common::property_access::read)
 			*static_cast<application_type **>(arg) = app_;
 		else if (access == common::property_access::write && handle_ == nullptr)
-			app_ = *static_cast<application_type **>(arg);
+			app_ = static_cast<application_type *>(arg);
 	}
 	else if (prop == &is_dialog_message){
 		auto info = static_cast<std::pair<common::types::msg *, bool> *>(arg);
 		info->second = is_dialog_message_(*info->first);
 		return;
+	}
+	else if (prop == &drawer){
+		drawer_.created = true;
+		*static_cast<drawing::hwnd_object **>(arg) = &drawer_;
 	}
 	else if (prop == &bubble_event){
 		auto info = static_cast<std::pair<events::basic *, events::basic *> *>(arg);

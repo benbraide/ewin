@@ -99,7 +99,7 @@ void ewin::drawing::hwnd_object::create_(bool create, const base_type::create_in
 				}
 				
 				if (destroy_event_id_ == 0u){
-					destroy_event_id_ = target_->events->destroy += [this](events::message &e){//Listen for destruction events
+					destroy_event_id_ = target_->events->destroy += [this]{//Listen for destruction events
 						create_(false, nullptr);//Destroy
 					};
 				}

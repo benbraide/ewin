@@ -25,14 +25,21 @@ namespace ewin::events{
 
 	template <class object_type, class target_type, bool can_be_propagated>
 	class typed_basic : public basic{
+	private:
+		struct dummy_type{};
+
+		struct dummy_type_other{};
+
 	public:
 		typedef object_type object_type;
 		typedef target_type target_type;
 
 		typedef std::function<void(object_type &)> callback_type;
+		typedef std::conditional_t<std::is_same_v<object_type, message>, dummy_type, std::function<void(message &)>> base_callback_type;
+		typedef std::conditional_t<std::is_same_v<object_type, object>, dummy_type_other, std::function<void(object &)>> low_level_callback_type;
 		typedef std::function<void()> no_arg_callback_type;
 
-		typedef std::variant<callback_type, no_arg_callback_type> generic_callback_type;
+		typedef std::variant<callback_type, base_callback_type, low_level_callback_type, no_arg_callback_type> generic_callback_type;
 		typedef std::unordered_map<std::size_t, generic_callback_type> map_type;
 
 		struct callback_visitor{
@@ -43,9 +50,23 @@ namespace ewin::events{
 				callback(*e_);
 			}
 
+			template <typename unused_type = object_type>
+			std::enable_if_t<!std::is_same_v<unused_type, message>, void> operator()(const base_callback_type &callback) const{
+				callback(*e_);
+			}
+
+			template <typename unused_type = object_type>
+			std::enable_if_t<!std::is_same_v<unused_type, object>, void> operator()(const low_level_callback_type &callback) const{
+				callback(*e_);
+			}
+
 			void operator()(const no_arg_callback_type &callback) const{
 				callback();
 			}
+
+			void operator()(const dummy_type &dummy) const{}
+
+			void operator()(const dummy_type_other &dummy) const{}
 
 			object_type *e_;
 		};
@@ -53,11 +74,21 @@ namespace ewin::events{
 		explicit typed_basic(target_type &target)
 			: target_(&target){}
 
-		std::size_t operator +=(callback_type callback){
+		std::size_t operator +=(const callback_type &callback){
 			return add_(callback);
 		}
 
-		std::size_t operator +=(no_arg_callback_type callback){
+		template <typename unused_type = object_type>
+		std::enable_if_t<!std::is_same_v<unused_type, message>, std::size_t> operator +=(const base_callback_type &callback){
+			return add_(callback);
+		}
+
+		template <typename unused_type = object_type>
+		std::enable_if_t<!std::is_same_v<unused_type, object>, std::size_t> operator +=(const low_level_callback_type &callback){
+			return add_(callback);
+		}
+
+		std::size_t operator +=(const no_arg_callback_type &callback){
 			return add_(callback);
 		}
 

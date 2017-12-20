@@ -3,6 +3,7 @@
 #ifndef EWIN_DRAWING_FACTORY_H
 #define EWIN_DRAWING_FACTORY_H
 
+#include "../common/type_aliases.h"
 #include "../common/boolean_property.h"
 #include "../common/object_property.h"
 

@@ -18,6 +18,7 @@
 #include "../window/window_class.h"
 
 #include "../drawing/drawing_factory.h"
+#include "../drawing/hdc_drawing_object.h"
 
 #define EWIN_UUID		 "{DABED3E8-D8A5-48FC-B80B-B17C167FA9B0}"
 #define EWIN_WUUID		L"{DABED3E8-D8A5-48FC-B80B-B17C167FA9B0}"
@@ -67,6 +68,7 @@ namespace ewin::application{
 		common::read_only_value_property<int, object> run;
 
 		common::read_only_object_value_property<drawing::factory, object> drawing_factory;
+		common::read_only_object_value_property<drawing::hdc_object, object> hdc_drawer;
 
 		static thread_local common::random_bool bool_generator;
 		static thread_local common::random_integral_number integer_generator;
@@ -127,6 +129,7 @@ namespace ewin::application{
 		window_type *window_being_created_;
 		common::types::hook hook_id_;
 		drawing::factory drawing_factory_;
+		drawing::hdc_object hdc_drawer_;
 	};
 }
 

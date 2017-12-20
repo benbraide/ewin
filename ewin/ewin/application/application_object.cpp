@@ -54,6 +54,7 @@ void ewin::application::object::bind_properties_(){
 
 	run.initialize_(nullptr, handler);
 	drawing_factory.initialize_(nullptr, handler);
+	hdc_drawer.initialize_(nullptr, handler);
 }
 
 void ewin::application::object::handle_property_(void *prop, void *arg, common::property_access access){
@@ -96,6 +97,13 @@ void ewin::application::object::handle_property_(void *prop, void *arg, common::
 		if (!drawing_factory_.created){//Create
 			drawing_factory_.app_ = this;
 			drawing_factory_.created = true;
+		}
+	}
+	else if (prop == &hdc_drawer){
+		*static_cast<drawing::hdc_object **>(arg) = &hdc_drawer_;
+		if (!hdc_drawer_.created){//Create
+			hdc_drawer_.factory = drawing_factory_;
+			hdc_drawer_.created = true;
 		}
 	}
 	else if (prop == &task)

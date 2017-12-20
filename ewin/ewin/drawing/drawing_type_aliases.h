@@ -44,6 +44,7 @@ namespace ewin::drawing::types{
 	typedef ::ID2D1RenderTarget					render_target;
 	typedef ::ID2D1BitmapRenderTarget			bitmap_render_target;
 	typedef ::ID2D1HwndRenderTarget				hwnd_render_target;
+	typedef ::ID2D1DCRenderTarget				hdc_render_target;
 	typedef ::D2D1_RENDER_TARGET_TYPE			render_target_type;
 
 	typedef ::D2D1_FACTORY_TYPE					factory_type;

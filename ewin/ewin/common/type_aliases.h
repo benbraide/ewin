@@ -66,6 +66,9 @@ namespace ewin::common::types{
 	typedef ::POINT				point;
 	typedef ::SIZE				size;
 	typedef ::RECT				rect;
+
+	typedef ::HRESULT			hresult;
+	typedef ::HDC				hdc;
 }
 
 #endif /* !EWIN_TYPE_ALIASES_H */

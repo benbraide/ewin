@@ -55,6 +55,7 @@ namespace ewin::common::types{
 	typedef ::WNDCLASSEXW		wnd_class;
 	typedef ::CREATESTRUCTW		create_struct;
 	typedef ::STYLESTRUCT		style_struct;
+	typedef ::PAINTSTRUCT		paint_struct;
 	typedef ::MSG				msg;
 
 	typedef ::WINDOWPLACEMENT	wnd_placement;
@@ -69,6 +70,7 @@ namespace ewin::common::types{
 
 	typedef ::HRESULT			hresult;
 	typedef ::HDC				hdc;
+	typedef ::HRGN				hrgn;
 }
 
 #endif /* !EWIN_TYPE_ALIASES_H */

@@ -19,11 +19,15 @@
 
 #include "../drawing/drawing_factory.h"
 #include "../drawing/hdc_drawing_object.h"
+#include "../drawing/solid_color_drawing_brush.h"
 
 #define EWIN_UUID		 "{DABED3E8-D8A5-48FC-B80B-B17C167FA9B0}"
 #define EWIN_WUUID		L"{DABED3E8-D8A5-48FC-B80B-B17C167FA9B0}"
 
-#define EWIN_WM_TASK	(WM_APP + 1)
+#define EWIN_WM_APP_FIRST	(WM_APP + 1)
+#define EWIN_WM_APP_LAST	(WM_APP + 10)
+
+#define EWIN_WM_TASK		(EWIN_WM_APP_FIRST + 0)
 
 namespace ewin::window{
 	class object;
@@ -69,6 +73,7 @@ namespace ewin::application{
 
 		common::read_only_object_value_property<drawing::factory, object> drawing_factory;
 		common::read_only_object_value_property<drawing::hdc_object, object> hdc_drawer;
+		common::read_only_object_value_property<drawing::solid_color_brush, object> color_brush;
 
 		static thread_local common::random_bool bool_generator;
 		static thread_local common::random_integral_number integer_generator;
@@ -130,6 +135,7 @@ namespace ewin::application{
 		common::types::hook hook_id_;
 		drawing::factory drawing_factory_;
 		drawing::hdc_object hdc_drawer_;
+		drawing::solid_color_brush color_brush_;
 	};
 }
 

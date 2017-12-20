@@ -41,22 +41,22 @@ namespace ewin::common{
 
 		bool operator ==(const value_type &rhs) const{
 			if (base_type::linked_ != nullptr)//Use linked value
-				return (base_type::linked_.left == rhs.left && base_type::linked_.top == rhs.top && base_type::linked_.right == rhs.right && base_type::linked_.bottom == rhs.bottom);
+				return (base_type::linked_->left == rhs.left && base_type::linked_->top == rhs.top && base_type::linked_->right == rhs.right && base_type::linked_->bottom == rhs.bottom);
 			auto left = (value_type)(*this);
 			return (left.left == rhs.left && left.top == rhs.top && left.right == rhs.right && left.bottom == rhs.bottom);
 		}
 
 		bool operator !=(const value_type &rhs) const{
-			return !(this == rhs);
+			return !(*this == rhs);
 		}
 
 		template <typename target_type, typename unused_type = value_type>
-		friend std::enable_if_t<!std::is_same_v<target_type, rect_value_property>, bool> operator ==(const target_type &lhs, const rect_value_property &rhs){
+		friend std::enable_if_t<!std::is_same_v<target_type, rect_value_property<unused_type, manager_type, access>>, bool> operator ==(const target_type &lhs, const rect_value_property &rhs){
 			return (rhs == lhs);
 		}
 
 		template <typename target_type, typename unused_type = value_type>
-		friend std::enable_if_t<!std::is_same_v<target_type, rect_value_property>, bool> operator !=(const target_type &lhs, const rect_value_property &rhs){
+		friend std::enable_if_t<!std::is_same_v<target_type, rect_value_property<unused_type, manager_type, access>>, bool> operator !=(const target_type &lhs, const rect_value_property &rhs){
 			return (rhs != lhs);
 		}
 

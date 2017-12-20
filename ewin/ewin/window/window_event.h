@@ -42,6 +42,11 @@ namespace ewin::window{
 		ewin::events::typed_basic<ewin::events::move, object, false> move;
 		ewin::events::typed_basic<ewin::events::style_change, object, false> style_change;
 
+		ewin::events::typed_basic<ewin::events::draw, object, false> background_erase;
+		ewin::events::typed_basic<ewin::events::message, object, false> get_background_brush;
+		ewin::events::typed_basic<ewin::events::message, object, false> get_background_color;
+		ewin::events::typed_basic<ewin::events::draw, object, false> draw;
+
 		ewin::events::typed_basic<ewin::events::message, object, false> unknown_message;
 	};
 }

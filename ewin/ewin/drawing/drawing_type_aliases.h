@@ -49,6 +49,12 @@ namespace ewin::drawing::types{
 
 	typedef ::D2D1_FACTORY_TYPE					factory_type;
 	typedef ::ID2D1Factory						factory;
+
+	typedef ::ID2D1StrokeStyle					stroke_style;
+	typedef ::D2D1_CAP_STYLE					cap_style;
+	typedef ::D2D1_LINE_JOIN					line_join;
+	typedef ::D2D1_DASH_STYLE					dash_style;
+	typedef ::D2D1_STROKE_STYLE_PROPERTIES		stroke_style_properties;
 }
 
 #endif /* !EWIN_DRAWING_TYPE_ALIASES_H */

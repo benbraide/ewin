@@ -136,6 +136,8 @@ namespace ewin::window{
 		common::boolean_value_property<object> auto_destroy;
 
 		common::read_only_object_value_property<drawing::hwnd_object, object> drawer;
+		common::read_only_object_value_property<drawing::solid_color_brush, object> color_brush;
+
 		common::write_only_variant_value_property<object, parent_change_info, child_change_info> changed;
 
 	protected:
@@ -199,6 +201,7 @@ namespace ewin::window{
 		common::types::dword local_error_value_;
 		bool auto_destroy_;
 		drawing::hwnd_object drawer_;
+		drawing::solid_color_brush color_brush_;
 	};
 
 	EWIN_MAKE_OPERATORS(object::attribute_option_type);

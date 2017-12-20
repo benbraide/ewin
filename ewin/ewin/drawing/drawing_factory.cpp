@@ -2,9 +2,10 @@
 
 ewin::drawing::factory::factory()
 	: app_(nullptr), native_(nullptr){
-	app.initialize_(app_, nullptr);
-	native.initialize_(native_, nullptr);
-	created.initialize_(nullptr, EWIN_PROP_HANDLER(factory));
+	auto handler = EWIN_PROP_HANDLER(factory);
+	app.initialize_(nullptr, handler);
+	native.initialize_(nullptr, handler);
+	created.initialize_(nullptr, handler);
 }
 
 ewin::drawing::factory::~factory(){
@@ -21,6 +22,10 @@ void ewin::drawing::factory::handle_property_(void *prop, void *arg, common::pro
 		else if (access == common::property_access::write)
 			create_(*static_cast<bool *>(arg), nullptr);
 	}
+	else if (prop == &app)
+		*static_cast<application::object **>(arg) = app_;
+	else if (prop == &native)
+		*static_cast<drawing::types::factory **>(arg) = native_;
 }
 
 void ewin::drawing::factory::create_(bool create, const create_info *info){

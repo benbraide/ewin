@@ -78,6 +78,14 @@ ewin::common::types::result ewin::message::target::dispatch_message_(common::typ
 			if (fire)
 				events_->set_cursor.fire_(e);
 		});
+	case EWIN_WM_GET_CURSOR:
+		return dispatch_message_to_(&target::on_get_cursor_, msg, [this](events::message &e, bool fire){
+			if (fire)
+				events_->get_cursor.fire_(e);
+
+			if (!e.handled)//Use default
+				e.result = ::LoadCursorW(nullptr, IDC_ARROW);
+		});
 	case WM_NCHITTEST:
 		return dispatch_message_to_(&target::on_hit_test_, msg, [this](events::message &e, bool fire){
 			if (fire)
@@ -132,6 +140,21 @@ ewin::common::types::result ewin::message::target::dispatch_message_(common::typ
 				info->styleNew = info->styleOld;
 			}
 		});
+	case WM_ERASEBKGND:
+		return dispatch_message_to_(&target::on_background_erase_, msg, [this](events::message &e, bool fire){
+			if (fire)
+				events_->background_erase.fire_(e);
+		});
+	case EWIN_WM_GET_BG_BRUSH:
+		return dispatch_message_to_(&target::on_get_background_brush_, msg, [this](events::message &e, bool fire){
+			if (fire)
+				events_->get_background_brush.fire_(e);
+		});
+	case EWIN_WM_GET_BG_COLOR:
+		return dispatch_message_to_(&target::on_get_background_color_, msg, [this](events::message &e, bool fire){
+			if (fire)
+				events_->get_background_color.fire_(e);
+		});
 	default:
 		break;
 	}
@@ -172,18 +195,9 @@ void ewin::message::target::on_focus_change_(events::focus_change &e){}
 void ewin::message::target::on_enable_(events::enable &e){}
 
 void ewin::message::target::on_set_cursor_(events::cursor &e){
-	auto result = dispatch_message_to_(&target::on_get_cursor_, *e.msg_, [this](events::message &e, bool fire){
-		if (fire)
-			events_->get_cursor.fire_(e);
-
-		if (e.prevent_default)//Prevent
-			e.result = ::LoadCursorW(nullptr, IDC_ARROW);
-	});
-
-	if (result != 0u)
+	auto result = ::SendMessageW(e.msg_->hwnd, EWIN_WM_GET_CURSOR, e.msg_->wParam, e.msg_->lParam);
+	if (result != 0u)//Cursor returned
 		::SetCursor(reinterpret_cast<common::types::hcursor>(result));
-	else if (LOWORD(e.msg_->lParam) != HTERROR && LOWORD(e.msg_->lParam) != HTNOWHERE)//Use default cursor
-		::SetCursor(::LoadCursorW(nullptr, IDC_ARROW));
 }
 
 ewin::common::types::hcursor ewin::message::target::on_get_cursor_(events::cursor &e){
@@ -232,7 +246,59 @@ void ewin::message::target::on_size_(events::size &e){}
 
 void ewin::message::target::on_move_(events::move &e){}
 
-void ewin::message::target::on_style_change_(events::move &e){}
+void ewin::message::target::on_style_change_(events::style_change &e){}
+
+void ewin::message::target::on_background_erase_(events::draw &e){
+	auto result = ::SendMessageW(e.msg_->hwnd, EWIN_WM_GET_BG_BRUSH, e.msg_->wParam, e.msg_->lParam);
+	if (result == 0u){//Use color
+		if ((result = ::SendMessageW(e.msg_->hwnd, EWIN_WM_GET_BG_COLOR, e.msg_->wParam, e.msg_->lParam)) == 0u)
+			return;//Color not returned
+
+		if (e.clip != reinterpret_cast<window::object *>(this)->client_rect){
+			drawing::solid_color_brush *brush = e.color_brush;
+			brush->color = *reinterpret_cast<drawing::types::color *>(result);//Update
+
+			common::types::rect clip = e.clip;
+			e.drawer->native->FillRectangle(
+				drawing::d2d1::RectF(
+					((static_cast<float>(clip.left)		/ e.drawer->dpi.x) * 96.0f),
+					((static_cast<float>(clip.top)		/ e.drawer->dpi.y) * 96.0f),
+					((static_cast<float>(clip.right)	/ e.drawer->dpi.x) * 96.0f),
+					((static_cast<float>(clip.bottom)	/ e.drawer->dpi.x) * 96.0f)
+				),
+				brush->native
+			);
+		}
+		else//Clear entire area
+			e.drawer->clear = *reinterpret_cast<drawing::types::color *>(result);
+	}
+	else{//Use brush
+		common::types::rect clip = e.clip;
+		e.drawer->native->FillRectangle(
+			drawing::d2d1::RectF(
+				((static_cast<float>(clip.left)		/ e.drawer->dpi.x) * 96.0f),
+				((static_cast<float>(clip.top)		/ e.drawer->dpi.y) * 96.0f),
+				((static_cast<float>(clip.right)	/ e.drawer->dpi.x) * 96.0f),
+				((static_cast<float>(clip.bottom)	/ e.drawer->dpi.x) * 96.0f)
+			),
+			reinterpret_cast<drawing::brush *>(result)->native
+		);
+	}
+
+	e.result = TRUE;//Handled
+}
+
+ewin::drawing::brush *ewin::message::target::on_get_background_brush_(events::message &e){
+	return nullptr;
+}
+
+ewin::drawing::types::color *ewin::message::target::on_get_background_color_(events::message &e){
+	return &background_color_;
+}
+
+void ewin::message::target::on_draw_(events::draw &e){
+
+}
 
 void ewin::message::target::on_unknown_message_(events::message &e){}
 

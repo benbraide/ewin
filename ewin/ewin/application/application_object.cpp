@@ -51,10 +51,14 @@ void ewin::application::object::bind_properties_(){
 	window_handles.initialize_(nullptr, handler);
 	top_level_handles.initialize_(nullptr, handler);
 	window_being_created.initialize_(nullptr, handler);
-
 	run.initialize_(nullptr, handler);
+
 	drawing_factory.initialize_(nullptr, handler);
 	hdc_drawer.initialize_(nullptr, handler);
+	color_brush.initialize_(nullptr, handler);
+
+	hdc_drawer_.brush = &color_brush_;
+	color_brush_.drawer = &hdc_drawer_;
 }
 
 void ewin::application::object::handle_property_(void *prop, void *arg, common::property_access access){
@@ -102,9 +106,20 @@ void ewin::application::object::handle_property_(void *prop, void *arg, common::
 	else if (prop == &hdc_drawer){
 		*static_cast<drawing::hdc_object **>(arg) = &hdc_drawer_;
 		if (!hdc_drawer_.created){//Create
-			hdc_drawer_.factory = drawing_factory_;
-			hdc_drawer_.created = true;
+			task_([this]{
+				hdc_drawer_.factory = drawing_factory;
+				hdc_drawer_.created = true;
+			});
 		}
+	}
+	else if (prop == &color_brush){
+		if (!color_brush_.created){
+			task_([this]{
+				color_brush_.created = true;
+			});
+		}
+		
+		*static_cast<drawing::solid_color_brush **>(arg) = &color_brush_;
 	}
 	else if (prop == &task)
 		task_(*reinterpret_cast<std::pair<void *, task_type *> *>(arg)->second);
@@ -256,7 +271,7 @@ ewin::common::types::result CALLBACK ewin::application::object::entry_(common::t
 	if (target == nullptr)//Unknown window
 		return ::CallWindowProcW(::DefWindowProcW, hwnd, msg, wparam, lparam);
 
-	if (target == current->message_window_.get() && msg > WM_APP)
+	if (target == current->message_window_.get() && msg >= EWIN_WM_APP_FIRST && msg <= EWIN_WM_APP_LAST)
 		return current->app_message_(msg, wparam, lparam);
 
 	auto result = target->dispatch_message[common::types::msg{ hwnd, msg, wparam, lparam }];

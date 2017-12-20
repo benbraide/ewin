@@ -9,6 +9,8 @@
 #include "../common/boolean_property.h"
 #include "../common/object_property.h"
 
+#include "../application/application_object.h"
+
 namespace ewin::message{
 	class target;
 }
@@ -160,7 +162,7 @@ namespace ewin::events{
 	protected:
 		virtual void handle_property_(void *prop, void *arg, common::property_access access) override{
 			if (prop == &is_changing)
-				*static_cast<common::types::uint *>(arg) = (msg_->message == changing_message);
+				*static_cast<bool *>(arg) = (msg_->message == changing_message);
 			else//Forward
 				message::handle_property_(prop, arg, access);
 		}
@@ -219,6 +221,47 @@ namespace ewin::events{
 
 	protected:
 		virtual void handle_property_(void *prop, void *arg, common::property_access access) override;
+	};
+
+	class draw : public message{
+	public:
+		typedef std::function<void()> cleanup_callback_type;
+
+		template <typename... args_types>
+		explicit draw(args_types &&... args)
+			: message(std::forward<args_types>(args)...), drawer_(nullptr), color_brush_(nullptr){
+			auto handler = EWIN_PROP_HANDLER(draw);
+
+			drawer.initialize_(nullptr, handler);
+			color_brush.initialize_(nullptr, handler);
+
+			clip.initialize_(nullptr, handler);
+			erase_background.initialize_(nullptr, handler);
+			paint_info.initialize_(nullptr, handler);
+
+			info_.fErase = info_.fIncUpdate = info_.fRestore = FALSE;
+			info_.hdc = nullptr;
+			info_.rcPaint = common::types::rect{};
+		}
+
+		virtual ~draw();
+
+		common::read_only_object_value_property<drawing::object, draw> drawer;
+		common::read_only_object_value_property<drawing::solid_color_brush, draw> color_brush;
+
+		common::read_only_rect_value_property<common::types::rect, draw> clip;
+		common::read_only_boolean_value_property<draw> erase_background;
+		common::read_only_object_value_property<common::types::paint_struct, draw> paint_info;
+
+	protected:
+		virtual void handle_property_(void *prop, void *arg, common::property_access access) override;
+
+		virtual void begin_paint_();
+
+		common::types::paint_struct info_;
+		drawing::object *drawer_;
+		drawing::solid_color_brush *color_brush_;
+		cleanup_callback_type cleanup_;
 	};
 
 	EWIN_MAKE_OPERATORS(object::state_type);

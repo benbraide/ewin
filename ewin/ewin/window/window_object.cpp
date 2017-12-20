@@ -7,10 +7,14 @@
 ewin::window::object::object()
 	: message_target_type(events_), tree(*this), view(*this), frame(*this), state(*this), style(*this), attribute(*this), events_(*this), app_(nullptr), handle_(nullptr),
 	error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), local_error_value_(ERROR_SUCCESS), auto_destroy_(true){
-	drawer_.target = *this;
-	drawer_.lock_target = true;
 	cache_ = cache_info{};
 	bind_properties_();
+
+	drawer_.target = *this;
+	drawer_.lock_target = true;
+	drawer_.brush = &color_brush_;
+
+	color_brush_.drawer = &drawer_;
 }
 
 ewin::window::object::~object(){
@@ -58,6 +62,7 @@ void ewin::window::object::bind_properties_(){
 	auto_destroy.initialize_(&auto_destroy_, nullptr);
 
 	drawer.initialize_(nullptr, handler);
+	color_brush.initialize_(nullptr, handler);
 }
 
 void ewin::window::object::handle_property_(void *prop, void *arg, common::property_access access){
@@ -116,8 +121,22 @@ void ewin::window::object::handle_property_(void *prop, void *arg, common::prope
 		return;
 	}
 	else if (prop == &drawer){
-		drawer_.created = true;
+		if (!drawer_.created && handle_ != nullptr){
+			app_->task += [this]{
+				drawer_.created = true;
+			};
+		}
+
 		*static_cast<drawing::hwnd_object **>(arg) = &drawer_;
+	}
+	else if (prop == &color_brush){
+		if (!color_brush_.created && handle_ != nullptr){
+			app_->task += [this]{
+				color_brush_.created = true;
+			};
+		}
+
+		*static_cast<drawing::solid_color_brush **>(arg) = &color_brush_;
 	}
 	else if (prop == &bubble_event){
 		auto info = static_cast<std::pair<events::basic *, events::basic *> *>(arg);

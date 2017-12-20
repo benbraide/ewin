@@ -56,60 +56,75 @@ void ewin::drawing::hwnd_object::handle_property_(void *prop, void *arg, common:
 
 void ewin::drawing::hwnd_object::create_(bool create, const base_type::create_info *info){
 	if (create && native_ == nullptr){
-		if (info == nullptr && factory_ != nullptr && target_ != nullptr && target_->created){
+		if (info == nullptr && target_ != nullptr && target_->created){
 			cache_.pixel_size = types::usize{
 				target_->client_size.width,
 				target_->client_size.height
 			};
 
-			auto result = factory_->native->CreateHwndRenderTarget(
-				d2d1::RenderTargetProperties(
-					types::render_target_type::D2D1_RENDER_TARGET_TYPE_DEFAULT,
-					d2d1::PixelFormat(
-						types::dxgi_format::DXGI_FORMAT_UNKNOWN,
-						types::alpha_mode::D2D1_ALPHA_MODE_UNKNOWN
+			if (factory_ == nullptr)
+				factory_ = target_->app->drawing_factory;
+
+			target_->app->task += [this]{
+				auto result = factory_->native->CreateHwndRenderTarget(
+					d2d1::RenderTargetProperties(
+						types::render_target_type::D2D1_RENDER_TARGET_TYPE_DEFAULT,
+						d2d1::PixelFormat(
+							types::dxgi_format::DXGI_FORMAT_UNKNOWN,
+							types::alpha_mode::D2D1_ALPHA_MODE_UNKNOWN
+						),
+						cache_.dpi.x,
+						cache_.dpi.y,
+						types::render_target_usage::D2D1_RENDER_TARGET_USAGE_NONE,
+						types::feature_level::D2D1_FEATURE_LEVEL_DEFAULT
 					),
-					cache_.dpi.x,
-					cache_.dpi.y,
-					types::render_target_usage::D2D1_RENDER_TARGET_USAGE_NONE,
-					types::feature_level::D2D1_FEATURE_LEVEL_DEFAULT
-				),
-				d2d1::HwndRenderTargetProperties(
-					target_->handle,
-					cache_.pixel_size,
-					types::present_options::D2D1_PRESENT_OPTIONS_NONE
-				),
-				&native_
-			);
+					d2d1::HwndRenderTargetProperties(
+						target_->handle,
+						cache_.pixel_size,
+						types::present_options::D2D1_PRESENT_OPTIONS_NONE
+					),
+					&native_
+				);
 
-			if (SUCCEEDED(result) && native_ != nullptr){//Created render
-				if (size_event_id_ == 0u){
-					size_event_id_ = target_->events->position_change += [this](events::position_change &e){//Listen for size events
-						if (target_ == nullptr || native_ == nullptr)
-							return;//Basic checks
+				if (SUCCEEDED(result) && native_ != nullptr){//Created render
+					if (size_event_id_ == 0u){
+						size_event_id_ = target_->events->position_change += [this](events::position_change &e){//Listen for size events
+							if (target_ == nullptr || native_ == nullptr)
+								return;//Basic checks
 
-						types::usize size{
-							target_->client_size.width,
-							target_->client_size.height
+							types::usize size{
+								target_->client_size.width,
+								target_->client_size.height
+							};
+
+							if (!e.is_changing && size.width != cache_.pixel_size.width && size.height != cache_.pixel_size.height)
+								native_->Resize(size);//Apply new size
 						};
+					}
 
-						if (!e.is_changing && size.width != cache_.pixel_size.width && size.height != cache_.pixel_size.height)
-							native_->Resize(size);//Apply new size
-					};
+					if (destroy_event_id_ == 0u){
+						destroy_event_id_ = target_->events->destroy += [this]{//Listen for destruction events
+							create_(false, nullptr);//Destroy
+						};
+					}
 				}
-				
-				if (destroy_event_id_ == 0u){
-					destroy_event_id_ = target_->events->destroy += [this]{//Listen for destruction events
-						create_(false, nullptr);//Destroy
-					};
-				}
-			}
+			};
 		}
 		else if (info != nullptr)//Use info
 			low_level_create_(*reinterpret_cast<const create_info *>(info));
 	}
-	else//Forward
-		base_type::create_(create, info);
+	else if (!create && native_ != nullptr){
+		if (factory_ != nullptr){
+			factory_->app->task += [this]{
+				native_->Release();
+				native_ = nullptr;
+			};
+		}
+		else{//Release in current context
+			native_->Release();
+			native_ = nullptr;
+		}
+	}
 }
 
 void ewin::drawing::hwnd_object::recreate_(){

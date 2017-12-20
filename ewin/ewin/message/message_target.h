@@ -10,6 +10,10 @@
 #include "../events/event_callback.h"
 #include "../events/basic_event.h"
 
+#define EWIN_WM_GET_CURSOR		(EWIN_WM_APP_LAST + 1)
+#define EWIN_WM_GET_BG_BRUSH	(EWIN_WM_APP_LAST + 2)
+#define EWIN_WM_GET_BG_COLOR	(EWIN_WM_APP_LAST + 3)
+
 namespace ewin::window{
 	class wnd_event;
 }
@@ -135,7 +139,15 @@ namespace ewin::message{
 
 		virtual void on_move_(events::move &e);
 
-		virtual void on_style_change_(events::move &e);
+		virtual void on_style_change_(events::style_change &e);
+
+		virtual void on_background_erase_(events::draw &e);
+
+		virtual drawing::brush *on_get_background_brush_(events::message &e);
+
+		virtual drawing::types::color *on_get_background_color_(events::message &e);
+
+		virtual void on_draw_(events::draw &e);
 
 		virtual void on_unknown_message_(events::message &e);
 
@@ -143,6 +155,7 @@ namespace ewin::message{
 
 		common::types::procedure procedure_;
 		window::wnd_event *events_;
+		drawing::types::color background_color_;
 	};
 }
 

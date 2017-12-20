@@ -71,7 +71,7 @@ ewin::common::types::result ewin::events::message::call_default_(){
 	result_ = callback_(*this);//Call
 	if (!EWIN_IS(states_, state_type::default_prevented))
 		EWIN_SET(states_, state_type::default_called);
-	
+
 	return result_;
 }
 
@@ -146,4 +146,72 @@ void ewin::events::style_change::handle_property_(void *prop, void *arg, common:
 		*static_cast<common::types::style_struct **>(arg) = reinterpret_cast<common::types::style_struct *>(msg_->lParam);
 	else//Forward
 		base_type::handle_property_(prop, arg, access);
+}
+
+ewin::events::draw::~draw(){
+	if (cleanup_ != nullptr)
+		cleanup_();
+
+	if (drawer_ != nullptr)
+		drawer_->began = false;
+}
+
+void ewin::events::draw::handle_property_(void *prop, void *arg, common::property_access access){
+	if (prop == &drawer){
+		begin_paint_();
+		*static_cast<drawing::object **>(arg) = drawer_;
+	}
+	else if (prop == &color_brush){
+		begin_paint_();
+		*static_cast<drawing::solid_color_brush **>(arg) = color_brush_;
+	}
+	else if (prop == &clip){
+		begin_paint_();
+		*static_cast<common::types::rect *>(arg) = info_.rcPaint;
+	}
+	else if (prop == &erase_background){
+		begin_paint_();
+		*static_cast<bool *>(arg) = EWIN_CPP_BOOL(info_.fErase);
+	}
+	else if (prop == &paint_info){
+		begin_paint_();
+		*static_cast<common::types::paint_struct **>(arg) = &info_;
+	}
+	else//Forward
+		message::handle_property_(prop, arg, access);
+}
+
+void ewin::events::draw::begin_paint_(){
+	if (drawer_ != nullptr)
+		return;//Not applicable
+
+	switch (msg_->message){
+	case WM_PAINT:
+	{
+		::BeginPaint(msg_->hwnd, &info_);
+		drawer_ = static_cast<drawing::hwnd_object *>(dynamic_cast<window::object *>(target_)->drawer);
+		cleanup_ = [this]{
+			::EndPaint(msg_->hwnd, &info_);
+		};
+		break;
+	}
+	case WM_ERASEBKGND:
+		::GetClipBox(info_.hdc = reinterpret_cast<common::types::hdc>(msg_->wParam), &info_.rcPaint);
+		drawer_ = static_cast<drawing::hwnd_object *>(dynamic_cast<window::object *>(target_)->drawer);
+		info_.fErase = TRUE;
+		break;
+	case WM_NCPAINT:
+		::GetClipBox(info_.hdc = GetDCEx(msg_->hwnd, reinterpret_cast<common::types::hrgn>(msg_->wParam), DCX_WINDOW | DCX_INTERSECTRGN), &info_.rcPaint);
+		cleanup_ = [this]{
+			::ReleaseDC(msg_->hwnd, info_.hdc);
+		};
+		break;
+	default:
+		drawer_ = static_cast<drawing::hwnd_object *>(dynamic_cast<window::object *>(target_)->drawer);
+		info_.rcPaint = dynamic_cast<window::object *>(target_)->client_rect;
+		break;
+	}
+
+	drawer_->began = true;
+	drawer_->transform = drawing::d2d1::IdentityMatrix();
 }

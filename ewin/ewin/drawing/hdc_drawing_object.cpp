@@ -83,6 +83,7 @@ void ewin::drawing::hdc_object::create_(bool create, const base_type::create_inf
 			);
 
 			if (SUCCEEDED(result) && native_ != nullptr && target_ != nullptr){//Bind
+				native_->GetDpi(&cache_.dpi.x, &cache_.dpi.y);
 				common::types::rect rect{
 					(offset_.x),
 					(offset_.y),

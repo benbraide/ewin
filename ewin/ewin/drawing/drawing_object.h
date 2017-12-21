@@ -60,15 +60,15 @@ namespace ewin::drawing{
 		common::write_only_value_property<create_info, object> create;
 
 	protected:
-		void bind_properties_(types::render_target *native_value);
-
 		virtual void handle_property_(void *prop, void *arg, common::property_access access);
 
 		virtual void create_(bool create, const create_info *info);
 
 		virtual void recreate_();
 
-		virtual types::render_target *native_value_();
+		virtual void draw_(void *arg);
+
+		virtual void fill_(void *arg);
 
 		drawing::brush *brush_;
 		bool began_;
@@ -82,9 +82,7 @@ namespace ewin::drawing{
 		typedef native_type native_type;
 
 		typed_object()
-			: native_(nullptr){
-			object::bind_properties_(native_);
-		}
+			: native_(nullptr){}
 
 		virtual ~typed_object(){
 			if (native_ != nullptr){
@@ -104,10 +102,52 @@ namespace ewin::drawing{
 
 	protected:
 		virtual void handle_property_(void *prop, void *arg, common::property_access access) override{
-			if (prop == &is_supported && native_ != nullptr){
+			if (prop == &brush){
+				if (access == common::property_access::read)
+					*static_cast<drawing::brush **>(arg) = brush_;
+				else if (access == common::property_access::write)
+					brush_ = static_cast<drawing::brush *>(arg);
+			}
+			else if (prop == &clear){
+				if (native_ != nullptr)
+					native_->Clear(*static_cast<types::color *>(arg));
+			}
+			else if (prop == &began){
+				if (access == common::property_access::write){
+					if (native_ != nullptr){
+						if (*static_cast<bool *>(arg) && !began_){
+							began_ = true;
+							result_ = S_OK;
+							native_->BeginDraw();
+						}
+						else if (!*static_cast<bool *>(arg) && began_){
+							began_ = false;
+							if ((result_ = native_->EndDraw()) == D2DERR_RECREATE_TARGET)
+								recreate_();
+						}
+					}
+				}
+				else if (access == common::property_access::read)
+					*static_cast<bool *>(arg) = began_;
+			}
+			else if (prop == &created){
+				if (access == common::property_access::read)
+					*static_cast<bool *>(arg) = (native_ != nullptr);
+				else if (access == common::property_access::write)
+					create_(*static_cast<bool *>(arg), nullptr);
+			}
+			else if (prop == &is_supported && native_ != nullptr){
 				auto info = static_cast<std::pair<types::render_target_properties *, bool> *>(arg);
 				info->second = EWIN_CPP_BOOL(native_->IsSupported(info->first));
 			}
+			else if (prop == &native)
+				*static_cast<drawing::types::render_target **>(arg) = native_;
+			else if (prop == &draw)
+				draw_(arg);
+			else if (prop == &fill)
+				fill_(arg);
+			else if (prop == &create)
+				create_(true, static_cast<create_info *>(arg));
 			else if (prop == &dpi && access == common::property_access::write && native_ != nullptr)
 				native_->SetDpi(cache_.dpi.x, cache_.dpi.y);
 			else if (prop == &pixel_format && native_ != nullptr)
@@ -120,8 +160,6 @@ namespace ewin::drawing{
 				native_->SetAntialiasMode(cache_.anti_alias_mode);
 			else if (prop == &text_anti_alias_mode && access == common::property_access::write && native_ != nullptr)
 				native_->SetTextAntialiasMode(cache_.text_anti_alias_mode);
-			else//Forward
-				object::handle_property_(prop, arg, access);
 		}
 
 		virtual void create_(bool create, const create_info *info) override{
@@ -129,10 +167,6 @@ namespace ewin::drawing{
 				native_->Release();
 				native_ = nullptr;
 			}
-		}
-
-		virtual types::render_target *native_value_() override{
-			return native_;
 		}
 
 		native_type *native_;

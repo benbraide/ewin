@@ -10,6 +10,7 @@ namespace ewin::window{
 	public:
 		dialog(){
 			procedure_ = ::DefDlgProcW;
+			background_color_ = drawing::d2d1::ColorF(::GetSysColor(COLOR_BTNFACE));
 		}
 
 		virtual ~dialog(){

@@ -8,7 +8,20 @@
 namespace ewin::drawing{
 	class brush{
 	public:
-		brush() = default;
+		struct create_info{};
+
+		brush()
+			: opacity_(1.0f), transform_(d2d1::IdentityMatrix()){
+			auto handler = EWIN_PROP_HANDLER(brush);
+
+			native.initialize_(nullptr, handler);
+
+			opacity.initialize_(&opacity_, handler);
+			transform.initialize_(&transform_, handler);
+
+			created.initialize_(nullptr, handler);
+			create.initialize_(nullptr, handler);
+		}
 
 		virtual ~brush() = default;
 
@@ -18,10 +31,17 @@ namespace ewin::drawing{
 
 		common::read_only_object_value_property<types::brush, brush> native;
 
+		common::value_property<float, brush> opacity;
+		common::value_property<types::matrix_3x2, brush> transform;
+
+		common::boolean_value_property<brush> created;
+		common::write_only_value_property<create_info, brush> create;
+
 	protected:
-		void bind_properties_(types::brush *native_value){
-			native.initialize_(native_value, nullptr);;
-		}
+		virtual void handle_property_(void *prop, void *arg, common::property_access access){}
+
+		float opacity_;
+		types::matrix_3x2 transform_;
 	};
 
 	template <class native_type>
@@ -29,19 +49,8 @@ namespace ewin::drawing{
 	public:
 		typedef native_type native_type;
 
-		struct create_info{};
-
 		typed_brush()
-			: native_(nullptr), opacity_(1.0f), transform_(d2d1::IdentityMatrix()){
-			brush::bind_properties_(native_);
-			auto handler = EWIN_PROP_HANDLER(typed_brush);
-
-			opacity.initialize_(&opacity_, handler);
-			transform.initialize_(&transform_, handler);
-
-			created.initialize_(nullptr, handler);
-			create.initialize_(nullptr, handler);
-		}
+			: native_(nullptr){}
 
 		virtual ~typed_brush(){
 			create_(false, nullptr);
@@ -56,20 +65,16 @@ namespace ewin::drawing{
 			return native_;
 		}
 
-		common::value_property<float, typed_brush> opacity;
-		common::value_property<types::matrix_3x2, typed_brush> transform;
-
-		common::boolean_value_property<typed_brush> created;
-		common::write_only_value_property<create_info, typed_brush> create;
-
 	protected:
-		virtual void handle_property_(void *prop, void *arg, common::property_access access){
+		virtual void handle_property_(void *prop, void *arg, common::property_access access) override{
 			if (prop == &created){
 				if (access == common::property_access::read)
 					*static_cast<bool *>(arg) = (native_ != nullptr);
 				else if (access == common::property_access::write)
 					create_(*static_cast<bool *>(arg), nullptr);
 			}
+			else if (prop == &native)
+				*static_cast<drawing::types::brush **>(arg) = native_;
 			else if (prop == &opacity && access == common::property_access::write && native_ != nullptr)//Update
 				native_->SetOpacity(opacity_);
 			else if (prop == &transform && access == common::property_access::write && native_ != nullptr)//Update
@@ -86,8 +91,6 @@ namespace ewin::drawing{
 		}
 
 		native_type *native_;
-		float opacity_;
-		types::matrix_3x2 transform_;
 	};
 }
 

@@ -40,67 +40,24 @@ ewin::drawing::object::object()
 
 ewin::drawing::object::~object() = default;
 
-void ewin::drawing::object::bind_properties_(types::render_target *native_value){}
-
-void ewin::drawing::object::handle_property_(void *prop, void *arg, common::property_access access){
-	if (prop == &brush){
-		if (access == common::property_access::read)
-			*static_cast<drawing::brush **>(arg) = brush_;
-		else if (access == common::property_access::write)
-			brush_ = static_cast<drawing::brush *>(arg);
-	}
-	else if (prop == &clear){
-		auto native_value = native_value_();
-		if (native_value != nullptr)
-			native_value->Clear(*static_cast<types::color *>(arg));
-	}
-	else if (prop == &draw){
-		auto shape = static_cast<drawing::shape *>(arg);
-		if (brush_ != nullptr)//Update brush
-			shape->brush = *brush_;
-
-		shape->drawer = *this;
-		shape->draw = true;
-	}
-	else if (prop == &fill){
-		auto shape = static_cast<drawing::shape *>(arg);
-		if (brush_ != nullptr)//Update brush
-			shape->brush = *brush_;
-
-		shape->drawer = *this;
-		shape->fill = true;
-	}
-	else if (prop == &began){
-		if (access == common::property_access::write){
-			auto native_value = native_value_();
-			if (native_value != nullptr){
-				if (*static_cast<bool *>(arg) && !began_){
-					result_ = NOERROR;
-					native_value->BeginDraw();
-				}
-				else if (!*static_cast<bool *>(arg) && began_ && (result_ = native_value->EndDraw()) == D2DERR_RECREATE_TARGET)
-					recreate_();
-			}
-		}
-		else if (access == common::property_access::read)
-			*static_cast<bool *>(arg) = began_;
-	}
-	else if (prop == &created){
-		if (access == common::property_access::read)
-			*static_cast<bool *>(arg) = (native_value_() != nullptr);
-		else if (access == common::property_access::write)
-			create_(*static_cast<bool *>(arg), nullptr);
-	}
-	else if (prop == &native)
-		*static_cast<drawing::types::render_target **>(arg) = native_value_();
-	else if (prop == &create)
-		create_(true, static_cast<create_info *>(arg));
-}
+void ewin::drawing::object::handle_property_(void *prop, void *arg, common::property_access access){}
 
 void ewin::drawing::object::create_(bool create, const create_info *info){}
 
 void ewin::drawing::object::recreate_(){}
 
-ewin::drawing::types::render_target *ewin::drawing::object::native_value_(){
-	return nullptr;
+void ewin::drawing::object::draw_(void *arg){
+	auto shape = static_cast<drawing::shape *>(arg);
+	if (brush_ != nullptr)//Update brush
+		shape->brush = *brush_;
+	shape->drawer = *this;
+	shape->draw = true;
+}
+
+void ewin::drawing::object::fill_(void *arg){
+	auto shape = static_cast<drawing::shape *>(arg);
+	if (brush_ != nullptr)//Update brush
+		shape->brush = *brush_;
+	shape->drawer = *this;
+	shape->fill = true;
 }

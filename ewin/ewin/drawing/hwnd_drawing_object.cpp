@@ -86,7 +86,9 @@ void ewin::drawing::hwnd_object::create_(bool create, const base_type::create_in
 					&native_
 				);
 
+
 				if (SUCCEEDED(result) && native_ != nullptr){//Created render
+					native_->GetDpi(&cache_.dpi.x, &cache_.dpi.y);
 					if (size_event_id_ == 0u){
 						size_event_id_ = target_->events->position_change += [this](events::position_change &e){//Listen for size events
 							if (target_ == nullptr || native_ == nullptr)

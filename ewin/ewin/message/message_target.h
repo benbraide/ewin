@@ -10,9 +10,11 @@
 #include "../events/event_callback.h"
 #include "../events/basic_event.h"
 
-#define EWIN_WM_GET_CURSOR		(EWIN_WM_APP_LAST + 1)
-#define EWIN_WM_GET_BG_BRUSH	(EWIN_WM_APP_LAST + 2)
-#define EWIN_WM_GET_BG_COLOR	(EWIN_WM_APP_LAST + 3)
+#define EWIN_WM_WIN_FIRST		(EWIN_WM_APP_LAST  + 1)
+#define EWIN_WM_POSITION_CHANGE	(EWIN_WM_WIN_FIRST + 0)
+#define EWIN_WM_GET_CURSOR		(EWIN_WM_WIN_FIRST + 1)
+#define EWIN_WM_GET_BG_BRUSH	(EWIN_WM_WIN_FIRST + 2)
+#define EWIN_WM_GET_BG_COLOR	(EWIN_WM_WIN_FIRST + 3)
 
 namespace ewin::window{
 	class wnd_event;

@@ -299,6 +299,9 @@ ewin::common::types::result CALLBACK ewin::application::object::entry_(common::t
 
 		break;
 	}
+	case EWIN_WM_POSITION_CHANGE:
+		target->cache_dimensions_();
+		break;
 	case WM_SETFOCUS:
 		current->focus_window_(hwnd);
 		break;

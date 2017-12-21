@@ -8,6 +8,8 @@ ewin::message::target::target(window::wnd_event &events)
 			info->second = dispatch_message_(*info->first);
 		}
 	});
+
+	background_color_ = drawing::d2d1::ColorF(::GetSysColor(COLOR_WINDOW));
 }
 
 ewin::message::target::~target() = default;
@@ -96,6 +98,7 @@ ewin::common::types::result ewin::message::target::dispatch_message_(common::typ
 		});
 	case WM_WINDOWPOSCHANGING:
 	case WM_WINDOWPOSCHANGED:
+	case EWIN_WM_POSITION_CHANGE:
 		return dispatch_message_to_(&target::on_position_change_, msg, [this](events::message &e, bool fire){
 			if (fire)
 				events_->position_change.fire_(e);
@@ -254,6 +257,7 @@ void ewin::message::target::on_background_erase_(events::draw &e){
 		if ((result = ::SendMessageW(e.msg_->hwnd, EWIN_WM_GET_BG_COLOR, e.msg_->wParam, e.msg_->lParam)) == 0u)
 			return;//Color not returned
 
+		::SendMessageW(e.msg_->hwnd, EWIN_WM_POSITION_CHANGE, 0, 0);
 		if (e.clip != reinterpret_cast<window::object *>(this)->client_rect){
 			drawing::solid_color_brush *brush = e.color_brush;
 			brush->color = *reinterpret_cast<drawing::types::color *>(result);//Update
@@ -273,6 +277,7 @@ void ewin::message::target::on_background_erase_(events::draw &e){
 			e.drawer->clear = *reinterpret_cast<drawing::types::color *>(result);
 	}
 	else{//Use brush
+		::SendMessageW(e.msg_->hwnd, EWIN_WM_POSITION_CHANGE, 0, 0);
 		common::types::rect clip = e.clip;
 		e.drawer->native->FillRectangle(
 			drawing::d2d1::RectF(
@@ -296,9 +301,7 @@ ewin::drawing::types::color *ewin::message::target::on_get_background_color_(eve
 	return &background_color_;
 }
 
-void ewin::message::target::on_draw_(events::draw &e){
-
-}
+void ewin::message::target::on_draw_(events::draw &e){}
 
 void ewin::message::target::on_unknown_message_(events::message &e){}
 

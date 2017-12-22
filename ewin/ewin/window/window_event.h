@@ -21,33 +21,36 @@ namespace ewin::window{
 
 		wnd_event &operator =(const wnd_event &) = delete;
 
-		ewin::events::typed_basic<ewin::events::message, object, false> create;
-		ewin::events::typed_basic<ewin::events::message, object, false> destroy;
-		ewin::events::typed_basic<ewin::events::message, object, false> close;
+		ewin::events::typed_basic<ewin::events::message, object> create;
+		ewin::events::typed_basic<ewin::events::message, object> destroy;
+		ewin::events::typed_basic<ewin::events::message, object> close;
 
-		ewin::events::typed_basic<ewin::events::mouse_activate, object, false> mouse_activate;
-		ewin::events::typed_basic<ewin::events::pre_activate, object, false> pre_activate;
-		ewin::events::typed_basic<ewin::events::activate, object, false> activate;
+		ewin::events::typed_basic<ewin::events::mouse_activate, object> mouse_activate;
+		ewin::events::typed_basic<ewin::events::pre_activate, object> pre_activate;
+		ewin::events::typed_basic<ewin::events::activate, object> activate;
 
-		ewin::events::typed_basic<ewin::events::message, object, false> cancel_mode;
-		ewin::events::typed_basic<ewin::events::focus_change, object, false> focus_change;
-		ewin::events::typed_basic<ewin::events::enable, object, false> enable;
+		ewin::events::typed_basic<ewin::events::message, object> cancel_mode;
+		ewin::events::typed_basic<ewin::events::focus_change, object> focus_change;
+		ewin::events::typed_basic<ewin::events::enable, object> enable;
 
-		ewin::events::typed_basic<ewin::events::cursor, object, false> set_cursor;
-		ewin::events::typed_basic<ewin::events::cursor, object, false> get_cursor;
-		ewin::events::typed_basic<ewin::events::hit_test, object, false> hit_test;
+		ewin::events::typed_basic<ewin::events::cursor, object> set_cursor;
+		ewin::events::typed_basic<ewin::events::cursor, object> get_cursor;
+		ewin::events::typed_basic<ewin::events::hit_test, object> hit_test;
 
-		ewin::events::typed_basic<ewin::events::position_change, object, false> position_change;
-		ewin::events::typed_basic<ewin::events::size, object, false> size;
-		ewin::events::typed_basic<ewin::events::move, object, false> move;
-		ewin::events::typed_basic<ewin::events::style_change, object, false> style_change;
+		ewin::events::typed_basic<ewin::events::position_change, object> position_change;
+		ewin::events::typed_basic<ewin::events::size, object> size;
+		ewin::events::typed_basic<ewin::events::move, object> move;
+		ewin::events::typed_basic<ewin::events::style_change, object> style_change;
 
-		ewin::events::typed_basic<ewin::events::draw, object, false> background_erase;
-		ewin::events::typed_basic<ewin::events::message, object, false> get_background_brush;
-		ewin::events::typed_basic<ewin::events::message, object, false> get_background_color;
-		ewin::events::typed_basic<ewin::events::draw, object, false> draw;
+		ewin::events::typed_basic<ewin::events::draw, object> background_erase;
+		ewin::events::typed_basic<ewin::events::message, object> get_background_brush;
+		ewin::events::typed_basic<ewin::events::message, object> get_background_color;
 
-		ewin::events::typed_basic<ewin::events::message, object, false> unknown_message;
+		ewin::events::typed_basic<ewin::events::draw, object> non_client_paint;
+		ewin::events::typed_basic<ewin::events::draw, object> paint;
+		ewin::events::typed_basic<ewin::events::draw, object> print_client;
+
+		ewin::events::typed_basic<ewin::events::message, object> unknown_message;
 	};
 }
 

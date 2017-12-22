@@ -121,7 +121,6 @@ namespace ewin::window{
 		common::read_only_state_value_property<common::types::uint, object> filtered_extended_styles;
 
 		common::transformation_property<common::types::msg, bool, object> is_dialog_message;
-		common::transformation_property<events::basic, events::basic *, object> bubble_event;
 
 		wnd_tree tree;
 		wnd_view view;
@@ -184,8 +183,6 @@ namespace ewin::window{
 		virtual void post_message_(message_info &info);
 
 		virtual bool is_dialog_message_(const common::types::msg &msg) const;
-
-		virtual events::basic *bubble_event_(const events::basic &e) const;
 
 		virtual void screen_to_client_(common::types::point &point) const;
 

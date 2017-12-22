@@ -18,12 +18,11 @@ namespace ewin::events{
 
 	protected:
 		friend class ewin::message::target;
-		template <class, class, bool> friend class typed_basic;
 
 		virtual void fire_(message &e) = 0;
 	};
 
-	template <class object_type, class target_type, bool can_be_propagated>
+	template <class object_type, class target_type>
 	class typed_basic : public basic{
 	private:
 		struct dummy_type{};
@@ -121,16 +120,6 @@ namespace ewin::events{
 			callback_visitor visitor(*dynamic_cast<object_type *>(&e));
 			for (auto &entry : map_)//Call target
 				std::visit(visitor, entry.second);
-
-			if (!can_be_propagated || e.stop_propagation)
-				return;
-
-			auto bubbled = target_->bubble_event[*this];
-			if (bubbled != nullptr){//Bubble event
-				e.bubble_();
-				bubbled->fire_(e);
-				e.remove_bubble_();
-			}
 		}
 
 		target_type *target_;

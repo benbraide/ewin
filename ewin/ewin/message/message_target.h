@@ -38,7 +38,7 @@ namespace ewin::message{
 
 		template <typename event_type, typename return_type>
 		common::types::result dispatch_message_to_(return_type(target::*callback)(event_type &), common::types::msg &msg,
-			dispatch_callback_type dispatch_callback = nullptr){
+			dispatch_callback_type dispatch_callback = nullptr, bool *stop_propagation = nullptr){
 			events::typed_callback<target, return_type, event_type> event_callback(*this, callback);
 			event_type e(msg, event_callback, this);
 
@@ -57,12 +57,15 @@ namespace ewin::message{
 					e.result = result;
 			}
 
+			if (stop_propagation != nullptr && e.stop_propagation)
+				*stop_propagation = true;
+
 			return e.result;
 		}
 
 		template <typename event_type>
 		common::types::result dispatch_message_to_(void(target::*callback)(event_type &), common::types::msg &msg,
-			dispatch_callback_type dispatch_callback = nullptr){
+			dispatch_callback_type dispatch_callback = nullptr, bool *stop_propagation = nullptr){
 			events::typed_callback<target, void, event_type> event_callback(*this, callback);
 			event_type e(msg, event_callback, this);
 
@@ -72,22 +75,25 @@ namespace ewin::message{
 					(this->*callback)(e);
 					dispatch_callback(e, false);
 
-					if (!e.handled)
+					if (static_cast<events::object &>(e).target_ == this && !e.handled)
 						e.result = call_procedure_(e);
 				}
 			}
 			else{//No dispatch callback
 				(this->*callback)(e);
-				if (!e.handled)
+				if (static_cast<events::object &>(e).target_ == this && !e.handled)
 					e.result = call_procedure_(e);
 			}
+
+			if (stop_propagation != nullptr && e.stop_propagation)
+				*stop_propagation = true;
 
 			return e.result;
 		}
 
 		template <typename event_type>
 		common::types::result dispatch_message_to_(bool(target::*callback)(event_type &), common::types::msg &msg,
-			dispatch_callback_type dispatch_callback = nullptr){
+			dispatch_callback_type dispatch_callback = nullptr, bool *stop_propagation = nullptr){
 			events::typed_callback<target, bool, event_type> event_callback(*this, callback);
 			event_type e(msg, event_callback, this);
 
@@ -98,12 +104,15 @@ namespace ewin::message{
 						e.prevent_default = true;
 
 					dispatch_callback(e, false);
-					if (!e.handled)
+					if (static_cast<events::object &>(e).target_ == this && !e.handled)
 						e.result = call_procedure_(e);
 				}
 			}
-			else if ((this->*callback)(e) && !e.handled)
+			else if ((this->*callback)(e) && static_cast<events::object &>(e).target_ == this && !e.handled)
 				e.result = call_procedure_(e);
+
+			if (stop_propagation != nullptr && e.stop_propagation)
+				*stop_propagation = true;
 
 			return e.result;
 		}

@@ -161,17 +161,17 @@ ewin::common::types::result ewin::message::target::dispatch_message_(common::typ
 	case WM_NCPAINT:
 		return dispatch_message_to_(&target::on_non_client_paint_, msg, [this](events::message &e, bool fire){
 			if (fire)
-				events_->draw.fire_(e);
+				events_->non_client_paint.fire_(e);
 		});
 	case WM_PAINT:
 		return dispatch_message_to_(&target::on_paint_, msg, [this](events::message &e, bool fire){
 			if (fire)
-				events_->draw.fire_(e);
+				events_->paint.fire_(e);
 		});
 	case WM_PRINTCLIENT:
 		return dispatch_message_to_(&target::on_print_client_, msg, [this](events::message &e, bool fire){
 			if (fire)
-				events_->draw.fire_(e);
+				events_->print_client.fire_(e);
 		});
 	default:
 		break;

@@ -54,7 +54,6 @@ void ewin::window::object::bind_properties_(){
 	filtered_extended_styles.initialize_(nullptr, handler);
 
 	is_dialog_message.initialize_(nullptr, handler);
-	bubble_event.initialize_(nullptr, handler);
 	events.initialize_(&events_, nullptr);
 
 	created.initialize_(nullptr, handler);
@@ -137,11 +136,6 @@ void ewin::window::object::handle_property_(void *prop, void *arg, common::prope
 		}
 
 		*static_cast<drawing::solid_color_brush **>(arg) = &color_brush_;
-	}
-	else if (prop == &bubble_event){
-		auto info = static_cast<std::pair<events::basic *, events::basic *> *>(arg);
-		info->second = bubble_event_(*info->first);
-		return;
 	}
 	else if (prop == &size && access == common::property_access::write)
 		update_dimension_(dimension_type::size);
@@ -506,10 +500,6 @@ void ewin::window::object::post_message_(message_info &info){
 
 bool ewin::window::object::is_dialog_message_(const common::types::msg &msg) const{
 	return EWIN_CPP_BOOL(::IsDialogMessageW(handle_, &const_cast<common::types::msg &>(msg)));
-}
-
-ewin::events::basic *ewin::window::object::bubble_event_(const events::basic &e) const{
-	return nullptr;
 }
 
 void ewin::window::object::screen_to_client_(common::types::point &point) const{

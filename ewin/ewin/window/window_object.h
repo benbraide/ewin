@@ -186,7 +186,11 @@ namespace ewin::window{
 
 		virtual void screen_to_client_(common::types::point &point) const;
 
+		virtual void screen_to_client_(common::types::rect &rect) const;
+
 		virtual void client_to_screen_(common::types::point &point) const;
+
+		virtual void client_to_screen_(common::types::rect &rect) const;
 
 		application_type *app_;
 		common::types::hwnd handle_;

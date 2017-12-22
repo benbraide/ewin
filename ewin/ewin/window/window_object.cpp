@@ -2,8 +2,6 @@
 
 #include "dialog_window.h"
 
-#pragma warning(disable: 4312)
-
 ewin::window::object::object()
 	: message_target_type(events_), tree(*this), view(*this), frame(*this), state(*this), style(*this), attribute(*this), events_(*this), app_(nullptr), handle_(nullptr),
 	error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), local_error_value_(ERROR_SUCCESS), auto_destroy_(true){
@@ -337,11 +335,8 @@ void ewin::window::object::update_dimension_(dimension_type type){
 			cache_.size.cx = (cache_.rect.right - cache_.rect.left);
 			cache_.size.cy = (cache_.rect.bottom - cache_.rect.top);
 
-			if (tree.parent_ != nullptr){//Convert from screen
-				tree.parent_->screen_to_client_(*reinterpret_cast<common::types::point *>(cache_.relative_rect.left));
-				cache_.relative_rect.right = (cache_.relative_rect.left + cache_.size.cx);
-				cache_.relative_rect.bottom = (cache_.relative_rect.top + cache_.size.cy);
-			}
+			if (tree.parent_ != nullptr)//Convert from screen
+				tree.parent_->screen_to_client_(cache_.relative_rect);
 			else//No conversion necessary
 				cache_.relative_rect = cache_.rect;
 
@@ -368,11 +363,8 @@ void ewin::window::object::update_dimension_(dimension_type type){
 			cache_.size.cx = (cache_.relative_rect.right - cache_.relative_rect.left);
 			cache_.size.cy = (cache_.relative_rect.bottom - cache_.relative_rect.top);
 
-			if (tree.parent_ != nullptr){//Convert from screen
-				tree.parent_->client_to_screen_(*reinterpret_cast<common::types::point *>(cache_.rect.left));
-				cache_.rect.right = (cache_.rect.left + cache_.size.cx);
-				cache_.rect.bottom = (cache_.rect.top + cache_.size.cy);
-			}
+			if (tree.parent_ != nullptr)//Convert from screen
+				tree.parent_->client_to_screen_(cache_.rect);
 			else//No conversion necessary
 				cache_.rect = cache_.relative_rect;
 
@@ -410,16 +402,11 @@ void ewin::window::object::update_dimension_(dimension_type type){
 	case dimension_type::client_size:
 	{
 		if (handle_ != nullptr){
-			common::types::point client_position{ cache_.client_rect.left, cache_.client_rect.top };
-			client_to_screen_(client_position);//Convert to screen
+			common::types::rect client_rect = cache_.client_rect;
+			client_to_screen_(client_rect);//Convert to screen
 
-			common::types::point client_position_extent{
-				client_position.x + (cache_.client_rect.right - cache_.client_rect.left),
-				client_position.y + (cache_.client_rect.bottom - cache_.client_rect.top)
-			};
-
-			cache_.rect.right = (cache_.rect.left + cache_.client_size.cx + (client_position.x - cache_.rect.left) + (cache_.rect.right - client_position_extent.x));
-			cache_.rect.bottom = (cache_.rect.top + cache_.client_size.cy + (client_position.y - cache_.rect.top) + (cache_.rect.bottom - client_position_extent.y));
+			cache_.rect.right = (cache_.rect.left + cache_.client_size.cx + (client_rect.left - cache_.rect.left) + (cache_.rect.right - client_rect.right));
+			cache_.rect.bottom = (cache_.rect.top + cache_.client_size.cy + (client_rect.top - cache_.rect.top) + (cache_.rect.bottom - client_rect.bottom));
 
 			update_dimension_(dimension_type::rect);
 		}
@@ -445,11 +432,8 @@ void ewin::window::object::cache_dimensions_(){
 	cache_.size.cx = (cache_.rect.right - cache_.rect.left);
 	cache_.size.cy = (cache_.rect.bottom - cache_.rect.top);
 
-	if (tree.parent_ != nullptr){//Convert from screen
-		tree.parent_->screen_to_client_(*reinterpret_cast<common::types::point *>(cache_.relative_rect.left));
-		cache_.relative_rect.right = (cache_.relative_rect.left + cache_.size.cx);
-		cache_.relative_rect.bottom = (cache_.relative_rect.top + cache_.size.cy);
-	}
+	if (tree.parent_ != nullptr)//Convert from screen
+		tree.parent_->screen_to_client_(cache_.relative_rect);
 	else//No conversion necessary
 		cache_.relative_rect = cache_.rect;
 
@@ -507,7 +491,17 @@ void ewin::window::object::screen_to_client_(common::types::point &point) const{
 		::ScreenToClient(handle_, &point);
 }
 
+void ewin::window::object::screen_to_client_(common::types::rect &rect) const{
+	if (handle_ != nullptr)
+		::MapWindowPoints(HWND_DESKTOP, handle_, reinterpret_cast<common::types::point *>(&rect), 2);
+}
+
 void ewin::window::object::client_to_screen_(common::types::point &point) const{
 	if (handle_ != nullptr)
 		::ClientToScreen(handle_, &point);
+}
+
+void ewin::window::object::client_to_screen_(common::types::rect &rect) const{
+	if (handle_ != nullptr)
+		::MapWindowPoints(handle_, HWND_DESKTOP, reinterpret_cast<common::types::point *>(&rect), 2);
 }

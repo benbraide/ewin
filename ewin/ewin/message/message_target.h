@@ -15,6 +15,7 @@
 #define EWIN_WM_GET_CURSOR		(EWIN_WM_WIN_FIRST + 1)
 #define EWIN_WM_GET_BG_BRUSH	(EWIN_WM_WIN_FIRST + 2)
 #define EWIN_WM_GET_BG_COLOR	(EWIN_WM_WIN_FIRST + 3)
+#define EWIN_WM_NCPAINT			(EWIN_WM_WIN_FIRST + 4)
 
 namespace ewin::window{
 	class wnd_event;
@@ -149,7 +150,11 @@ namespace ewin::message{
 
 		virtual drawing::types::color *on_get_background_color_(events::message &e);
 
-		virtual void on_draw_(events::draw &e);
+		virtual void on_non_client_paint_(events::draw &e);
+
+		virtual void on_paint_(events::draw &e);
+
+		virtual void on_print_client_(events::draw &e);
 
 		virtual void on_unknown_message_(events::message &e);
 

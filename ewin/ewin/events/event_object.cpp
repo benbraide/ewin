@@ -186,6 +186,18 @@ void ewin::events::draw::begin_paint_(){
 		return;//Not applicable
 
 	switch (msg_->message){
+	case WM_NCPAINT:
+	{
+		auto drawer = static_cast<drawing::hdc_object *>(dynamic_cast<window::object *>(target_)->app->hdc_drawer);
+		::GetClipBox(info_.hdc = GetDCEx(msg_->hwnd, reinterpret_cast<common::types::hrgn>(msg_->wParam), DCX_WINDOW | DCX_INTERSECTRGN), &info_.rcPaint);
+		bind_(*drawer);
+		drawer_ = drawer;
+		color_brush_ = dynamic_cast<window::object *>(target_)->color_brush;
+		cleanup_ = [this]{
+			::ReleaseDC(msg_->hwnd, info_.hdc);
+		};
+		break;
+	}
 	case WM_PAINT:
 	{
 		::BeginPaint(msg_->hwnd, &info_);
@@ -196,29 +208,22 @@ void ewin::events::draw::begin_paint_(){
 		};
 		break;
 	}
+	case WM_PRINTCLIENT:
+	{
+		auto drawer = static_cast<drawing::hdc_object *>(dynamic_cast<window::object *>(target_)->app->hdc_drawer);
+		::GetClipBox(info_.hdc = reinterpret_cast<common::types::hdc>(msg_->wParam), &info_.rcPaint);
+		bind_(*drawer);
+		drawer_ = drawer;
+		color_brush_ = dynamic_cast<window::object *>(target_)->color_brush;
+		info_.fErase = EWIN_IS(msg_->lParam, PRF_ERASEBKGND);
+		break;
+	}
 	case WM_ERASEBKGND:
 		::GetClipBox(info_.hdc = reinterpret_cast<common::types::hdc>(msg_->wParam), &info_.rcPaint);
 		drawer_ = static_cast<drawing::hwnd_object *>(dynamic_cast<window::object *>(target_)->drawer);
 		color_brush_ = dynamic_cast<window::object *>(target_)->color_brush;
 		info_.fErase = TRUE;
 		break;
-	case WM_NCPAINT:
-	{
-		auto drawer = static_cast<drawing::hdc_object *>(dynamic_cast<window::object *>(target_)->app->hdc_drawer);
-		::GetClipBox(info_.hdc = GetDCEx(msg_->hwnd, reinterpret_cast<common::types::hrgn>(msg_->wParam), DCX_WINDOW | DCX_INTERSECTRGN), &info_.rcPaint);
-		drawer_ = drawer;
-		drawer->target = nullptr;
-		drawer->offset.x = info_.rcPaint.left;
-		drawer->offset.y = info_.rcPaint.top;
-		drawer->size.width = (info_.rcPaint.right - info_.rcPaint.left);
-		drawer->size.height = (info_.rcPaint.bottom - info_.rcPaint.top);
-		drawer->target = info_.hdc;
-		color_brush_ = dynamic_cast<window::object *>(target_)->color_brush;
-		cleanup_ = [this]{
-			::ReleaseDC(msg_->hwnd, info_.hdc);
-		};
-		break;
-	}
 	default:
 		drawer_ = static_cast<drawing::hwnd_object *>(dynamic_cast<window::object *>(target_)->drawer);
 		color_brush_ = dynamic_cast<window::object *>(target_)->color_brush;
@@ -228,4 +233,13 @@ void ewin::events::draw::begin_paint_(){
 
 	drawer_->began = true;
 	drawer_->transform = drawing::d2d1::IdentityMatrix();
+}
+
+void ewin::events::draw::bind_(drawing::hdc_object &drawer){
+	drawer.target = nullptr;
+	drawer.offset.x = info_.rcPaint.left;
+	drawer.offset.y = info_.rcPaint.top;
+	drawer.size.width = (info_.rcPaint.right - info_.rcPaint.left);
+	drawer.size.height = (info_.rcPaint.bottom - info_.rcPaint.top);
+	drawer.target = info_.hdc;
 }

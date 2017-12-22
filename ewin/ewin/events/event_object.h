@@ -258,6 +258,8 @@ namespace ewin::events{
 
 		virtual void begin_paint_();
 
+		virtual void bind_(drawing::hdc_object &drawer);
+
 		common::types::paint_struct info_;
 		drawing::object *drawer_;
 		drawing::solid_color_brush *color_brush_;

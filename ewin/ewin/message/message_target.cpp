@@ -158,6 +158,21 @@ ewin::common::types::result ewin::message::target::dispatch_message_(common::typ
 			if (fire)
 				events_->get_background_color.fire_(e);
 		});
+	case WM_NCPAINT:
+		return dispatch_message_to_(&target::on_non_client_paint_, msg, [this](events::message &e, bool fire){
+			if (fire)
+				events_->draw.fire_(e);
+		});
+	case WM_PAINT:
+		return dispatch_message_to_(&target::on_paint_, msg, [this](events::message &e, bool fire){
+			if (fire)
+				events_->draw.fire_(e);
+		});
+	case WM_PRINTCLIENT:
+		return dispatch_message_to_(&target::on_print_client_, msg, [this](events::message &e, bool fire){
+			if (fire)
+				events_->draw.fire_(e);
+		});
 	default:
 		break;
 	}
@@ -301,7 +316,11 @@ ewin::drawing::types::color *ewin::message::target::on_get_background_color_(eve
 	return &background_color_;
 }
 
-void ewin::message::target::on_draw_(events::draw &e){}
+void ewin::message::target::on_non_client_paint_(events::draw &e){}
+
+void ewin::message::target::on_paint_(events::draw &e){}
+
+void ewin::message::target::on_print_client_(events::draw &e){}
 
 void ewin::message::target::on_unknown_message_(events::message &e){}
 

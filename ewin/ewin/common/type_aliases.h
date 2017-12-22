@@ -63,6 +63,8 @@ namespace ewin::common::types{
 
 	typedef ::CBT_CREATEWND		hook_create_window_info;
 	typedef ::CBTACTIVATESTRUCT	hook_activate_info;
+	typedef ::MOUSEHOOKSTRUCT	mouse_hook_struct;
+	typedef ::TRACKMOUSEEVENT	track_mouse_event;
 
 	typedef ::POINT				point;
 	typedef ::SIZE				size;

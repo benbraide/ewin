@@ -1,17 +1,22 @@
 #include "../window/window_object.h"
 
-ewin::events::object::object(target_type *target)
-	: target_(target), states_(state_type::nil){
+ewin::events::object::object(target_type *target, target_type *owner)
+	: target_((target == nullptr) ? owner : target), owner_(owner), states_(state_type::nil){
 	bind_properties_();
+	if (target_ != owner_)
+		EWIN_SET(states_, state_type::bubbled);
 }
 
 void ewin::events::object::bind_properties_(){
 	auto handler = EWIN_PROP_HANDLER(object);
 
 	target.initialize_(target_, nullptr);
+	owner.initialize_(owner_, nullptr);
+
 	do_default.initialize_(nullptr, handler);
 	prevent_default.initialize_(nullptr, handler);
 	stop_propagation.initialize_(nullptr, handler);
+
 	bubbled.initialize_(nullptr, handler);
 	handled.initialize_(nullptr, handler);
 }
@@ -242,4 +247,57 @@ void ewin::events::draw::bind_(drawing::hdc_object &drawer){
 	drawer.size.width = (info_.rcPaint.right - info_.rcPaint.left);
 	drawer.size.height = (info_.rcPaint.bottom - info_.rcPaint.top);
 	drawer.target = info_.hdc;
+}
+
+ewin::events::mouse::~mouse(){
+	if (!EWIN_IS(states_, state_type::bubbled))
+		application::manager::current->update_last_mouse_position = true;
+}
+
+void ewin::events::mouse::cache_values_(){
+	auto position = ::GetMessagePos();
+	cache_.position = common::types::point{ GET_X_LPARAM(position), GET_Y_LPARAM(position) };
+
+	switch (msg_->message){
+	case WM_NCMOUSEMOVE:
+	case WM_NCMOUSEHOVER:
+	case WM_NCLBUTTONDOWN:
+	case WM_NCLBUTTONUP:
+	case WM_NCLBUTTONDBLCLK:
+	case WM_NCMBUTTONDOWN:
+	case WM_NCMBUTTONUP:
+	case WM_NCMBUTTONDBLCLK:
+	case WM_NCRBUTTONDOWN:
+	case WM_NCRBUTTONUP:
+	case WM_NCRBUTTONDBLCLK:
+	case WM_NCXBUTTONDOWN:
+	case WM_NCXBUTTONUP:
+	case WM_NCXBUTTONDBLCLK:
+		cache_.hit = static_cast<common::types::uint>(msg_->wParam);
+		cache_.delta = common::types::size{
+			(cache_.position.x - application::manager::current->last_mouse_position.x),
+			(cache_.position.y - application::manager::current->last_mouse_position.y)
+		};
+		break;
+	case WM_NCMOUSELEAVE:
+	case EWIN_WM_MOUSEENTER:
+		cache_.hit = HTTOP;
+		cache_.delta = common::types::size{};
+		break;
+	case WM_MOUSEWHEEL:
+		cache_.hit = HTCLIENT;
+		cache_.delta = common::types::size{ 0, static_cast<int>(HIWORD(msg_->wParam) / WHEEL_DELTA) };
+		break;
+	case WM_MOUSEHWHEEL:
+		cache_.hit = HTCLIENT;
+		cache_.delta = common::types::size{ static_cast<int>(HIWORD(msg_->wParam) / WHEEL_DELTA), 0 };
+		break;
+	default://Client area
+		cache_.hit = HTCLIENT;
+		cache_.delta = common::types::size{
+			(cache_.position.x - application::manager::current->last_mouse_position.x),
+			(cache_.position.y - application::manager::current->last_mouse_position.y)
+		};
+		break;
+	}
 }

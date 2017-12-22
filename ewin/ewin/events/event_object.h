@@ -35,9 +35,11 @@ namespace ewin::events{
 			bubbled					= (1 << 0x0003),
 		};
 
-		explicit object(target_type *target);
+		object(target_type *target, target_type *owner);
 
 		common::read_only_object_value_property<target_type, object> target;
+		common::read_only_object_value_property<target_type, object> owner;
+
 		common::boolean_value_property<object> do_default;
 		common::boolean_value_property<object> prevent_default;
 		common::boolean_value_property<object> stop_propagation;
@@ -57,6 +59,7 @@ namespace ewin::events{
 		virtual void prevent_default_();
 
 		target_type *target_;
+		target_type *owner_;
 		state_type states_;
 	};
 
@@ -262,6 +265,35 @@ namespace ewin::events{
 		drawing::object *drawer_;
 		drawing::solid_color_brush *color_brush_;
 		cleanup_callback_type cleanup_;
+	};
+
+	class mouse : public message{
+	public:
+		struct cache{
+			common::types::uint hit;
+			common::types::point position;
+			common::types::size delta;
+		};
+
+		template <typename... args_types>
+		explicit mouse(args_types &&... args)
+			: message(std::forward<args_types>(args)...){
+			cache_values_();
+			hit.initialize_(&cache_.hit, nullptr);
+			position.initialize_(&cache_.position, nullptr);
+			delta.initialize_(&cache_.delta, nullptr);
+		}
+
+		virtual ~mouse();
+
+		common::read_only_value_property<common::types::uint, mouse> hit;
+		common::read_only_point_value_property<common::types::point, mouse> position;
+		common::read_only_size_value_property<common::types::size, mouse> delta;
+
+	protected:
+		virtual void cache_values_();
+
+		cache cache_;
 	};
 
 	EWIN_MAKE_OPERATORS(object::state_type);

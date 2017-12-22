@@ -53,6 +53,10 @@ namespace ewin::application{
 		struct object_state{
 			common::types::hwnd focused;
 			common::types::hwnd moused;
+			common::types::point last_mouse_position;
+			common::types::point mouse_down_position;
+			common::types::uint mouse_button_down;
+			bool dragging;
 		};
 
 		object();
@@ -74,6 +78,9 @@ namespace ewin::application{
 		common::read_only_object_value_property<drawing::factory, object> drawing_factory;
 		common::read_only_object_value_property<drawing::hdc_object, object> hdc_drawer;
 		common::read_only_object_value_property<drawing::solid_color_brush, object> color_brush;
+
+		common::read_only_point_value_property<common::types::point, object> last_mouse_position;
+		common::write_only_boolean_value_property<object> update_last_mouse_position;
 
 		static thread_local common::random_bool bool_generator;
 		static thread_local common::random_integral_number integer_generator;
@@ -119,6 +126,16 @@ namespace ewin::application{
 
 		void move_window_(window_type &window_object);
 
+		void mouse_leave_(common::types::hwnd hwnd, common::types::uint msg);
+
+		void mouse_move_(common::types::hwnd hwnd);
+
+		void mouse_down_(common::types::hwnd hwnd, common::types::uint button);
+
+		void mouse_up_(common::types::hwnd hwnd, common::types::uint button);
+
+		void track_mouse_(common::types::hwnd hwnd, common::types::uint flags);
+
 		common::types::result app_message_(common::types::uint msg, common::types::wparam wparam, common::types::lparam lparam);
 
 		static common::types::result CALLBACK entry_(common::types::hwnd hwnd, common::types::uint msg, common::types::wparam wparam, common::types::lparam lparam);
@@ -127,12 +144,15 @@ namespace ewin::application{
 
 		std::thread::id thread_id_;
 		std::shared_ptr<window_type> message_window_;
+
 		object_state object_state_{};
 		hwnd_list_type top_level_handles_;
 		window_map_type window_handles_;
+
 		std::pair<common::types::hwnd, window_type *> cached_window_handle_;
 		window_type *window_being_created_;
 		common::types::hook hook_id_;
+
 		drawing::factory drawing_factory_;
 		drawing::hdc_object hdc_drawer_;
 		drawing::solid_color_brush color_brush_;

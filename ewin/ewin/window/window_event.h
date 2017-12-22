@@ -50,6 +50,28 @@ namespace ewin::window{
 		ewin::events::typed_basic<ewin::events::draw, object> paint;
 		ewin::events::typed_basic<ewin::events::draw, object> print_client;
 
+		ewin::events::typed_basic<ewin::events::mouse, object> mouse_leave;
+		ewin::events::typed_basic<ewin::events::mouse, object> mouse_enter;
+
+		ewin::events::typed_basic<ewin::events::mouse, object> mouse_move;
+		ewin::events::typed_basic<ewin::events::mouse, object> mouse_hover;
+
+		ewin::events::typed_basic<ewin::events::mouse, object> left_mouse_down;
+		ewin::events::typed_basic<ewin::events::mouse, object> middle_mouse_down;
+		ewin::events::typed_basic<ewin::events::mouse, object> right_mouse_down;
+
+		ewin::events::typed_basic<ewin::events::mouse, object> left_mouse_up;
+		ewin::events::typed_basic<ewin::events::mouse, object> middle_mouse_up;
+		ewin::events::typed_basic<ewin::events::mouse, object> right_mouse_up;
+
+		ewin::events::typed_basic<ewin::events::mouse, object> left_mouse_double_click;
+		ewin::events::typed_basic<ewin::events::mouse, object> middle_mouse_double_click;
+		ewin::events::typed_basic<ewin::events::mouse, object> right_mouse_double_click;
+
+		ewin::events::typed_basic<ewin::events::mouse, object> mouse_wheel;
+		ewin::events::typed_basic<ewin::events::mouse, object> mouse_drag;
+		ewin::events::typed_basic<ewin::events::mouse, object> mouse_drag_end;
+
 		ewin::events::typed_basic<ewin::events::message, object> unknown_message;
 	};
 }

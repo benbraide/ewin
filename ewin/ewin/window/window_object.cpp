@@ -19,6 +19,10 @@ ewin::window::object::~object(){
 	destruct_();
 }
 
+ewin::message::target *ewin::window::object::parent_() const{
+	return tree.parent_;
+}
+
 void ewin::window::object::bind_properties_(){
 	auto handler = EWIN_PROP_HANDLER(object);
 

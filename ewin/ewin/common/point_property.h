@@ -21,8 +21,14 @@ namespace ewin::common{
 		explicit point_value_property(args_types &&... args)
 			: base_type(std::forward<args_types>(args)...){
 			auto handler = EWIN_PROP_HANDLER(point_value_property);
-			x.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->x), handler);
-			y.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->y), handler);
+			if (base_type::callback_ == nullptr){
+				x.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->x), nullptr);
+				y.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->y), nullptr);
+			}
+			else{//Bind callback
+				x.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->x), handler);
+				y.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->y), handler);
+			}
 		}
 
 		template <typename target_type>
@@ -66,10 +72,14 @@ namespace ewin::common{
 
 		void initialize_(value_type *linked, callback_type callback){
 			base_type::initialize_(linked, callback);
-			if (linked != nullptr){//Update linked
-				auto handler = EWIN_PROP_HANDLER(point_value_property);
-				x.initialize_(&linked->x, handler);
-				y.initialize_(&linked->y, handler);
+			auto handler = EWIN_PROP_HANDLER(point_value_property);
+			if (callback == nullptr){
+				x.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->x), nullptr);
+				y.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->y), nullptr);
+			}
+			else{//Bind callback
+				x.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->x), handler);
+				y.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->y), handler);
 			}
 		}
 

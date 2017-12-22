@@ -142,6 +142,8 @@ namespace ewin::window{
 	protected:
 		friend class application::object;
 
+		virtual ewin::message::target *parent_() const override;
+
 		void bind_properties_();
 
 		virtual void handle_property_(void *prop, void *arg, common::property_access access);

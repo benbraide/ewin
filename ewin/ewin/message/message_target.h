@@ -15,7 +15,10 @@
 #define EWIN_WM_GET_CURSOR		(EWIN_WM_WIN_FIRST + 1)
 #define EWIN_WM_GET_BG_BRUSH	(EWIN_WM_WIN_FIRST + 2)
 #define EWIN_WM_GET_BG_COLOR	(EWIN_WM_WIN_FIRST + 3)
-#define EWIN_WM_NCPAINT			(EWIN_WM_WIN_FIRST + 4)
+#define EWIN_WM_MOUSEENTER		(EWIN_WM_WIN_FIRST + 4)
+#define EWIN_WM_MOUSELEAVE		(EWIN_WM_WIN_FIRST + 5)
+#define EWIN_WM_MOUSEDRAG		(EWIN_WM_WIN_FIRST + 6)
+#define EWIN_WM_MOUSEDRAGEND	(EWIN_WM_WIN_FIRST + 7)
 
 namespace ewin::window{
 	class wnd_event;
@@ -26,6 +29,7 @@ namespace ewin::message{
 	public:
 		typedef std::pair<common::types::result, common::types::result> result_pair_type;
 		typedef std::function<void(events::message &, bool)> dispatch_callback_type;
+		typedef std::function<void(common::types::msg &)> bubble_callback_type;
 
 		explicit target(window::wnd_event &events);
 
@@ -34,13 +38,13 @@ namespace ewin::message{
 		common::transformation_property<common::types::msg, common::types::result, target> dispatch_message;
 
 	protected:
-		virtual common::types::result dispatch_message_(common::types::msg &msg);
+		virtual common::types::result dispatch_message_(common::types::msg &msg, target *target);
 
 		template <typename event_type, typename return_type>
-		common::types::result dispatch_message_to_(return_type(target::*callback)(event_type &), common::types::msg &msg,
+		common::types::result dispatch_message_to_(return_type(target::*callback)(event_type &), common::types::msg &msg, target *target,
 			dispatch_callback_type dispatch_callback = nullptr, bool *stop_propagation = nullptr){
-			events::typed_callback<target, return_type, event_type> event_callback(*this, callback);
-			event_type e(msg, event_callback, this);
+			events::typed_callback<message::target, return_type, event_type> event_callback(*this, callback);
+			event_type e(msg, event_callback, target, this);
 
 			if (dispatch_callback != nullptr){
 				dispatch_callback(e, true);
@@ -64,10 +68,10 @@ namespace ewin::message{
 		}
 
 		template <typename event_type>
-		common::types::result dispatch_message_to_(void(target::*callback)(event_type &), common::types::msg &msg,
+		common::types::result dispatch_message_to_(void(target::*callback)(event_type &), common::types::msg &msg, target *target,
 			dispatch_callback_type dispatch_callback = nullptr, bool *stop_propagation = nullptr){
-			events::typed_callback<target, void, event_type> event_callback(*this, callback);
-			event_type e(msg, event_callback, this);
+			events::typed_callback<message::target, void, event_type> event_callback(*this, callback);
+			event_type e(msg, event_callback, target, this);
 
 			if (dispatch_callback != nullptr){
 				dispatch_callback(e, true);
@@ -75,13 +79,13 @@ namespace ewin::message{
 					(this->*callback)(e);
 					dispatch_callback(e, false);
 
-					if (static_cast<events::object &>(e).target_ == this && !e.handled)
+					if (msg.message < WM_APP && !e.handled)
 						e.result = call_procedure_(e);
 				}
 			}
 			else{//No dispatch callback
 				(this->*callback)(e);
-				if (static_cast<events::object &>(e).target_ == this && !e.handled)
+				if (msg.message < WM_APP && !e.handled)
 					e.result = call_procedure_(e);
 			}
 
@@ -92,10 +96,10 @@ namespace ewin::message{
 		}
 
 		template <typename event_type>
-		common::types::result dispatch_message_to_(bool(target::*callback)(event_type &), common::types::msg &msg,
+		common::types::result dispatch_message_to_(bool(target::*callback)(event_type &), common::types::msg &msg, target *target,
 			dispatch_callback_type dispatch_callback = nullptr, bool *stop_propagation = nullptr){
-			events::typed_callback<target, bool, event_type> event_callback(*this, callback);
-			event_type e(msg, event_callback, this);
+			events::typed_callback<message::target, bool, event_type> event_callback(*this, callback);
+			event_type e(msg, event_callback, target, this);
 
 			if (dispatch_callback != nullptr){
 				dispatch_callback(e, true);
@@ -104,17 +108,36 @@ namespace ewin::message{
 						e.prevent_default = true;
 
 					dispatch_callback(e, false);
-					if (static_cast<events::object &>(e).target_ == this && !e.handled)
+					if (msg.message < WM_APP && !e.handled)
 						e.result = call_procedure_(e);
 				}
 			}
-			else if ((this->*callback)(e) && static_cast<events::object &>(e).target_ == this && !e.handled)
+			else if ((this->*callback)(e) && msg.message < WM_APP && !e.handled)
 				e.result = call_procedure_(e);
 
 			if (stop_propagation != nullptr && e.stop_propagation)
 				*stop_propagation = true;
 
 			return e.result;
+		}
+
+		template <typename event_type, typename return_type>
+		common::types::result dispatch_bubbling_message_to_(return_type(target::*callback)(event_type &), common::types::msg &msg, target *target,
+			dispatch_callback_type dispatch_callback = nullptr, bubble_callback_type bubble_callback = nullptr){
+			auto parent = parent_();
+			if (parent == nullptr)//Parent required for bubbling
+				return dispatch_message_to_(callback, msg, target, dispatch_callback);
+
+			auto stop_propagation = false;
+			auto result = dispatch_message_to_(callback, msg, target, dispatch_callback, &stop_propagation);
+			if ( stop_propagation)//Don't bubble
+				return result;
+
+			if (bubble_callback != nullptr)//Prepare for bubbling
+				bubble_callback(msg);
+
+			parent->dispatch_message_(msg, target);
+			return result;
 		}
 
 		virtual bool on_pre_create_(events::message &e);
@@ -165,9 +188,43 @@ namespace ewin::message{
 
 		virtual void on_print_client_(events::draw &e);
 
+		virtual void on_mouse_leave(events::mouse &e);
+
+		virtual void on_mouse_enter(events::mouse &e);
+
+		virtual void on_mouse_move(events::mouse &e);
+
+		virtual void on_mouse_hover(events::mouse &e);
+
+		virtual void on_left_mouse_down(events::mouse &e);
+
+		virtual void on_middle_mouse_down(events::mouse &e);
+
+		virtual void on_right_mouse_down(events::mouse &e);
+
+		virtual void on_left_mouse_up(events::mouse &e);
+
+		virtual void on_middle_mouse_up(events::mouse &e);
+
+		virtual void on_right_mouse_up(events::mouse &e);
+
+		virtual void on_left_mouse_double_click(events::mouse &e);
+
+		virtual void on_middle_mouse_double_click(events::mouse &e);
+
+		virtual void on_right_mouse_double_click(events::mouse &e);
+
+		virtual void on_mouse_wheel(events::mouse &e);
+
+		virtual void on_mouse_drag(events::mouse &e);
+
+		virtual void on_mouse_drag_end(events::mouse &e);
+
 		virtual void on_unknown_message_(events::message &e);
 
 		virtual common::types::result call_procedure_(events::message &e);
+
+		virtual target *parent_() const = 0;
 
 		common::types::procedure procedure_;
 		window::wnd_event *events_;

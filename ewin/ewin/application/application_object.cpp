@@ -17,11 +17,18 @@ ewin::application::object::object(bool is_main)
 	manager::current_ = this;
 	manager::application_list_.push_back(*this);
 
-	hook_id_ = ::SetWindowsHookExW(WH_CBT, hook_, nullptr, ::GetCurrentThreadId());
-	bind_properties_();
+	object_state_.focused = object_state_.moused = HWND_DESKTOP;
+	object_state_.last_mouse_position.x = object_state_.last_mouse_position.y = -1;
+	object_state_.mouse_down_position.x = object_state_.mouse_down_position.y = 0;
+	object_state_.mouse_button_down = 0;
+	object_state_.dragging = false;
 
+	hook_id_ = ::SetWindowsHookExW(WH_CBT, hook_, nullptr, ::GetCurrentThreadId());
 	thread_id_ = std::this_thread::get_id();
+
+	bind_properties_();
 	message_window_ = std::make_shared<window::message>();
+
 	if (!is_main)//Create message window
 		message_window_->created = true;
 }
@@ -57,6 +64,9 @@ void ewin::application::object::bind_properties_(){
 	hdc_drawer.initialize_(nullptr, handler);
 	color_brush.initialize_(nullptr, handler);
 
+	last_mouse_position.initialize_(&object_state_.last_mouse_position, nullptr);
+	update_last_mouse_position.initialize_(nullptr, handler);
+
 	hdc_drawer_.brush = &color_brush_;
 	color_brush_.drawer = &hdc_drawer_;
 }
@@ -65,23 +75,23 @@ void ewin::application::object::handle_property_(void *prop, void *arg, common::
 	if (prop == &window_handles){
 		task_([&]{//Execute in thread context
 			if (access == common::property_access::list_at){
-				auto &info = *reinterpret_cast<std::pair<common::types::hwnd, window_type *> *>(arg);
+				auto &info = *static_cast<std::pair<common::types::hwnd, window_type *> *>(arg);
 				info.second = find_(info.first);
 			}
 			else if (access == common::property_access::list_find){
-				auto &info = *reinterpret_cast<std::pair<common::types::hwnd, window_type *> *>(arg);
+				auto &info = *static_cast<std::pair<common::types::hwnd, window_type *> *>(arg);
 				info.first = info.second->handle;
 			}
 			else if (access == common::property_access::list_size)
-				*reinterpret_cast<std::size_t *>(arg) = window_handles_.size();
+				*static_cast<std::size_t *>(arg) = window_handles_.size();
 		});
 	}
 	else if (prop == &top_level_handles){
 		task_([&]{//Execute in thread context
 			if (access == common::property_access::list_begin)
-				*reinterpret_cast<window_list_iterator_type *>(arg) = top_level_handles_.begin();
+				*static_cast<window_list_iterator_type *>(arg) = top_level_handles_.begin();
 			else if (access == common::property_access::list_end)
-				*reinterpret_cast<window_list_iterator_type *>(arg) = top_level_handles_.end();
+				*static_cast<window_list_iterator_type *>(arg) = top_level_handles_.end();
 		});
 	}
 	else if (prop == &window_being_created){
@@ -118,13 +128,17 @@ void ewin::application::object::handle_property_(void *prop, void *arg, common::
 				color_brush_.created = true;
 			});
 		}
-		
+
 		*static_cast<drawing::solid_color_brush **>(arg) = &color_brush_;
 	}
+	else if (prop == &update_last_mouse_position){
+		auto position = ::GetMessagePos();
+		object_state_.last_mouse_position = common::types::point{ GET_X_LPARAM(position), GET_Y_LPARAM(position) };
+	}
 	else if (prop == &task)
-		task_(*reinterpret_cast<std::pair<void *, task_type *> *>(arg)->second);
+		task_(*static_cast<std::pair<void *, task_type *> *>(arg)->second);
 	else if (prop == &async_task)
-		async_task_(*reinterpret_cast<std::pair<void *, task_type *> *>(arg)->second);
+		async_task_(*static_cast<std::pair<void *, task_type *> *>(arg)->second);
 }
 
 void ewin::application::object::task_(const task_type &callback){
@@ -252,6 +266,89 @@ void ewin::application::object::move_window_(window_type &window_object){
 	//#TODO: Alert position watchers
 }
 
+void ewin::application::object::mouse_leave_(common::types::hwnd hwnd, common::types::uint msg){
+	auto position = ::GetMessagePos();
+	switch (::SendMessageW(hwnd, WM_NCHITTEST, 0, position)){
+	case HTCLIENT://Still inside client --> Inside child
+		if (msg == WM_NCMOUSELEAVE)
+			track_mouse_(hwnd, 0);//Moved from non-client to client
+		return;
+	case HTNOWHERE://Outside window
+		break;
+	default://Inside non-client area --> Track
+		track_mouse_(hwnd, TME_NONCLIENT);
+		return;
+	}
+
+	if (object_state_.dragging){//End drag
+		::SendMessageW(hwnd, EWIN_WM_MOUSEDRAGEND, 0, 0);
+		object_state_.mouse_button_down = 0;
+		object_state_.dragging = false;
+	}
+
+	::SendMessageW(hwnd, EWIN_WM_MOUSELEAVE, 0, 0);//Alert
+	for (hwnd = ::GetParent(hwnd); hwnd != HWND_DESKTOP && ::SendMessageW(hwnd, WM_NCHITTEST, 0, position) == HTNOWHERE; hwnd = ::GetParent(hwnd))
+		::SendMessageW(hwnd, EWIN_WM_MOUSELEAVE, 0, 0);//Alert
+
+	object_state_.moused = hwnd;//Update
+}
+
+void ewin::application::object::mouse_move_(common::types::hwnd hwnd){
+	if (hwnd == object_state_.moused){//Check for drag or continue drag
+		if (!object_state_.dragging && object_state_.mouse_button_down != 0u){
+			auto &mouse_down_position = object_state_.mouse_down_position;
+			common::types::point position{ GET_X_LPARAM(::GetMessagePos()), GET_Y_LPARAM(::GetMessagePos()) };
+
+			common::types::size delta{//Absolute values
+				((position.x < mouse_down_position.x) ? (mouse_down_position.x - position.x) : (position.x - mouse_down_position.x)),
+				((position.y < mouse_down_position.y) ? (mouse_down_position.y - position.y) : (position.y - mouse_down_position.y))
+			};
+
+			if ((delta.cx >= ::GetSystemMetrics(SM_CXDRAG) || delta.cy >= ::GetSystemMetrics(SM_CYDRAG))){
+				object_state_.dragging = true;//Drag begin
+
+				auto old_mouse_position = object_state_.last_mouse_position;
+				object_state_.last_mouse_position = object_state_.mouse_down_position;
+				::SendMessageW(hwnd, EWIN_WM_MOUSEDRAG, object_state_.mouse_button_down, 0);
+				object_state_.last_mouse_position = old_mouse_position;
+			}
+		}
+		else if (object_state_.dragging)//Continue drag
+			::SendMessageW(hwnd, EWIN_WM_MOUSEDRAG, object_state_.mouse_button_down, 0);
+	}
+	else{//New target
+		switch (::SendMessageW(hwnd, WM_NCHITTEST, 0, ::GetMessagePos())){
+		case HTCLIENT://Inside client area
+			track_mouse_(hwnd, 0);
+			break;
+		default://Inside non-client area
+			track_mouse_(hwnd, TME_NONCLIENT);
+			break;
+		}
+
+		::SendMessageW(hwnd, EWIN_WM_MOUSEENTER, 0, 0);//Alert
+	}
+}
+
+void ewin::application::object::mouse_down_(common::types::hwnd hwnd, common::types::uint button){
+	if (object_state_.mouse_button_down == 0u)//First button down
+		object_state_.mouse_down_position = common::types::point{ GET_X_LPARAM(::GetMessagePos()), GET_Y_LPARAM(::GetMessagePos()) };
+	object_state_.mouse_button_down = button;
+}
+
+void ewin::application::object::mouse_up_(common::types::hwnd hwnd, common::types::uint button){
+	EWIN_REMOVE(object_state_.mouse_button_down, button);
+	if (object_state_.mouse_button_down == 0u && object_state_.dragging){//End drag
+		::SendMessageW(hwnd, EWIN_WM_MOUSEDRAGEND, 0, 0);
+		object_state_.dragging = false;
+	}
+}
+
+void ewin::application::object::track_mouse_(common::types::hwnd hwnd, common::types::uint flags){
+	common::types::track_mouse_event track_info{ sizeof(common::types::track_mouse_event), (TME_LEAVE | flags), hwnd, 0 };
+	::TrackMouseEvent(&track_info);//Notify when mouse leaves window or client area
+}
+
 ewin::common::types::result ewin::application::object::app_message_(common::types::uint msg, common::types::wparam wparam, common::types::lparam lparam){
 	switch (msg){
 	case EWIN_WM_TASK://Execute task
@@ -274,6 +371,40 @@ ewin::common::types::result CALLBACK ewin::application::object::entry_(common::t
 	if (target == current->message_window_.get() && msg >= EWIN_WM_APP_FIRST && msg <= EWIN_WM_APP_LAST)
 		return current->app_message_(msg, wparam, lparam);
 
+	switch (msg){
+	case WM_NCMOUSELEAVE:
+	case WM_MOUSELEAVE:
+		current->mouse_leave_(hwnd, msg);
+		return ::CallWindowProcW(::DefWindowProcW, hwnd, msg, wparam, lparam);
+	case WM_NCMOUSEMOVE:
+	case WM_MOUSEMOVE:
+		current->mouse_move_(hwnd);
+		break;
+	case WM_LBUTTONDOWN:
+		current->mouse_down_(hwnd, MK_LBUTTON);
+		break;
+	case WM_MBUTTONDOWN:
+		current->mouse_down_(hwnd, MK_MBUTTON);
+		break;
+	case WM_RBUTTONDOWN:
+		current->mouse_down_(hwnd, MK_RBUTTON);
+		break;
+	case WM_NCLBUTTONUP:
+	case WM_LBUTTONUP:
+		current->mouse_up_(hwnd, MK_LBUTTON);
+		break;
+	case WM_NCMBUTTONUP:
+	case WM_MBUTTONUP:
+		current->mouse_up_(hwnd, MK_MBUTTON);
+		break;
+	case WM_NCRBUTTONUP:
+	case WM_RBUTTONUP:
+		current->mouse_up_(hwnd, MK_RBUTTON);
+		break;
+	default:
+		break;
+	}
+
 	auto result = target->dispatch_message[common::types::msg{ hwnd, msg, wparam, lparam }];
 	switch (msg){
 	case WM_CREATE:
@@ -284,6 +415,12 @@ ewin::common::types::result CALLBACK ewin::application::object::entry_(common::t
 		break;
 	case WM_NCDESTROY:
 		current->destroy_window_(hwnd);
+		break;
+	case WM_ACTIVATEAPP:
+		if (!EWIN_CPP_BOOL(wparam)){//Another app activated
+			for (; current->object_state_.moused != HWND_DESKTOP; current->object_state_.moused = ::GetParent(current->object_state_.moused))
+				::SendMessageW(current->object_state_.moused, WM_NCMOUSELEAVE, 0, 0);//Alert
+		}
 		break;
 	case WM_WINDOWPOSCHANGED:
 	{//Check for size and position changes

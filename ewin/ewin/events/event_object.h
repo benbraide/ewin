@@ -4,6 +4,7 @@
 #define EWIN_EVENT_OBJECT_H
 
 #include <memory>
+#include <bitset>
 
 #include "../common/type_aliases.h"
 #include "../common/boolean_property.h"
@@ -311,6 +312,109 @@ namespace ewin::events{
 
 	protected:
 		common::types::uint button_;
+	};
+
+	class context_menu : public message{
+	public:
+		template <typename... args_types>
+		explicit context_menu(args_types &&... args)
+			: message(std::forward<args_types>(args)...){
+			cache_values_();
+			position.initialize_(&position_, nullptr);
+		}
+
+		virtual ~context_menu();
+
+		common::read_only_point_value_property<common::types::point, context_menu> position;
+
+	protected:
+		void cache_values_();
+
+		common::types::point position_;
+	};
+
+	class key : public message{
+	public:
+		typedef std::unordered_map<common::types::byte, bool> key_state_map_type;
+
+		struct cache{
+			unsigned short code;
+			char scan_code;
+			bool extended;
+		};
+
+		template <typename... args_types>
+		explicit key(args_types &&... args)
+			: message(std::forward<args_types>(args)...){
+			cache_values_();
+			code.initialize_(&cache_.code, nullptr);
+			scan_code.initialize_(&cache_.scan_code, nullptr);
+			extended.initialize_(&cache_.extended, nullptr);
+			state.initialize_(nullptr, [](void *prop, void *arg, common::property_access access){
+				*static_cast<common::types::uint *>(arg) = retrieve_key_states();
+			});
+		}
+
+		virtual ~key();
+
+		common::read_only_value_property<unsigned short, key> code;
+		common::read_only_value_property<char, key> scan_code;
+		common::read_only_boolean_value_property<key> extended;
+		common::read_only_value_property<common::types::uint, key> state;
+
+		static common::types::uint retrieve_key_states();
+
+		static thread_local common::types::byte keyboard_states[0x100];
+
+	protected:
+		void cache_values_();
+
+		cache cache_;
+	};
+
+	class key_down : public key{
+	public:
+		struct extended_cache{
+			bool first;
+			common::types::word repeat_count;
+		};
+
+		template <typename... args_types>
+		explicit key_down(args_types &&... args)
+			: key(std::forward<args_types>(args)...){
+			cache_values_();
+			first.initialize_(&extended_cache_.first, nullptr);
+			repeat_count.initialize_(&extended_cache_.repeat_count, nullptr);
+		}
+
+		virtual ~key_down();
+
+		common::read_only_boolean_value_property<key_down> first;
+		common::read_only_value_property<common::types::word, key_down> repeat_count;
+
+	protected:
+		void cache_values_();
+
+		extended_cache extended_cache_;
+	};
+
+	class key_press : public key_down{
+	public:
+		template <typename... args_types>
+		explicit key_press(args_types &&... args)
+			: key_down(std::forward<args_types>(args)...){
+			cache_values_();
+			released.initialize_(&released_, nullptr);
+		}
+
+		virtual ~key_press();
+
+		common::read_only_boolean_value_property<key_press> released;
+
+	protected:
+		void cache_values_();
+
+		bool released_;
 	};
 
 	EWIN_MAKE_OPERATORS(object::state_type);

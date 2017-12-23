@@ -188,37 +188,55 @@ namespace ewin::message{
 
 		virtual void on_print_client_(events::draw &e);
 
-		virtual void on_mouse_leave(events::mouse &e);
+		virtual void on_mouse_leave_(events::mouse &e);
 
-		virtual void on_mouse_enter(events::mouse &e);
+		virtual void on_mouse_enter_(events::mouse &e);
 
-		virtual void on_mouse_move(events::mouse &e);
+		virtual void on_mouse_move_(events::mouse &e);
 
-		virtual void on_mouse_hover(events::mouse &e);
+		virtual void on_mouse_hover_(events::mouse &e);
 
-		virtual void on_left_mouse_down(events::mouse &e);
+		virtual void on_left_mouse_down_(events::mouse &e);
 
-		virtual void on_middle_mouse_down(events::mouse &e);
+		virtual void on_middle_mouse_down_(events::mouse &e);
 
-		virtual void on_right_mouse_down(events::mouse &e);
+		virtual void on_right_mouse_down_(events::mouse &e);
 
-		virtual void on_left_mouse_up(events::mouse &e);
+		virtual void on_left_mouse_up_(events::mouse &e);
 
-		virtual void on_middle_mouse_up(events::mouse &e);
+		virtual void on_middle_mouse_up_(events::mouse &e);
 
-		virtual void on_right_mouse_up(events::mouse &e);
+		virtual void on_right_mouse_up_(events::mouse &e);
 
-		virtual void on_left_mouse_double_click(events::mouse &e);
+		virtual void on_left_mouse_double_click_(events::mouse &e);
 
-		virtual void on_middle_mouse_double_click(events::mouse &e);
+		virtual void on_middle_mouse_double_click_(events::mouse &e);
 
-		virtual void on_right_mouse_double_click(events::mouse &e);
+		virtual void on_right_mouse_double_click_(events::mouse &e);
 
-		virtual void on_mouse_wheel(events::mouse &e);
+		virtual void on_mouse_wheel_(events::mouse &e);
 
-		virtual void on_mouse_drag(events::mouse_drag &e);
+		virtual void on_mouse_drag_(events::mouse_drag &e);
 
-		virtual void on_mouse_drag_end(events::mouse &e);
+		virtual void on_mouse_drag_end_(events::mouse &e);
+
+		virtual void on_context_menu_(events::context_menu &e);
+
+		virtual void on_key_down_(events::key_down &e);
+
+		virtual void on_system_key_down_(events::key_down &e);
+
+		virtual void on_key_up_(events::key &e);
+
+		virtual void on_system_key_up_(events::key &e);
+
+		virtual void on_key_press_(events::key_press &e);
+
+		virtual void on_system_key_press_(events::key_press &e);
+
+		virtual void on_dead_key_(events::key_press &e);
+
+		virtual void on_dead_system_key_(events::key_press &e);
 
 		virtual void on_unknown_message_(events::message &e);
 

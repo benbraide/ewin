@@ -72,6 +72,19 @@ namespace ewin::window{
 		ewin::events::typed_basic<ewin::events::mouse_drag, object> mouse_drag;
 		ewin::events::typed_basic<ewin::events::mouse, object> mouse_drag_end;
 
+		ewin::events::typed_basic<ewin::events::context_menu, object> context_menu;
+		ewin::events::typed_basic<ewin::events::key_down, object> key_down;
+		ewin::events::typed_basic<ewin::events::key_down, object> system_key_down;
+
+		ewin::events::typed_basic<ewin::events::key, object> key_up;
+		ewin::events::typed_basic<ewin::events::key, object> system_key_up;
+
+		ewin::events::typed_basic<ewin::events::key_press, object> key_press;
+		ewin::events::typed_basic<ewin::events::key_press, object> system_key_press;
+
+		ewin::events::typed_basic<ewin::events::key_press, object> dead_key;
+		ewin::events::typed_basic<ewin::events::key_press, object> dead_system_key;
+
 		ewin::events::typed_basic<ewin::events::message, object> unknown_message;
 	};
 }

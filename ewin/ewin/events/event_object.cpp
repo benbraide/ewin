@@ -303,3 +303,64 @@ void ewin::events::mouse::cache_values_(){
 }
 
 ewin::events::mouse_drag::~mouse_drag() = default;
+
+ewin::events::context_menu::~context_menu() = default;
+
+void ewin::events::context_menu::cache_values_(){
+	position_ = common::types::point{ GET_X_LPARAM(msg_->lParam), GET_Y_LPARAM(msg_->lParam) };
+}
+
+ewin::events::key::~key() = default;
+
+ewin::common::types::uint ewin::events::key::retrieve_key_states(){
+	static const key_state_map_type key_state_map{
+		{ VK_LSHIFT, false },
+		{ VK_RSHIFT, false },
+		{ VK_LCONTROL, false },
+		{ VK_RCONTROL, false },
+		{ VK_LMENU, false },
+		{ VK_RMENU, false },
+		{ VK_LWIN, false },
+		{ VK_RWIN, false },
+		{ VK_CAPITAL, true },
+		{ VK_NUMLOCK, true },
+		{ VK_SCROLL, true },
+		{ VK_INSERT, true },
+	};
+
+	if (!EWIN_CPP_BOOL(::GetKeyboardState(keyboard_states)))
+		return 0;//Failed to retrieve states
+
+	auto states = 0u;
+	for (auto &info : key_state_map){
+		if (info.second){//Toggle state
+			if ((keyboard_states[info.first] & 1u) != 0u)
+				EWIN_SET(states, info.first);
+		}
+		else if (keyboard_states[info.first] < 0u)
+			EWIN_SET(states, info.first);
+	}
+
+	return states;
+}
+
+void ewin::events::key::cache_values_(){
+	cache_.code = static_cast<unsigned short>(msg_->wParam);
+	cache_.scan_code = (reinterpret_cast<common::types::byte *>(&msg_->lParam))[2];
+	cache_.extended = std::bitset<sizeof(common::types::result) * 8>(msg_->lParam).test(24);
+}
+
+thread_local ewin::common::types::byte ewin::events::key::keyboard_states[0x100];
+
+ewin::events::key_down::~key_down() = default;
+
+void ewin::events::key_down::cache_values_(){
+	extended_cache_.first = !std::bitset<sizeof(common::types::result) * 8>(msg_->lParam).test(30);
+	extended_cache_.repeat_count = static_cast<common::types::word>(msg_->lParam);
+}
+
+ewin::events::key_press::~key_press() = default;
+
+void ewin::events::key_press::cache_values_(){
+	released_ = std::bitset<sizeof(common::types::result) * 8>(msg_->lParam).test(31);
+}

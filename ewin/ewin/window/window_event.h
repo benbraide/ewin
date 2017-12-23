@@ -69,7 +69,7 @@ namespace ewin::window{
 		ewin::events::typed_basic<ewin::events::mouse, object> right_mouse_double_click;
 
 		ewin::events::typed_basic<ewin::events::mouse, object> mouse_wheel;
-		ewin::events::typed_basic<ewin::events::mouse, object> mouse_drag;
+		ewin::events::typed_basic<ewin::events::mouse_drag, object> mouse_drag;
 		ewin::events::typed_basic<ewin::events::mouse, object> mouse_drag_end;
 
 		ewin::events::typed_basic<ewin::events::message, object> unknown_message;

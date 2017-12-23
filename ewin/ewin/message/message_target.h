@@ -216,7 +216,7 @@ namespace ewin::message{
 
 		virtual void on_mouse_wheel(events::mouse &e);
 
-		virtual void on_mouse_drag(events::mouse &e);
+		virtual void on_mouse_drag(events::mouse_drag &e);
 
 		virtual void on_mouse_drag_end(events::mouse &e);
 

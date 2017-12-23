@@ -225,7 +225,7 @@ void ewin::application::object::create_window_(common::types::hwnd handle, commo
 		return;//Different window
 
 	if (window_being_created_->attribute.is_control)//Replace procedure
-		::SetWindowLongPtrW(handle, GWLP_WNDPROC, *reinterpret_cast<common::types::ptr *>(entry_));
+		::SetWindowLongPtrW(handle, GWLP_WNDPROC, reinterpret_cast<common::types::ptr>(entry_));
 	else if (!window_being_created_->attribute.is_message_only && window_being_created_->tree.parent == nullptr)
 		top_level_handles_.push_back(handle);//Add to top-level list
 
@@ -244,10 +244,13 @@ void ewin::application::object::destroy_window_(common::types::hwnd handle){
 	if (!window_handles_.empty())//Remove from map
 		window_handles_.erase(handle);
 
-	if (object_state_.focused == handle){//Reset focused
-		if (object_state_.moused = object_state_.focused)
-			object_state_.moused = nullptr;//Reset moused
+	if (object_state_.focused == handle)//Reset focused
 		object_state_.focused = nullptr;
+
+	if (object_state_.moused = handle){//Reset moused
+		object_state_.moused = nullptr;
+		object_state_.mouse_button_down = 0;
+		object_state_.dragging = false;
 	}
 
 	if (cached_window_handle_.first == handle)
@@ -269,13 +272,13 @@ void ewin::application::object::move_window_(window_type &window_object){
 void ewin::application::object::mouse_leave_(common::types::hwnd hwnd, common::types::uint msg){
 	auto position = ::GetMessagePos();
 	switch (::SendMessageW(hwnd, WM_NCHITTEST, 0, position)){
-	case HTCLIENT://Still inside client --> Inside child
-		if (msg == WM_NCMOUSELEAVE)
-			track_mouse_(hwnd, 0);//Moved from non-client to client
+	case HTCLIENT://Inside client --> Possibly inside child
+		if (msg == WM_NCMOUSELEAVE)//Moved from non-client to client
+			track_mouse_(hwnd, 0);
 		return;
 	case HTNOWHERE://Outside window
 		break;
-	default://Inside non-client area --> Track
+	default://Moved from client to non-client
 		track_mouse_(hwnd, TME_NONCLIENT);
 		return;
 	}

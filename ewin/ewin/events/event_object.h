@@ -291,9 +291,26 @@ namespace ewin::events{
 		common::read_only_size_value_property<common::types::size, mouse> delta;
 
 	protected:
-		virtual void cache_values_();
+		void cache_values_();
 
 		cache cache_;
+	};
+
+	class mouse_drag : public mouse{
+	public:
+		template <typename... args_types>
+		explicit mouse_drag(args_types &&... args)
+			: mouse(std::forward<args_types>(args)...){
+			button_ = static_cast<common::types::uint>(msg_->wParam);
+			button.initialize_(&button_, nullptr);
+		}
+
+		virtual ~mouse_drag();
+
+		common::read_only_value_property<common::types::uint, mouse_drag> button;
+
+	protected:
+		common::types::uint button_;
 	};
 
 	EWIN_MAKE_OPERATORS(object::state_type);

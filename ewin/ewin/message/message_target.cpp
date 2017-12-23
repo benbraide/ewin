@@ -488,7 +488,7 @@ void ewin::message::target::on_right_mouse_double_click(events::mouse &e){}
 
 void ewin::message::target::on_mouse_wheel(events::mouse &e){}
 
-void ewin::message::target::on_mouse_drag(events::mouse &e){}
+void ewin::message::target::on_mouse_drag(events::mouse_drag &e){}
 
 void ewin::message::target::on_mouse_drag_end(events::mouse &e){}
 

@@ -301,3 +301,5 @@ void ewin::events::mouse::cache_values_(){
 		break;
 	}
 }
+
+ewin::events::mouse_drag::~mouse_drag() = default;

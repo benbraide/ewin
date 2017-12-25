@@ -10,6 +10,43 @@
 
 #define EWIN_PROP_HANDLER(t) std::bind(&t::handle_property_, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3)
 
+#define EWIN_PROP_FRIEND_OPTYPE(t, r) std::enable_if_t<!std::is_same_v<target_type, t<unused_type, manager_type, access>>, r>
+#define EWIN_SPEC_PROP_FRIEND_OPTYPE(t, r) std::enable_if_t<!std::is_same_v<target_type, t<unused_type, access>>, r>
+#define EWIN_EX_PROP_FRIEND_OPTYPE(t, r, e) std::enable_if_t<!std::is_same_v<target_type, t<unused_type, manager_type, access, e>>, r>
+
+#define EWIN_PROP_FRIEND_OPCOMP(t)																\
+template <typename target_type, typename unused_type = value_type>								\
+friend EWIN_PROP_FRIEND_OPTYPE(t, bool) operator ==(const target_type &lhs, const t &rhs){		\
+	return (rhs == lhs);																		\
+}																								\
+																								\
+template <typename target_type, typename unused_type = value_type>								\
+friend EWIN_PROP_FRIEND_OPTYPE(t, bool) operator !=(const target_type &lhs, const t &rhs){		\
+	return (rhs != lhs);																		\
+}
+
+#define EWIN_SPEC_PROP_FRIEND_OPCOMP(t)															\
+template <typename target_type, typename unused_type = manager_type>							\
+friend EWIN_SPEC_PROP_FRIEND_OPTYPE(t, bool) operator ==(const target_type &lhs, const t &rhs){	\
+	return (rhs == lhs);																		\
+}																								\
+																								\
+template <typename target_type, typename unused_type = manager_type>							\
+friend EWIN_SPEC_PROP_FRIEND_OPTYPE(t, bool) operator !=(const target_type &lhs, const t &rhs){	\
+	return (rhs != lhs);																		\
+}
+
+#define EWIN_EX_PROP_FRIEND_OPCOMP(t, e)														\
+template <typename target_type, typename unused_type = value_type>								\
+friend EWIN_EX_PROP_FRIEND_OPTYPE(t, bool, e) operator ==(const target_type &lhs, const t &rhs){\
+	return (rhs == lhs);																		\
+}																								\
+																								\
+template <typename target_type, typename unused_type = value_type>								\
+friend EWIN_EX_PROP_FRIEND_OPTYPE(t, bool, e) operator !=(const target_type &lhs, const t &rhs){\
+	return (rhs != lhs);																		\
+}
+
 namespace ewin::common{
 	enum class property_access : unsigned int{
 		nil					= (0 << 0x0000),
@@ -37,8 +74,17 @@ namespace ewin::common{
 		}
 	};
 
+	class property_object{
+	public:
+		property_object() = default;
+
+		property_object(const property_object &) = delete;
+		
+		property_object &operator =(const property_object &) = delete;
+	};
+
 	template <class value_type, class manager_type = void, property_access access = property_access::nil>
-	class value_property{
+	class value_property : public property_object{
 	public:
 		typedef value_type value_type;
 		typedef manager_type manager_type;
@@ -58,14 +104,12 @@ namespace ewin::common{
 		value_property(value_type &linked, callback_type callback)
 			: linked_(&linked), callback_(callback){}
 
-		value_property(const value_property &) = delete;
-		
-		value_property &operator =(const value_property &value){
+		template <typename target_type>
+		value_property &operator =(const target_type &value){
 			return operator =((value_type)value);
 		}
 
-		template <typename target_type>
-		value_property &operator =(const target_type &value){
+		value_property &operator =(const value_property &value){
 			return operator =((value_type)value);
 		}
 

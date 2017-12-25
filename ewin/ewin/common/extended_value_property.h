@@ -7,7 +7,7 @@
 
 namespace ewin::common{
 	template <class value_type, class read_type, class manager_type = void, property_access access = property_access::nil>
-	class extended_value_property{
+	class extended_value_property : public property_object{
 	public:
 		typedef value_type value_type;
 		typedef read_type read_type;
@@ -23,6 +23,10 @@ namespace ewin::common{
 
 		template <typename target_type>
 		extended_value_property &operator =(const target_type &value){
+			return operator =((read_type)value);
+		}
+
+		extended_value_property &operator =(const extended_value_property &value){
 			return operator =((read_type)value);
 		}
 

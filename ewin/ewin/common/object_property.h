@@ -7,7 +7,7 @@
 
 namespace ewin::common{
 	template <class value_type, class manager_type = void, property_access access = property_access::nil>
-	class object_value_property{
+	class object_value_property : public property_object{
 	public:
 		typedef value_type value_type;
 		typedef manager_type manager_type;
@@ -27,8 +27,17 @@ namespace ewin::common{
 		object_value_property(value_type &linked, callback_type callback)
 			: linked_(&linked), callback_(callback){}
 
-		template <typename target_type>
-		object_value_property &operator =(const target_type &value){
+		template <typename target_type, typename unused_type = value_type>
+		std::enable_if_t<std::is_base_of_v<property_object, target_type>, object_value_property<unused_type, manager_type, access>> &operator =(const target_type &value){
+			return operator =(*((value_type *)value));
+		}
+
+		template <typename target_type, typename unused_type = value_type>
+		std::enable_if_t<!std::is_base_of_v<property_object, target_type>, object_value_property<unused_type, manager_type, access>> &operator =(const target_type &value){
+			return operator =((const value_type &)value);
+		}
+
+		object_value_property &operator =(const object_value_property &value){
 			return operator =(*((value_type *)value));
 		}
 

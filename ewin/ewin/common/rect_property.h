@@ -21,11 +21,18 @@ namespace ewin::common{
 		explicit rect_value_property(args_types &&... args)
 			: base_type(std::forward<args_types>(args)...){
 			auto handler = EWIN_PROP_HANDLER(rect_value_property);
-
-			left.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->left), handler);
-			top.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->top), handler);
-			right.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->right), handler);
-			bottom.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->bottom), handler);
+			if (base_type::callback_ == nullptr){
+				left.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->left), nullptr);
+				top.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->top), nullptr);
+				right.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->right), nullptr);
+				bottom.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->bottom), nullptr);
+			}
+			else{//Bind callback
+				left.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->left), handler);
+				top.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->top), handler);
+				right.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->right), handler);
+				bottom.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->bottom), handler);
+			}
 		}
 
 		template <typename target_type>
@@ -50,20 +57,12 @@ namespace ewin::common{
 			return !(*this == rhs);
 		}
 
-		template <typename target_type, typename unused_type = value_type>
-		friend std::enable_if_t<!std::is_same_v<target_type, rect_value_property<unused_type, manager_type, access>>, bool> operator ==(const target_type &lhs, const rect_value_property &rhs){
-			return (rhs == lhs);
-		}
-
-		template <typename target_type, typename unused_type = value_type>
-		friend std::enable_if_t<!std::is_same_v<target_type, rect_value_property<unused_type, manager_type, access>>, bool> operator !=(const target_type &lhs, const rect_value_property &rhs){
-			return (rhs != lhs);
-		}
-
 		numeric_value_property_type left;
 		numeric_value_property_type top;
 		numeric_value_property_type right;
 		numeric_value_property_type bottom;
+
+		EWIN_PROP_FRIEND_OPCOMP(rect_value_property)
 
 	protected:
 		friend class property_manager;
@@ -71,13 +70,18 @@ namespace ewin::common{
 
 		void initialize_(value_type *linked, callback_type callback){
 			base_type::initialize_(linked, callback);
-			if (linked != nullptr){//Update linked
-				auto handler = EWIN_PROP_HANDLER(rect_value_property);
-
-				left.initialize_(((linked == nullptr) ? nullptr : &linked->left), handler);
-				top.initialize_(((linked == nullptr) ? nullptr : &linked->top), handler);
-				right.initialize_(((linked == nullptr) ? nullptr : &linked->right), handler);
-				bottom.initialize_(((linked == nullptr) ? nullptr : &linked->bottom), handler);
+			auto handler = EWIN_PROP_HANDLER(rect_value_property);
+			if (base_type::callback_ == nullptr){
+				left.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->left), nullptr);
+				top.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->top), nullptr);
+				right.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->right), nullptr);
+				bottom.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->bottom), nullptr);
+			}
+			else{//Bind callback
+				left.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->left), handler);
+				top.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->top), handler);
+				right.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->right), handler);
+				bottom.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->bottom), handler);
 			}
 		}
 

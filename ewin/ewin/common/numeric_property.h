@@ -5,6 +5,49 @@
 
 #include "value_property.h"
 
+#define EWIN_NUM_PROP_FRIEND_OP(t)																\
+template <typename target_type, typename unused_type = value_type>								\
+friend EWIN_PROP_FRIEND_OPTYPE(t, value_type) operator +(const target_type &lhs, const t &rhs){	\
+	return (rhs + lhs);																			\
+}																								\
+																								\
+template <typename target_type, typename unused_type = value_type>								\
+friend EWIN_PROP_FRIEND_OPTYPE(t, value_type) operator -(const target_type &lhs, const t &rhs){	\
+	return ((value_type)lhs - (value_type)rhs);													\
+}																								\
+																								\
+template <typename target_type, typename unused_type = value_type>								\
+friend EWIN_PROP_FRIEND_OPTYPE(t, value_type) operator *(const target_type &lhs, const t &rhs){	\
+	return (rhs * lhs);																			\
+}																								\
+																								\
+template <typename target_type, typename unused_type = value_type>								\
+friend EWIN_PROP_FRIEND_OPTYPE(t, value_type) operator /(const target_type &lhs, const t &rhs){	\
+	return ((value_type)lhs / (value_type)rhs);													\
+}																								\
+																								\
+template <typename target_type, typename unused_type = value_type>								\
+friend EWIN_PROP_FRIEND_OPTYPE(t, bool) operator <(const target_type &lhs, const t &rhs){		\
+	return ((value_type)lhs < (value_type)rhs);													\
+}																								\
+																								\
+template <typename target_type, typename unused_type = value_type>								\
+friend EWIN_PROP_FRIEND_OPTYPE(t, bool) operator <=(const target_type &lhs, const t &rhs){		\
+	return ((value_type)lhs <= (value_type)rhs);												\
+}																								\
+																								\
+template <typename target_type, typename unused_type = value_type>								\
+friend EWIN_PROP_FRIEND_OPTYPE(t, bool) operator >=(const target_type &lhs, const t &rhs){		\
+	return ((value_type)lhs >= (value_type)rhs);												\
+}																								\
+																								\
+template <typename target_type, typename unused_type = value_type>								\
+friend EWIN_PROP_FRIEND_OPTYPE(t, bool) operator >(const target_type &lhs, const t &rhs){		\
+	return ((value_type)lhs > (value_type)rhs);													\
+}																								\
+																								\
+EWIN_PROP_FRIEND_OPCOMP(t)
+
 namespace ewin::common{
 	template <class value_type, class manager_type = void, property_access access = property_access::nil>
 	class numeric_value_property : public value_property<value_type, manager_type, access>{
@@ -73,26 +116,6 @@ namespace ewin::common{
 		}
 
 		template <typename target_type>
-		friend value_type operator +(const target_type &lhs, const numeric_value_property &rhs){
-			return ((value_type)lhs + (value_type)rhs);
-		}
-
-		template <typename target_type>
-		friend value_type operator -(const target_type &lhs, const numeric_value_property &rhs){
-			return ((value_type)lhs - (value_type)rhs);
-		}
-
-		template <typename target_type>
-		friend value_type operator *(const target_type &lhs, const numeric_value_property &rhs){
-			return ((value_type)lhs * (value_type)rhs);
-		}
-
-		template <typename target_type>
-		friend value_type operator /(const target_type &lhs, const numeric_value_property &rhs){
-			return ((value_type)lhs / (value_type)rhs);
-		}
-
-		template <typename target_type>
 		bool operator <(const target_type &rhs) const{
 			return ((value_type)(*this) < (value_type)rhs);
 		}
@@ -122,35 +145,7 @@ namespace ewin::common{
 			return ((value_type)(*this) > (value_type)rhs);
 		}
 
-		template <typename target_type>
-		friend bool operator <(const target_type &lhs, const numeric_value_property &rhs){
-			return ((value_type)lhs < (value_type)rhs);
-		}
-
-		template <typename target_type>
-		friend bool operator <=(const target_type &lhs, const numeric_value_property &rhs){
-			return ((value_type)lhs <= (value_type)rhs);
-		}
-
-		template <typename target_type>
-		friend bool operator ==(const target_type &lhs, const numeric_value_property &rhs){
-			return ((value_type)lhs == (value_type)rhs);
-		}
-
-		template <typename target_type>
-		friend bool operator !=(const target_type &lhs, const numeric_value_property &rhs){
-			return ((value_type)lhs != (value_type)rhs);
-		}
-
-		template <typename target_type>
-		friend bool operator >=(const target_type &lhs, const numeric_value_property &rhs){
-			return ((value_type)lhs >= (value_type)rhs);
-		}
-
-		template <typename target_type>
-		friend bool operator >(const target_type &lhs, const numeric_value_property &rhs){
-			return ((value_type)lhs > (value_type)rhs);
-		}
+		EWIN_NUM_PROP_FRIEND_OP(numeric_value_property)
 	};
 
 	template <class value_type, class manager_type = void>

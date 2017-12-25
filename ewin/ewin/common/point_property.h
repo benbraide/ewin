@@ -53,18 +53,10 @@ namespace ewin::common{
 			return !(*this == rhs);
 		}
 
-		template <typename target_type, typename unused_type = value_type>
-		friend std::enable_if_t<!std::is_same_v<target_type, point_value_property>, bool> operator ==(const target_type &lhs, const point_value_property &rhs){
-			return (rhs == lhs);
-		}
-
-		template <typename target_type, typename unused_type = value_type>
-		friend std::enable_if_t<!std::is_same_v<target_type, point_value_property>, bool> operator !=(const target_type &lhs, const point_value_property &rhs){
-			return (rhs != lhs);
-		}
-
 		numeric_value_property_type x;
 		numeric_value_property_type y;
+
+		EWIN_PROP_FRIEND_OPCOMP(point_value_property)
 
 	protected:
 		friend class property_manager;

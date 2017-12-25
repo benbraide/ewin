@@ -29,8 +29,14 @@ namespace ewin::common{
 		explicit basic_size_value_property(args_types &&... args)
 			: base_type(std::forward<args_types>(args)...){
 			auto handler = EWIN_PROP_HANDLER(basic_size_value_property);
-			width.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->cx), handler);
-			height.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->cy), handler);
+			if (base_type::callback_ == nullptr){
+				width.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->cx), nullptr);
+				height.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->cy), nullptr);
+			}
+			else{//Bind callback
+				width.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->cx), handler);
+				height.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->cy), handler);
+			}
 		}
 
 		template <typename target_type>
@@ -55,18 +61,10 @@ namespace ewin::common{
 			return !(*this == rhs);
 		}
 
-		template <typename target_type, typename unused_type = value_type>
-		friend std::enable_if_t<!std::is_same_v<target_type, basic_size_value_property>, bool> operator ==(const target_type &lhs, const basic_size_value_property &rhs){
-			return (rhs == lhs);
-		}
-
-		template <typename target_type, typename unused_type = value_type>
-		friend std::enable_if_t<!std::is_same_v<target_type, basic_size_value_property>, bool> operator !=(const target_type &lhs, const basic_size_value_property &rhs){
-			return (rhs != lhs);
-		}
-
 		numeric_value_property_type width;
 		numeric_value_property_type height;
+
+		EWIN_EX_PROP_FRIEND_OPCOMP(basic_size_value_property, has_cx)
 
 	protected:
 		friend class property_manager;
@@ -74,10 +72,14 @@ namespace ewin::common{
 
 		void initialize_(value_type *linked, callback_type callback){
 			base_type::initialize_(linked, callback);
-			if (linked != nullptr){//Update linked
-				auto handler = EWIN_PROP_HANDLER(basic_size_value_property);
-				width.initialize_(&linked->cx, handler);
-				height.initialize_(&linked->cy, handler);
+			auto handler = EWIN_PROP_HANDLER(basic_size_value_property);
+			if (base_type::callback_ == nullptr){
+				width.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->cx), nullptr);
+				height.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->cy), nullptr);
+			}
+			else{//Bind callback
+				width.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->cx), handler);
+				height.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->cy), handler);
 			}
 		}
 
@@ -123,8 +125,14 @@ namespace ewin::common{
 		explicit basic_size_value_property(args_types &&... args)
 			: base_type(std::forward<args_types>(args)...){
 			auto handler = EWIN_PROP_HANDLER(basic_size_value_property);
-			width.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->width), handler);
-			height.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->height), handler);
+			if (base_type::callback_ == nullptr){
+				width.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->width), nullptr);
+				height.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->height), nullptr);
+			}
+			else{//Bind callback
+				width.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->width), handler);
+				height.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->height), handler);
+			}
 		}
 
 		template <typename target_type>
@@ -149,18 +157,10 @@ namespace ewin::common{
 			return !(*this == rhs);
 		}
 
-		template <typename target_type, typename unused_type = value_type>
-		friend std::enable_if_t<!std::is_same_v<target_type, basic_size_value_property>, bool> operator ==(const target_type &lhs, const basic_size_value_property &rhs){
-			return (rhs == lhs);
-		}
-
-		template <typename target_type, typename unused_type = value_type>
-		friend std::enable_if_t<!std::is_same_v<target_type, basic_size_value_property>, bool> operator !=(const target_type &lhs, const basic_size_value_property &rhs){
-			return (rhs != lhs);
-		}
-
 		numeric_value_property_type width;
 		numeric_value_property_type height;
+
+		EWIN_EX_PROP_FRIEND_OPCOMP(basic_size_value_property, false)
 
 	protected:
 		friend class property_manager;
@@ -168,10 +168,14 @@ namespace ewin::common{
 
 		void initialize_(value_type *linked, callback_type callback){
 			base_type::initialize_(linked, callback);
-			if (linked != nullptr){//Update linked
-				auto handler = EWIN_PROP_HANDLER(basic_size_value_property);
-				width.initialize_(&linked->width, handler);
-				height.initialize_(&linked->height, handler);
+			auto handler = EWIN_PROP_HANDLER(basic_size_value_property);
+			if (base_type::callback_ == nullptr){
+				width.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->width), nullptr);
+				height.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->height), nullptr);
+			}
+			else{//Bind callback
+				width.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->width), handler);
+				height.initialize_(((base_type::linked_ == nullptr) ? nullptr : &base_type::linked_->height), handler);
 			}
 		}
 

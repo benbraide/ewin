@@ -13,7 +13,7 @@ namespace ewin::common{
 	};
 
 	template <class manager_type, property_access access, class... type_list>
-	class variant_value_property{
+	class variant_value_property : public property_object{
 	public:
 		typedef void value_type;
 		typedef manager_type manager_type;
@@ -22,7 +22,7 @@ namespace ewin::common{
 
 		typedef std::function<void(void *, void *, access_type)> callback_type;
 
-		variant_value_property(){}
+		variant_value_property() = default;
 
 		explicit variant_value_property(callback_type callback)
 			: callback_(callback){}

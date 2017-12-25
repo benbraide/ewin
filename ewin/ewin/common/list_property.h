@@ -10,7 +10,7 @@
 
 namespace ewin::common{
 	template <class value_type, class iterator_type, class const_iterator_type, class manager_type = void, class index_type = std::size_t, property_access access = property_access::nil>
-	class list_value_property{
+	class list_value_property : public property_object{
 	public:
 		typedef value_type value_type;
 		typedef iterator_type iterator_type;

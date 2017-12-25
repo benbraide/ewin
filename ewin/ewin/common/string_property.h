@@ -7,9 +7,17 @@
 
 #include "numeric_property.h"
 
+#define EWIN_STR_PROP_FRIEND_OP(t)																\
+template <typename target_type, typename unused_type = value_type>								\
+friend EWIN_PROP_FRIEND_OPTYPE(t, value_type) operator +(const target_type &lhs, const t &rhs){	\
+	return (rhs + lhs);																			\
+}																								\
+																								\
+EWIN_PROP_FRIEND_OPCOMP(t)
+
 namespace ewin::common{
 	template <class value_type, class manager_type = void, property_access access = property_access::nil>
-	class string_value_property{
+	class string_value_property : public property_object{
 	public:
 		typedef value_type value_type;
 		typedef manager_type manager_type;
@@ -36,6 +44,10 @@ namespace ewin::common{
 
 		template <typename target_type, typename unused = value_type>
 		string_value_property &operator =(const target_type &value){
+			return operator =((value_type)value);
+		}
+
+		string_value_property &operator =(const string_value_property &value){
 			return operator =((value_type)value);
 		}
 
@@ -103,6 +115,16 @@ namespace ewin::common{
 			return ((value_type)(*this) + (value_type)rhs);
 		}
 
+		template <typename target_type>
+		bool operator ==(const target_type &rhs) const{
+			return ((value_type)(*this) == (value_type)rhs);
+		}
+
+		template <typename target_type>
+		bool operator !=(const target_type &rhs) const{
+			return ((value_type)(*this) != (value_type)rhs);
+		}
+
 		iterator_type begin(){
 			if (access != access_type::nil && !EWIN_IS(access, access_type::list_begin))
 				throw error_type::property_access_violation;
@@ -150,6 +172,8 @@ namespace ewin::common{
 		}
 
 		numeric_value_property_type size;
+
+		EWIN_STR_PROP_FRIEND_OP(string_value_property)
 
 		static const property_access required_access = access;
 

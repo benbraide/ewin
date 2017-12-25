@@ -9,7 +9,7 @@
 
 namespace ewin::common{
 	template <class value_type, class return_type, class manager_type = void, property_access access = property_access::nil>
-	class transformation_property{
+	class transformation_property : public property_object{
 	public:
 		typedef value_type value_type;
 		typedef return_type return_type;
@@ -18,7 +18,7 @@ namespace ewin::common{
 
 		typedef std::function<void(void *, void *, access_type)> callback_type;
 
-		transformation_property(){}
+		transformation_property() = default;
 
 		explicit transformation_property(callback_type callback)
 			: callback_(callback){}

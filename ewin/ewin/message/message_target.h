@@ -27,7 +27,6 @@ namespace ewin::window{
 namespace ewin::message{
 	class target{
 	public:
-		typedef std::pair<common::types::result, common::types::result> result_pair_type;
 		typedef std::function<void(events::message &, bool)> dispatch_callback_type;
 		typedef std::function<void(common::types::msg &)> bubble_callback_type;
 

@@ -23,11 +23,6 @@ namespace ewin::common{
 			return *this;
 		}
 
-		boolean_value_property &operator =(const value_type &value){
-			base_type::operator =(value);
-			return *this;
-		}
-
 		template <typename target_type>
 		bool operator ==(const target_type &rhs) const{
 			return ((value_type)(*this) == (value_type)rhs);
@@ -35,18 +30,10 @@ namespace ewin::common{
 
 		template <typename target_type>
 		bool operator !=(const target_type &rhs) const{
-			return ((value_type)(*this) != (value_type)rhs);
+			return !(*this == rhs);
 		}
 
-		template <typename target_type>
-		friend bool operator ==(const target_type &lhs, const boolean_value_property &rhs){
-			return ((value_type)lhs == (value_type)rhs);
-		}
-
-		template <typename target_type>
-		friend bool operator !=(const target_type &lhs, const boolean_value_property &rhs){
-			return ((value_type)lhs != (value_type)rhs);
-		}
+		EWIN_SPEC_PROP_FRIEND_OPCOMP(boolean_value_property)
 	};
 
 	template <class manager_type = void>

@@ -6,6 +6,19 @@
 #include "macro.h"
 #include "value_property.h"
 
+#define EWIN_STATE_PROP_FRIEND_OP(t)															\
+template <typename target_type, typename unused_type = value_type>								\
+friend EWIN_PROP_FRIEND_OPTYPE(t, value_type) operator +(const target_type &lhs, const t &rhs){	\
+	return EWIN_SET_V((value_type)lhs, (value_type)rhs);										\
+}																								\
+																								\
+template <typename target_type, typename unused_type = value_type>								\
+friend EWIN_PROP_FRIEND_OPTYPE(t, value_type) operator -(const target_type &lhs, const t &rhs){	\
+	return EWIN_REMOVE_V((value_type)lhs, (value_type)rhs);										\
+}																								\
+																								\
+EWIN_PROP_FRIEND_OPCOMP(t)
+
 namespace ewin::common{
 	template <class value_type, class manager_type = void, property_access access = property_access::nil>
 	class state_value_property : public value_property<value_type, manager_type, access>{
@@ -80,16 +93,6 @@ namespace ewin::common{
 		}
 
 		template <typename target_type>
-		friend value_type operator +(const target_type &lhs, const state_value_property &rhs){
-			return EWIN_SET_V((value_type)lhs, (value_type)rhs);
-		}
-
-		template <typename target_type>
-		friend value_type operator -(const target_type &lhs, const state_value_property &rhs){
-			return EWIN_REMOVE_V((value_type)lhs, (value_type)rhs);
-		}
-
-		template <typename target_type>
 		bool operator [](const target_type &rhs) const{
 			return EWIN_IS_ANY((value_type)(*this), (value_type)rhs);
 		}
@@ -104,15 +107,7 @@ namespace ewin::common{
 			return !EWIN_IS((value_type)(*this), (value_type)rhs);
 		}
 
-		template <typename target_type>
-		friend bool operator ==(const target_type &lhs, const state_value_property &rhs){
-			return (rhs == lhs);
-		}
-
-		template <typename target_type>
-		friend bool operator !=(const target_type &lhs, const state_value_property &rhs){
-			return (rhs != lhs);
-		}
+		EWIN_STATE_PROP_FRIEND_OP(state_value_property)
 	};
 
 	template <class value_type, class manager_type = void>

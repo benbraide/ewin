@@ -10,11 +10,6 @@ namespace ewin::window{
 
 	class wnd_event{
 	public:
-		typedef std::shared_ptr<object> object_ptr_type;
-		typedef std::list<object_ptr_type> object_list_type;
-
-		typedef object_list_type::iterator object_list_iterator_type;
-
 		explicit wnd_event(object &target);
 
 		wnd_event(const wnd_event &) = delete;

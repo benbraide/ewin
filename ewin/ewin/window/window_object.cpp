@@ -509,3 +509,51 @@ void ewin::window::object::client_to_screen_(common::types::rect &rect) const{
 	if (handle_ != nullptr)
 		::MapWindowPoints(handle_, HWND_DESKTOP, reinterpret_cast<common::types::point *>(&rect), 2);
 }
+
+bool ewin::window::object::validate_parent_change_(object *value){
+	if (attribute.is_message_only){//Cannot change parent
+		set_error_(common::error_type::parent_change_forbidden);
+		return false;
+	}
+
+	if (attribute.is_control && value == nullptr){//Parent required
+		set_error_(common::error_type::parent_required);
+		return false;
+	}
+
+	if (value != nullptr && created){//Target window has been created
+		if (!value->created){
+			set_error_(common::error_type::parent_not_created);
+			return false;
+		}
+
+		if (value->app_ != app_){//Cannot move to parent in a different app
+			set_error_(common::error_type::app_mismatch);
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool ewin::window::object::validate_child_remove_(object &value){
+	return true;
+}
+
+bool ewin::window::object::validate_child_add_(object &value, std::size_t index){
+	return true;
+}
+
+void ewin::window::object::child_removed_(object &value, std::size_t index){}
+
+void ewin::window::object::child_added_(object &value, std::size_t index){}
+
+void ewin::window::object::parent_changed_(object *current, object *previous, std::size_t index){
+	if (handle_ != nullptr && current != previous){//Update
+		::SetParent(handle_, ((current == nullptr) ? nullptr : current->handle_));
+		if (previous == nullptr && current != nullptr)
+			style.value += WS_CHILD;//Set child style
+		else if (previous != nullptr && current == nullptr)
+			style.value -= WS_CHILD;//Remove child style
+	}
+}

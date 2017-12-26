@@ -122,7 +122,7 @@ namespace ewin::window{
 
 		common::transformation_property<common::types::msg, bool, object> is_dialog_message;
 
-		wnd_tree tree;
+		wnd_tree<object> tree;
 		wnd_view view;
 		wnd_frame frame;
 		wnd_state state;
@@ -141,6 +141,7 @@ namespace ewin::window{
 
 	protected:
 		friend class application::object;
+		friend class wnd_tree<object>;
 
 		virtual ewin::message::target *parent_() const override;
 
@@ -193,6 +194,18 @@ namespace ewin::window{
 		virtual void client_to_screen_(common::types::point &point) const;
 
 		virtual void client_to_screen_(common::types::rect &rect) const;
+
+		virtual bool validate_parent_change_(object *value);
+
+		virtual bool validate_child_remove_(object &value);
+
+		virtual bool validate_child_add_(object &value, std::size_t index);
+
+		virtual void child_removed_(object &value, std::size_t index);
+
+		virtual void child_added_(object &value, std::size_t index);
+
+		virtual void parent_changed_(object *current, object *previous, std::size_t index);
 
 		application_type *app_;
 		common::types::hwnd handle_;

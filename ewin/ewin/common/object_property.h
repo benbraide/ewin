@@ -29,7 +29,7 @@ namespace ewin::common{
 
 		template <typename target_type, typename unused_type = value_type>
 		std::enable_if_t<std::is_base_of_v<property_object, target_type>, object_value_property<unused_type, manager_type, access>> &operator =(const target_type &value){
-			return operator =(*((value_type *)value));
+			return operator =((value_type *)value);
 		}
 
 		template <typename target_type, typename unused_type = value_type>
@@ -37,24 +37,29 @@ namespace ewin::common{
 			return operator =((const value_type &)value);
 		}
 
+		template <typename target_type>
+		object_value_property &operator =(const target_type *value){
+			return operator =((value_type *)const_cast<target_type *>(value));
+		}
+
 		object_value_property &operator =(const object_value_property &value){
-			return operator =(*((value_type *)value));
+			return operator =((value_type *)value);
 		}
 
 		object_value_property &operator =(const value_type *value){
-			return operator =(*value);
-		}
-
-		object_value_property &operator =(const value_type &value){
 			if (access != access_type::nil && !EWIN_IS(access, access_type::write))
 				throw error_type::property_access_violation;
 
 			if (callback_ != nullptr)//Call handler
-				callback_(this, &const_cast<value_type &>(value), access_type::write);
+				callback_(this, const_cast<value_type *>(value), access_type::write);
 			else//Error
 				throw error_type::uninitialized_property;
 
 			return *this;
+		}
+
+		object_value_property &operator =(const value_type &value){
+			return operator =(&value);
 		}
 
 		operator value_type *() const{

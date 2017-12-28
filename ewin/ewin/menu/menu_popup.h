@@ -45,6 +45,8 @@ namespace ewin::menu{
 
 		void bind_properties_();
 
+		virtual void destruct_() override;
+
 		virtual void create_(bool create, const create_info *info) override;
 
 		item *owner_;

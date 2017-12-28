@@ -62,6 +62,12 @@ void ewin::menu::popup::bind_properties_(){
 	});
 }
 
+void ewin::menu::popup::destruct_(){
+	container::destruct_();
+	if (owner_ != nullptr)//Remove association
+		owner_->sub_menu = nullptr;
+}
+
 void ewin::menu::popup::create_(bool create, const create_info *info){
 	if (create && handle_ == nullptr)//Create
 		low_level_create_(false);

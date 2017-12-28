@@ -42,6 +42,8 @@ namespace ewin::menu{
 
 		virtual void handle_property_(void *prop, void *arg, common::property_access access) override;
 
+		virtual void destruct_() override;
+
 		virtual void create_(bool create, const create_info *info) override;
 
 		virtual bool validate_child_remove_(object &value) override;

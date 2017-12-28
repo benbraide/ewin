@@ -78,6 +78,11 @@ void ewin::menu::item::handle_property_(void *prop, void *arg, common::property_
 		update_check_marks_();
 }
 
+void ewin::menu::item::destruct_(){
+	object::destruct_();
+	set_sub_menu_(nullptr);
+}
+
 void ewin::menu::item::create_(bool create, const create_info *info){
 	if (!create && created_){//Destroy
 		app_->task += [this]{

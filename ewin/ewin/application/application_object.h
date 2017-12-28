@@ -29,6 +29,10 @@
 
 #define EWIN_WM_TASK		(EWIN_WM_APP_FIRST + 0)
 
+namespace ewin::menu{
+	class container;
+}
+
 namespace ewin::window{
 	class object;
 }
@@ -46,6 +50,7 @@ namespace ewin::application{
 
 		typedef std::list<common::types::hwnd> hwnd_list_type;
 		typedef std::unordered_map<common::types::hwnd, window_type *> window_map_type;
+		typedef std::unordered_map<common::types::hmenu, menu::container *> menu_map_type;
 
 		typedef hwnd_list_type::iterator window_list_iterator_type;
 		typedef hwnd_list_type::const_iterator window_list_const_iterator_type;
@@ -70,6 +75,7 @@ namespace ewin::application{
 		common::list_value_property<task_type, void *, void *, object, std::size_t, common::property_access::list_add> task;
 		common::list_value_property<task_type, void *, void *, object, std::size_t, common::property_access::list_add> async_task;
 
+		common::access_only_list_value_property<menu::container, object, common::types::hmenu> menu_handles;
 		common::access_only_list_value_property<window_type, object, common::types::hwnd> window_handles;
 		common::iterator_only_list_value_property<window_type, window_list_iterator_type, window_list_const_iterator_type, object> top_level_handles;
 		common::write_only_value_property<window_type *, object> window_being_created;
@@ -89,6 +95,7 @@ namespace ewin::application{
 
 	protected:
 		friend class manager;
+		friend class menu::container;
 
 		explicit object(bool is_main);
 
@@ -103,6 +110,8 @@ namespace ewin::application{
 		void execute_task_(task_type *callback, bool is_async);
 
 		window_type *find_(common::types::hwnd handle);
+
+		menu::container *find_menu_(common::types::hmenu handle);
 
 		int run_();
 
@@ -148,8 +157,11 @@ namespace ewin::application{
 		object_state object_state_{};
 		hwnd_list_type top_level_handles_;
 		window_map_type window_handles_;
+		menu_map_type menu_handles_;
 
 		std::pair<common::types::hwnd, window_type *> cached_window_handle_;
+		std::pair<common::types::hmenu, menu::container *> cached_menu_handle_;
+
 		window_type *window_being_created_;
 		common::types::hook hook_id_;
 

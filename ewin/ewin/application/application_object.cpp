@@ -4,7 +4,10 @@ ewin::application::object::object()
 	: object(false){}
 
 ewin::application::object::object(bool is_main)
-	: cached_window_handle_(std::make_pair<common::types::hwnd, window_type *>(nullptr, nullptr)), window_being_created_(nullptr){
+	: window_being_created_(nullptr){
+	cached_window_handle_ = std::make_pair<common::types::hwnd, window_type *>(nullptr, nullptr);
+	cached_menu_handle_ = std::make_pair<common::types::hmenu, menu::container *>(nullptr, nullptr);
+
 	if (!is_main && manager::main_ == nullptr)
 		throw error_type::no_main_app;
 
@@ -55,6 +58,7 @@ void ewin::application::object::bind_properties_(){
 	task.initialize_(nullptr, handler);
 	async_task.initialize_(nullptr, handler);
 
+	menu_handles.initialize_(nullptr, handler);
 	window_handles.initialize_(nullptr, handler);
 	top_level_handles.initialize_(nullptr, handler);
 	window_being_created.initialize_(nullptr, handler);
@@ -72,7 +76,21 @@ void ewin::application::object::bind_properties_(){
 }
 
 void ewin::application::object::handle_property_(void *prop, void *arg, common::property_access access){
-	if (prop == &window_handles){
+	if (prop == &menu_handles){
+		task_([&]{//Execute in thread context
+			if (access == common::property_access::list_at){
+				auto &info = *static_cast<std::pair<common::types::hmenu, menu::container *> *>(arg);
+				info.second = find_menu_(info.first);
+			}
+			else if (access == common::property_access::list_find){
+				auto &info = *static_cast<std::pair<common::types::hmenu, menu::container *> *>(arg);
+				info.first = info.second->handle;
+			}
+			else if (access == common::property_access::list_size)
+				*static_cast<std::size_t *>(arg) = window_handles_.size();
+		});
+	}
+	else if (prop == &window_handles){
 		task_([&]{//Execute in thread context
 			if (access == common::property_access::list_at){
 				auto &info = *static_cast<std::pair<common::types::hwnd, window_type *> *>(arg);
@@ -170,6 +188,22 @@ ewin::application::object::window_type *ewin::application::object::find_(common:
 
 	if (value != nullptr)//Update cached value
 		cached_window_handle_ = std::make_pair(handle, value);
+
+	return value;
+}
+
+ewin::menu::container *ewin::application::object::find_menu_(common::types::hmenu handle){
+	if (handle == cached_menu_handle_.first)//Use cached value
+		return cached_menu_handle_.second;
+
+	if (handle == nullptr || menu_handles_.empty())
+		return nullptr;
+
+	auto entry = menu_handles_.find(handle);
+	auto value = ((entry == menu_handles_.end()) ? nullptr : entry->second);
+
+	if (value != nullptr)//Update cached value
+		cached_menu_handle_ = std::make_pair(handle, value);
 
 	return value;
 }
@@ -456,6 +490,9 @@ ewin::common::types::result CALLBACK ewin::application::object::hook_(int code, 
 	switch (code){
 	case HCBT_CREATEWND:
 		manager::current_->create_window_(reinterpret_cast<common::types::hwnd>(wparam), *reinterpret_cast<common::types::hook_create_window_info *>(lparam));
+		break;
+	case HCBT_DESTROYWND:
+		::SetMenu(reinterpret_cast<common::types::hwnd>(wparam), nullptr);//Prevent menu, if any, destruction
 		break;
 	default:
 		break;

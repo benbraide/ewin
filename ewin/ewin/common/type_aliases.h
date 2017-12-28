@@ -68,6 +68,7 @@ namespace ewin::common::types{
 	typedef ::TRACKMOUSEEVENT	track_mouse_event;
 
 	typedef ::MENUITEMINFOW		menu_item_info;
+	typedef ::MENUINFO			menu_info;
 
 	typedef ::POINT				point;
 	typedef ::SIZE				size;

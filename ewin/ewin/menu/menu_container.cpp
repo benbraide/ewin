@@ -41,7 +41,22 @@ void ewin::menu::container::low_level_create_(bool popup){
 		else//Bar
 			handle_ = ::CreateMenu();
 
-		if (handle_ == nullptr)//Failed to create
+		if (handle_ != nullptr){
+			set_error_(error_type::nil);
+
+			app_->menu_handles_[handle_] = this;
+			app_->cached_menu_handle_.first = handle_;
+			app_->cached_menu_handle_.second = this;
+
+			common::types::menu_info info{
+				sizeof(common::types::menu_info),
+				MIM_STYLE,
+				MNS_NOTIFYBYPOS
+			};
+
+			::SetMenuInfo(handle_, &info);
+		}
+		else//Failed to create
 			set_error_(::GetLastError());
 	};
 }

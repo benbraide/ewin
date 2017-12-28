@@ -38,6 +38,7 @@ namespace ewin::common::types{
 	typedef ::WORD				word;
 	typedef ::DWORD				dword;
 	typedef ::ATOM				atom;
+	typedef ::BOOL				boolean;
 
 	typedef ::HANDLE			handle;
 	typedef ::HINSTANCE			hinstance;

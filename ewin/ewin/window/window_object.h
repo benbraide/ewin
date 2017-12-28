@@ -206,7 +206,7 @@ namespace ewin::window{
 
 		virtual void child_added_(object &value, std::size_t index);
 
-		virtual void parent_changed_(object *current, object *previous, std::size_t index);
+		virtual void parent_changed_(object *current, object *previous, std::size_t index, std::size_t previous_index);
 
 		application_type *app_;
 		common::types::hwnd handle_;

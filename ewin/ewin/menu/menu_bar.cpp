@@ -61,3 +61,15 @@ void ewin::menu::bar::set_owner_(window::object *value){
 	else//Reset event id
 		event_id_ = 0;
 }
+
+void ewin::menu::bar::child_removed_(object &value, std::size_t index){
+	container::child_removed_(value, index);
+	if (handle_ != nullptr && owner_ != nullptr && owner_->created)
+		::DrawMenuBar(owner_->handle);
+}
+
+void ewin::menu::bar::child_added_(object &value, std::size_t index){
+	container::child_added_(value, index);
+	if (handle_ != nullptr && owner_ != nullptr && owner_->created)
+		::DrawMenuBar(owner_->handle);
+}

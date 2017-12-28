@@ -25,6 +25,10 @@ namespace ewin::menu{
 
 		virtual void create_(bool create, const create_info *info) override;
 
+		virtual void child_removed_(object &value, std::size_t index) override;
+
+		virtual void child_added_(object &value, std::size_t index) override;
+
 		virtual void set_owner_(window::object *value);
 
 		window::object *owner_;

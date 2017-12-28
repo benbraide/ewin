@@ -190,6 +190,14 @@ void ewin::window::object::destruct_(){
 		}
 		catch (...){}
 	}
+
+	if (!tree.children_.empty()){
+		auto children = tree.children_;//Get copy of list
+		for (auto child : children)//Remove association
+			child->tree.set_parent_(nullptr, 0);
+	}
+
+	tree.set_parent_(nullptr, 0);//Remove parent, if any
 }
 
 void ewin::window::object::create_(bool create, const create_info *info){
@@ -548,7 +556,7 @@ void ewin::window::object::child_removed_(object &value, std::size_t index){}
 
 void ewin::window::object::child_added_(object &value, std::size_t index){}
 
-void ewin::window::object::parent_changed_(object *current, object *previous, std::size_t index){
+void ewin::window::object::parent_changed_(object *current, object *previous, std::size_t index, std::size_t previous_index){
 	if (handle_ != nullptr && current != previous){//Update
 		::SetParent(handle_, ((current == nullptr) ? nullptr : current->handle_));
 		if (previous == nullptr && current != nullptr)

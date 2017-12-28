@@ -100,63 +100,78 @@ bool ewin::menu::item::validate_child_add_(object &value, std::size_t index){
 	return false;
 }
 
+void ewin::menu::item::parent_changed_(object *current, object *previous, std::size_t index, std::size_t previous_index){
+	app_->task += [&]{
+		created_ = false;
+		if (previous != nullptr)//Remove item
+			::RemoveMenu(previous->handle, static_cast<common::types::uint>(previous_index), MF_BYPOSITION);
+
+		if (current != nullptr)//Insert into new parent
+			low_level_create_(current->handle, static_cast<common::types::uint>(index));
+	};
+}
+
 void ewin::menu::item::low_level_create_(){
 	object *parent = tree.parent;
-	if (parent == nullptr){
+	if (parent != nullptr){//Insert into parent
+		(app_ = parent->app)->task += [&]{
+			low_level_create_(parent->handle, static_cast<common::types::uint>(parent->tree.children[*this]));
+		};
+	}
+	else//Error
 		set_error_(error_type::parent_required);
-		return;
+}
+
+void ewin::menu::item::low_level_create_(common::types::hmenu handle, common::types::uint index){
+	if (cache_.id == 0u)//Generate random id
+		cache_.id = app_->integer_generator(static_cast<common::types::word>(1), std::numeric_limits<common::types::word>::max());
+
+	common::types::uint types = 0;
+	common::types::uint mask = (MIIM_ID | MIIM_DATA);
+	if (!cache_.label.empty())
+		EWIN_SET(mask, MIIM_STRING);
+
+	if (types != 0u)
+		EWIN_SET(mask, MIIM_FTYPE);
+
+	if (cache_.states != 0u)
+		EWIN_SET(mask, MIIM_STATE);
+
+	if (cache_.bitmap != nullptr)
+		EWIN_SET(mask, MIIM_BITMAP);
+
+	if (cache_.checked_bitmap != nullptr || cache_.unchecked_bitmap != nullptr)
+		EWIN_SET(mask, MIIM_CHECKMARKS);
+
+	common::types::hmenu sub = nullptr;
+	if (sub_menu_ != nullptr){
+		sub = sub_menu_->handle;
+		EWIN_SET(mask, MIIM_SUBMENU);
 	}
 
-	(app_ = parent->app)->task += [&]{
-		if (cache_.id == 0u)//Generate random id
-			cache_.id = app_->integer_generator(static_cast<common::types::word>(1), std::numeric_limits<common::types::word>::max());
-
-		common::types::uint types = 0;
-		common::types::uint mask = (MIIM_ID | MIIM_DATA);
-		if (!cache_.label.empty())
-			EWIN_SET(mask, MIIM_STRING);
-
-		if (types != 0u)
-			EWIN_SET(mask, MIIM_FTYPE);
-
-		if (cache_.states != 0u)
-			EWIN_SET(mask, MIIM_STATE);
-
-		if (cache_.bitmap != nullptr)
-			EWIN_SET(mask, MIIM_BITMAP);
-
-		if (cache_.checked_bitmap != nullptr || cache_.unchecked_bitmap != nullptr)
-			EWIN_SET(mask, MIIM_CHECKMARKS);
-
-		common::types::hmenu sub = nullptr;
-		if (sub_menu_ != nullptr){
-			sub = sub_menu_->handle;
-			EWIN_SET(mask, MIIM_SUBMENU);
-		}
-
-		common::types::menu_item_info info{
-			sizeof(common::types::menu_item_info),					//Size
-			mask,													//Flags
-			types,													//Types
-			cache_.states,											//States
-			cache_.id,												//Id
-			sub,													//Sub-menu
-			cache_.checked_bitmap,									//Checked bitmap
-			cache_.unchecked_bitmap,								//Unchecked bitmap
-			reinterpret_cast<common::types::uptr>(this),			//Data
-			cache_.label.data(),									//String
-			static_cast<common::types::uint>(cache_.label.size()),	//String size
-			cache_.bitmap											//Item bitmap
-		};
-
-		set_error_(error_type::nil);
-		if (!EWIN_CPP_BOOL(::InsertMenuItemW(parent->handle, static_cast<common::types::uint>(tree.index), TRUE, &info))){
-			created_ = false;
-			set_error_(::GetLastError());
-		}
-		else//Success
-			created_ = true;
+	common::types::menu_item_info info{
+		sizeof(common::types::menu_item_info),					//Size
+		mask,													//Flags
+		types,													//Types
+		cache_.states,											//States
+		cache_.id,												//Id
+		sub,													//Sub-menu
+		cache_.checked_bitmap,									//Checked bitmap
+		cache_.unchecked_bitmap,								//Unchecked bitmap
+		reinterpret_cast<common::types::uptr>(this),			//Data
+		cache_.label.data(),									//String
+		static_cast<common::types::uint>(cache_.label.size()),	//String size
+		cache_.bitmap											//Item bitmap
 	};
+
+	if (EWIN_CPP_BOOL(::InsertMenuItemW(handle, index, TRUE, &info))){
+		created_ = true;
+		set_error_(error_type::nil);
+	}
+	else{//Failed to insert
+		created_ = false;
+		set_error_(::GetLastError());
+	}
 }
 
 void ewin::menu::item::update_id_(common::types::word *value){

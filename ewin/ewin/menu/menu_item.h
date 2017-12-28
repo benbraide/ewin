@@ -48,7 +48,11 @@ namespace ewin::menu{
 
 		virtual bool validate_child_add_(object &value, std::size_t index) override;
 
+		virtual void parent_changed_(object *current, object *previous, std::size_t index, std::size_t previous_index) override;
+
 		virtual void low_level_create_();
+
+		virtual void low_level_create_(common::types::hmenu handle, common::types::uint index);
 
 		virtual void update_id_(common::types::word *value = nullptr);
 

@@ -186,10 +186,11 @@ namespace ewin::window{
 			if (value != nullptr && !value->validate_child_add_(*target_, index))
 				return -1;//Child insertion rejected by new parent
 
-			auto &parent_children = parent_->tree.children_;
 			auto old_parent = parent_;
+			auto old_index = index_();
 
-			if (parent_ != nullptr){//Remove from current parent
+			if (parent_ != nullptr && !parent_->tree.children_.empty()){//Remove from current parent
+				auto &parent_children = parent_->tree.children_;
 				auto iter = std::find(parent_children.begin(), parent_children.end(), target_);
 				if (iter != parent_children.end()){
 					auto old_index = std::distance(parent_children.begin(), iter);
@@ -199,6 +200,7 @@ namespace ewin::window{
 			}
 
 			if ((parent_ = value) != nullptr){//Insert into list
+				auto &parent_children = parent_->tree.children_;
 				if (index >= parent_children.size()){//Append
 					parent_children.push_back(target_);
 					index = (parent_children.size() - 1u);
@@ -208,7 +210,7 @@ namespace ewin::window{
 				parent_->child_added_(*target_, index);
 			}
 
-			target_->parent_changed_(parent_, old_parent, index);
+			target_->parent_changed_(parent_, old_parent, index, old_index);
 			return index;
 		}
 

@@ -1,7 +1,7 @@
 #include "menu_object.h"
 
 ewin::menu::object::object()
-	: app_(nullptr), error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), local_error_value_(ERROR_SUCCESS), auto_destroy_(true){
+	: tree(*this), app_(nullptr), error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), local_error_value_(ERROR_SUCCESS), auto_destroy_(true){
 	cache_ = cache_info{};
 	bind_properties_();
 }
@@ -158,3 +158,26 @@ void ewin::menu::object::set_error_(common::types::dword value){
 	else//Signify local error
 		set_error_(error_type::local_error);
 }
+
+bool ewin::menu::object::validate_parent_change_(object *value){
+	if (value == nullptr){//Parent required
+		set_error_(common::error_type::parent_required);
+		return false;
+	}
+
+	return true;
+}
+
+bool ewin::menu::object::validate_child_remove_(object &value){
+	return true;
+}
+
+bool ewin::menu::object::validate_child_add_(object &value, std::size_t index){
+	return true;
+}
+
+void ewin::menu::object::child_removed_(object &value, std::size_t index){}
+
+void ewin::menu::object::child_added_(object &value, std::size_t index){}
+
+void ewin::menu::object::parent_changed_(object *current, object *previous, std::size_t index){}

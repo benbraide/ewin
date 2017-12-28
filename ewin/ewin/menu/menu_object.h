@@ -15,6 +15,8 @@
 
 #include "../application/application_manager.h"
 
+#include "../window/window_tree.h"
+
 namespace ewin::menu{
 	class object : public std::enable_shared_from_this<object>, public ewin::message::menu_target{
 	public:
@@ -60,7 +62,11 @@ namespace ewin::menu{
 		common::transformation_property<create_info, void, object> create;
 		common::boolean_value_property<object> auto_destroy;
 
+		window::wnd_tree<object> tree;
+
 	protected:
+		friend class window::wnd_tree<object>;
+
 		void bind_properties_();
 
 		virtual void handle_property_(void *prop, void *arg, common::property_access access);
@@ -80,6 +86,18 @@ namespace ewin::menu{
 		virtual void set_error_(error_type value);
 
 		virtual void set_error_(common::types::dword value);
+
+		virtual bool validate_parent_change_(object *value);
+
+		virtual bool validate_child_remove_(object &value);
+
+		virtual bool validate_child_add_(object &value, std::size_t index);
+
+		virtual void child_removed_(object &value, std::size_t index);
+
+		virtual void child_added_(object &value, std::size_t index);
+
+		virtual void parent_changed_(object *current, object *previous, std::size_t index);
 
 		application_type *app_;
 		cache_info cache_;

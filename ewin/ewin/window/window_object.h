@@ -13,7 +13,8 @@
 
 #include "../message/message_target.h"
 
-#include "../application/application_manager.h"
+#include "../menu/menu_bar.h"
+#include "../menu/menu_popup.h"
 
 #include "../drawing/hwnd_drawing_object.h"
 

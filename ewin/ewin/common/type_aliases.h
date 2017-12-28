@@ -51,6 +51,7 @@ namespace ewin::common::types{
 	typedef ::HICON				hicon;
 	typedef ::HCURSOR			hcursor;
 	typedef ::HBRUSH			hbrush;
+	typedef ::HBITMAP			hbitmap;
 
 	typedef ::WNDCLASSEXW		wnd_class;
 	typedef ::CREATESTRUCTW		create_struct;
@@ -65,6 +66,8 @@ namespace ewin::common::types{
 	typedef ::CBTACTIVATESTRUCT	hook_activate_info;
 	typedef ::MOUSEHOOKSTRUCT	mouse_hook_struct;
 	typedef ::TRACKMOUSEEVENT	track_mouse_event;
+
+	typedef ::MENUITEMINFOW		menu_item_info;
 
 	typedef ::POINT				point;
 	typedef ::SIZE				size;

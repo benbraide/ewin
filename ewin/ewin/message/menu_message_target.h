@@ -21,8 +21,6 @@ namespace ewin::message{
 		common::transformation_property<common::types::msg, common::types::result, target> dispatch_message;
 
 	protected:
-		virtual common::types::result call_procedure_(events::message &e);
-
 		virtual target *parent_() const = 0;
 	};
 }

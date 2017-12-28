@@ -19,6 +19,8 @@ namespace ewin::common{
 		failed_to_retrieve_message,
 		app_mismatch,
 		cross_thread,
+		menu_not_created,
+		bad_track_target,
 		window_not_created,
 		parent_not_created,
 		parent_not_found,

@@ -20,6 +20,10 @@
 #define EWIN_WM_MOUSEDRAG		(EWIN_WM_WIN_FIRST + 6)
 #define EWIN_WM_MOUSEDRAGEND	(EWIN_WM_WIN_FIRST + 7)
 
+namespace ewin::menu{
+	class popup;
+}
+
 namespace ewin::window{
 	class wnd_event;
 }
@@ -34,6 +38,7 @@ namespace ewin::message{
 
 		virtual ~target();
 
+		common::object_value_property<menu::popup, target> context_menu;
 		common::transformation_property<common::types::msg, common::types::result, target> dispatch_message;
 
 	protected:
@@ -244,6 +249,7 @@ namespace ewin::message{
 		virtual target *parent_() const = 0;
 
 		common::types::procedure procedure_;
+		menu::popup *context_menu_;
 		window::wnd_event *events_;
 		drawing::types::color background_color_;
 	};

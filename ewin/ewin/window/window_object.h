@@ -134,6 +134,9 @@ namespace ewin::window{
 		common::transformation_property<create_info, void, object> create;
 		common::boolean_value_property<object> auto_destroy;
 
+		common::read_only_object_value_property<ewin::menu::bar_collection, object> menu;
+		common::read_only_object_value_property<ewin::menu::external_collection, object> system_menu;
+
 		common::read_only_object_value_property<drawing::hwnd_object, object> drawer;
 		common::read_only_object_value_property<drawing::solid_color_brush, object> color_brush;
 
@@ -212,10 +215,15 @@ namespace ewin::window{
 		wnd_event events_;
 		cache_info cache_;
 
+		bool auto_destroy_;
 		error_throw_policy_type error_throw_policy_;
+
 		error_type error_value_;
 		common::types::dword local_error_value_;
-		bool auto_destroy_;
+		
+		std::shared_ptr<ewin::menu::bar_collection> menu_;
+		std::shared_ptr<ewin::menu::external_collection> system_menu_;
+
 		drawing::hwnd_object drawer_;
 		drawing::solid_color_brush color_brush_;
 	};

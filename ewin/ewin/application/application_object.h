@@ -31,6 +31,9 @@
 
 namespace ewin::menu{
 	class container;
+	
+	template <class menu_type>
+	class basic_external;
 }
 
 namespace ewin::window{
@@ -96,6 +99,8 @@ namespace ewin::application{
 	protected:
 		friend class manager;
 		friend class menu::container;
+
+		template <class> friend class menu::basic_external;
 
 		explicit object(bool is_main);
 

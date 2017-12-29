@@ -4,7 +4,7 @@
 
 ewin::window::object::object()
 	: message_target_type(events_), tree(*this), view(*this), frame(*this), state(*this), style(*this), attribute(*this), events_(*this), app_(nullptr), handle_(nullptr),
-	error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), local_error_value_(ERROR_SUCCESS), auto_destroy_(true){
+	auto_destroy_(true), error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), local_error_value_(ERROR_SUCCESS){
 	cache_ = cache_info{};
 	bind_properties_();
 
@@ -61,6 +61,9 @@ void ewin::window::object::bind_properties_(){
 	created.initialize_(nullptr, handler);
 	create.initialize_(nullptr, handler);
 	auto_destroy.initialize_(&auto_destroy_, nullptr);
+
+	menu.initialize_(nullptr, handler);
+	system_menu.initialize_(nullptr, handler);
 
 	drawer.initialize_(nullptr, handler);
 	color_brush.initialize_(nullptr, handler);
@@ -138,6 +141,30 @@ void ewin::window::object::handle_property_(void *prop, void *arg, common::prope
 		}
 
 		*static_cast<drawing::solid_color_brush **>(arg) = &color_brush_;
+	}
+	else if (prop == &menu){
+		if (tree.parent_ != nullptr || attribute.is_control || attribute.is_message_only){
+			set_error_(error_type::forbidden_property);
+			return;
+		}
+
+		if (menu_ == nullptr){//Create
+			menu_ = std::make_shared<ewin::menu::bar_collection>();
+			menu_->owner = this;
+		}
+
+		*static_cast<ewin::menu::bar_collection **>(arg) = menu_.get();
+	}
+	else if (prop == &system_menu){
+		if (handle_ == nullptr){
+			set_error_(error_type::forbidden_property);
+			return;
+		}
+
+		if (system_menu_ == nullptr)//Create
+			system_menu_ = std::make_shared<ewin::menu::external_collection>(::GetSystemMenu(handle_, FALSE), *app_);
+
+		*static_cast<ewin::menu::external_collection **>(arg) = system_menu_.get();
 	}
 	else if (prop == &size && access == common::property_access::write)
 		update_dimension_(dimension_type::size);

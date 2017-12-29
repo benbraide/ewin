@@ -31,10 +31,21 @@ void ewin::menu::bar::bind_properties_(){
 }
 
 void ewin::menu::bar::create_(bool create, const create_info *info){
-	if (create && handle_ == nullptr)//Create
+	if (create && handle_ == nullptr){//Create
 		low_level_create_(false);
+		if (handle_ != nullptr && owner_ != nullptr && owner_->created){
+			if (owner_->app != app_){
+				set_error_(error_type::app_mismatch);
+				return;
+			}
+
+			::SetMenu(owner_->handle, handle_);
+			::DrawMenuBar(owner_->handle);
+		}
+	}
 	else if (!create && owner_ != nullptr && event_id_ != 0u)
 		owner_->events->create -= event_id_;
+
 	container::create_(create, info);//Forward
 }
 
@@ -42,6 +53,12 @@ void ewin::menu::bar::set_owner_(window::object *value){
 	if (value == owner_)
 		return;//No changes
 
+	if (handle_ != nullptr && value != nullptr && value->created && value->app != app_){
+		set_error_(error_type::app_mismatch);
+		return;
+	}
+
+	set_error_(error_type::nil);
 	if (owner_ != nullptr && event_id_ != 0u)//Remove previous event
 		owner_->events->create -= event_id_;
 
@@ -53,8 +70,13 @@ void ewin::menu::bar::set_owner_(window::object *value){
 
 		event_id_ = owner_->events->create += [this]{
 			if (handle_ != nullptr){//Bind menu
-				::SetMenu(owner_->handle, handle_);
-				::DrawMenuBar(owner_->handle);
+				if (owner_->app == app_){
+					error_value_ = error_type::nil;
+					::SetMenu(owner_->handle, handle_);
+					::DrawMenuBar(owner_->handle);
+				}
+				else//Error
+					error_value_ = error_type::app_mismatch;
 			}
 		};
 	}

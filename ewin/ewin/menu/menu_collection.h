@@ -11,6 +11,7 @@
 
 #include "menu_bar.h"
 #include "menu_popup.h"
+#include "external_menu.h"
 
 namespace ewin::menu{
 	template <class base_type>
@@ -95,7 +96,9 @@ namespace ewin::menu{
 			});
 		}
 
-		virtual ~collection() = default;
+		virtual ~collection(){
+			destruct_();
+		}
 
 		common::list_value_property<item_callback_type, void *, void *, collection, std::size_t, common::property_access::list_add> items;
 		common::list_value_property<link_callback_type, void *, void *, collection, std::size_t, common::property_access::list_add> links;
@@ -107,6 +110,10 @@ namespace ewin::menu{
 
 	using bar_collection = collection<bar>;
 	using popup_collection = collection<popup>;
+
+	using external_collection = collection<external>;
+	using external_bar_collection = collection<external_bar>;
+	using external_popup_collection = collection<external_popup>;
 }
 
 #endif /* !EWIN_MENU_COLLECTION_H */

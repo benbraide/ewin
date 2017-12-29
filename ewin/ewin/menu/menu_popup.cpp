@@ -51,11 +51,14 @@ ewin::menu::popup::~popup(){
 void ewin::menu::popup::bind_properties_(){
 	owner.initialize_(nullptr, [this](void *prop, void *arg, common::property_access access){
 		if (access == common::property_access::write){
+			auto owner = static_cast<item *>(arg);
+			if (owner != nullptr)//Create association
+				owner->sub_menu = this;
+
 			if (owner_ != nullptr)//Remove association
 				owner_->sub_menu = nullptr;
 
-			if ((owner_ = static_cast<item *>(arg)) != nullptr)//Create association
-				owner_->sub_menu = this;
+			owner_ = owner;//Update
 		}
 		else if (access == common::property_access::read)
 			*static_cast<item **>(arg) = owner_;

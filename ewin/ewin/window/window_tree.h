@@ -193,19 +193,15 @@ namespace ewin::window{
 			if (value != nullptr && !value->validate_child_add_(*target_, index))
 				return -1;//Child insertion rejected by new parent
 
-			auto old_parent = parent_;
+			
 			auto old_index = index_();
-
-			if (parent_ != nullptr && !parent_->tree.children_.empty()){//Remove from current parent
+			if (parent_ != nullptr){//Remove from current parent
 				auto &parent_children = parent_->tree.children_;
-				auto iter = std::find(parent_children.begin(), parent_children.end(), target_);
-				if (iter != parent_children.end()){
-					auto old_index = std::distance(parent_children.begin(), iter);
-					parent_children.erase(iter);
-					parent_->child_removed_(*target_, old_index);
-				}
+				if (old_index < parent_children.size())
+					parent_children.erase(std::next(parent_children.begin(), old_index));
 			}
 
+			auto old_parent = parent_;
 			if ((parent_ = value) != nullptr){//Insert into list
 				auto &parent_children = parent_->tree.children_;
 				if (index >= parent_children.size()){//Append
@@ -214,10 +210,15 @@ namespace ewin::window{
 				}
 				else//Insert
 					parent_children.insert((std::next(parent_children.begin(), index)), target_);
-				parent_->child_added_(*target_, index);
 			}
 
 			target_->parent_changed_(parent_, old_parent, index, old_index);
+			if (parent_ != nullptr)
+				parent_->child_added_(*target_, index);
+
+			if (old_parent != nullptr)
+				old_parent->child_removed_(*target_, old_index);
+
 			return index;
 		}
 
@@ -274,14 +275,19 @@ namespace ewin::window{
 
 		std::size_t find_(object_type &target, list_target_type list_target) const{
 			if (list_target == list_target_type::children){//Find target in children list
+				if (children_.empty())
+					return -1;
+
 				auto iter = std::find(children_.begin(), children_.end(), &target);
 				return ((iter == children_.end()) ? -1 : std::distance(children_.begin(), iter));
 			}
 
 			if (list_target == list_target_type::siblings){//Find target in sibling list
-				std::size_t index = 0u;
 				auto &parent_children = parent_->tree.children_;
+				if (parent_children.empty())
+					return -1;
 
+				std::size_t index = 0u;
 				for (auto sibling : parent_children){
 					if (sibling != target_ && sibling == &target)
 						return index;//Match found

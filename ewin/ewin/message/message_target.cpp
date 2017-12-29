@@ -1,12 +1,17 @@
 #include "../window/window_object.h"
 
 ewin::message::target::target(window::wnd_event &events)
-	: procedure_(::DefWindowProcW), events_(&events){
+	: procedure_(::DefWindowProcW), context_menu_(nullptr), events_(&events){
 	dispatch_message.initialize_(nullptr, [this](void *prop, void *arg, common::property_access access){
-		if (prop == &dispatch_message){
-			auto info = static_cast<std::pair<common::types::msg *, common::types::result> *>(arg);
-			info->second = dispatch_message_(*info->first, nullptr);
-		}
+		auto info = static_cast<std::pair<common::types::msg *, common::types::result> *>(arg);
+		info->second = dispatch_message_(*info->first, nullptr);
+	});
+
+	context_menu.initialize_(nullptr, [this](void *prop, void *arg, common::property_access access){
+		if (access == common::property_access::read)
+			*static_cast<menu::popup **>(arg) = context_menu_;
+		else if (access == common::property_access::write)
+			context_menu_ = static_cast<menu::popup *>(arg);
 	});
 
 	background_color_ = drawing::d2d1::ColorF(::GetSysColor(COLOR_WINDOW));

@@ -142,6 +142,18 @@ void ewin::menu::item::low_level_create_(){
 }
 
 void ewin::menu::item::low_level_create_(common::types::hmenu handle, common::types::uint index){
+	if (sub_menu_ != nullptr){
+		if (!sub_menu_->created){
+			set_error_(error_type::parent_not_created);
+			return;
+		}
+
+		if (sub_menu_->app != app_){
+			set_error_(error_type::app_mismatch);
+			return;
+		}
+	}
+
 	if (cache_.id == 0u)//Generate random id
 		cache_.id = app_->integer_generator(static_cast<common::types::word>(1), std::numeric_limits<common::types::word>::max());
 
@@ -359,6 +371,18 @@ bool ewin::menu::item::get_state_(common::types::uint state){
 }
 
 void ewin::menu::item::set_sub_menu_(popup *value){
+	if (created_ && value != nullptr){
+		if (!value->created){
+			set_error_(error_type::parent_not_created);
+			return;
+		}
+
+		if (value->app != app_){
+			set_error_(error_type::app_mismatch);
+			return;
+		}
+	}
+
 	if (sub_menu_ != nullptr)//Remove association
 		sub_menu_->owner_ = nullptr;
 

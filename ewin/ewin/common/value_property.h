@@ -61,6 +61,8 @@ namespace ewin::common{
 		list_end			= (1 << 0x0008),
 		list_size			= (1 << 0x0009),
 		write_alt			= (1 << 0x000A),
+		increment			= (1 << 0x000B),
+		decrement			= (1 << 0x000C),
 	};
 
 	class property_manager{

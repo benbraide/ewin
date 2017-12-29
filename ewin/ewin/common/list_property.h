@@ -29,6 +29,11 @@ namespace ewin::common{
 		explicit list_value_property(callback_type callback)
 			: callback_(callback){}
 
+		template <typename target_type>
+		index_type operator +=(const target_type &value){
+			return (*this += static_cast<const value_type &>(value));
+		}
+
 		index_type operator +=(const value_type &value){
 			if (access != access_type::nil && !EWIN_IS(access, access_type::list_add))
 				throw error_type::property_access_violation;

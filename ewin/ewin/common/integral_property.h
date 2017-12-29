@@ -163,6 +163,30 @@ namespace ewin::common{
 			return ((value_type)(*this) | (value_type)rhs);
 		}
 
+		value_type operator ~() const{
+			return ~operator value_type();
+		}
+
+		integral_value_property &operator ++(){
+			return (*this += static_cast<value_type>(1));
+		}
+
+		value_type operator ++(int){
+			auto value = operator value_type();
+			*this += static_cast<value_type>(1);
+			return value;
+		}
+
+		integral_value_property &operator --(){
+			return (*this -= static_cast<value_type>(1));
+		}
+
+		value_type operator --(int){
+			auto value = operator value_type();
+			*this -= static_cast<value_type>(1);
+			return value;
+		}
+
 		EWIN_INT_PROP_FRIEND_OP(integral_value_property)
 	};
 

@@ -32,7 +32,7 @@ namespace ewin::window{
 		};
 
 		explicit wnd_tree(object_type &target)
-			: target_(&target){
+			: target_(&target), parent_(nullptr){
 			bind_properties_();
 		}
 

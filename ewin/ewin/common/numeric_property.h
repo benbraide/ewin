@@ -115,6 +115,14 @@ namespace ewin::common{
 			return ((value_type)(*this) / (value_type)rhs);
 		}
 
+		value_type operator +() const{
+			return +operator value_type();
+		}
+
+		value_type operator -() const{
+			return -operator value_type();
+		}
+
 		template <typename target_type>
 		bool operator <(const target_type &rhs) const{
 			return ((value_type)(*this) < (value_type)rhs);

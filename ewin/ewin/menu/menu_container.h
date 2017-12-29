@@ -4,6 +4,7 @@
 #define EWIN_MENU_CONTAINER_H
 
 #include "menu_item.h"
+#include "menu_separator.h"
 
 namespace ewin::menu{
 	class container : public object{

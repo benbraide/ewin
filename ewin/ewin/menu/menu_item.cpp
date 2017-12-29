@@ -108,8 +108,8 @@ bool ewin::menu::item::validate_child_add_(object &value, std::size_t index){
 }
 
 void ewin::menu::item::parent_changed_(object *current, object *previous, std::size_t index, std::size_t previous_index){
-	if (previous != nullptr){//Remove item
-		app_ = nullptr;
+	app_ = nullptr;
+	if (previous != nullptr && previous->created){//Remove item
 		previous->app->task += [&]{
 			::RemoveMenu(previous->handle, static_cast<common::types::uint>(previous_index), MF_BYPOSITION);
 		};
@@ -129,7 +129,8 @@ void ewin::menu::item::low_level_create_(){
 	object *parent = tree.parent;
 	if (parent != nullptr){//Insert into parent
 		if (!parent->created){
-			//#TODO: Delay insertion
+			set_error_(error_type::parent_not_created);
+			return;
 		}
 
 		(app_ = parent->app)->task += [&]{

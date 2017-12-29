@@ -1,55 +1,5 @@
 #include "../window/window_object.h"
 
-ewin::events::object::object(target_type *target, target_type *owner)
-	: target_((target == nullptr) ? owner : target), owner_(owner), states_(state_type::nil){
-	bind_properties_();
-	if (target_ != owner_)
-		EWIN_SET(states_, state_type::bubbled);
-}
-
-void ewin::events::object::bind_properties_(){
-	auto handler = EWIN_PROP_HANDLER(object);
-
-	target.initialize_(target_, nullptr);
-	owner.initialize_(owner_, nullptr);
-
-	do_default.initialize_(nullptr, handler);
-	prevent_default.initialize_(nullptr, handler);
-	stop_propagation.initialize_(nullptr, handler);
-
-	bubbled.initialize_(nullptr, handler);
-	handled.initialize_(nullptr, handler);
-}
-
-void ewin::events::object::handle_property_(void *prop, void *arg, common::property_access access){
-	if (prop == &prevent_default){
-		if (access == common::property_access::read)
-			*static_cast<bool *>(arg) = EWIN_IS(states_, state_type::default_prevented);
-		else if (access == common::property_access::write && *static_cast<bool *>(arg))
-			prevent_default_();
-	}
-	else if (prop == &stop_propagation){
-		if (access == common::property_access::read)
-			*static_cast<bool *>(arg) = EWIN_IS(states_, state_type::propagation_stopped);
-		else if (access == common::property_access::write && *static_cast<bool *>(arg))
-			EWIN_SET(states_, state_type::propagation_stopped);
-	}
-	else if (prop == &bubbled)
-		*static_cast<bool *>(arg) = EWIN_IS(states_, state_type::bubbled);
-	else if (prop == &handled)
-		*static_cast<bool *>(arg) = EWIN_IS_ANY(states_, state_type::default_called | state_type::default_prevented | state_type::bubbled);
-}
-
-void ewin::events::object::do_default_(){
-	if (!EWIN_IS_ANY(states_, state_type::default_called | state_type::default_prevented | state_type::bubbled))
-		EWIN_SET(states_, state_type::default_called);
-}
-
-void ewin::events::object::prevent_default_(){
-	if (!EWIN_IS_ANY(states_, state_type::default_called | state_type::default_prevented | state_type::bubbled))
-		EWIN_SET(states_, state_type::default_prevented);
-}
-
 ewin::events::message::~message() = default;
 
 void ewin::events::message::handle_property_(void *prop, void *arg, common::property_access access){

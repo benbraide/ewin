@@ -14,6 +14,7 @@
 
 namespace ewin::message{
 	class target;
+	class menu_target;
 }
 
 namespace ewin::window{
@@ -23,46 +24,94 @@ namespace ewin::window{
 namespace ewin::events{
 	class callback;
 
-	class object{
+	enum class object_state_type : unsigned int{
+		nil						= (0 << 0x0000),
+		default_called			= (1 << 0x0000),
+		default_prevented		= (1 << 0x0001),
+		propagation_stopped		= (1 << 0x0002),
+		bubbled					= (1 << 0x0003),
+	};
+
+	EWIN_MAKE_OPERATORS(object_state_type);
+
+	template <class target_type>
+	class basic_object{
 	public:
-		typedef ewin::message::target target_type;
+		typedef target_type target_type;
+		typedef object_state_type state_type;
+
 		typedef ewin::window::object window_type;
 
-		enum class state_type : unsigned int{
-			nil						= (0 << 0x0000),
-			default_called			= (1 << 0x0000),
-			default_prevented		= (1 << 0x0001),
-			propagation_stopped		= (1 << 0x0002),
-			bubbled					= (1 << 0x0003),
-		};
+		basic_object(target_type *target, target_type *owner)
+			: target_((target == nullptr) ? owner : target), owner_(owner), states_(state_type::nil){
+			bind_properties_();
+			if (target_ != owner_)
+				EWIN_SET(states_, state_type::bubbled);
+		}
 
-		object(target_type *target, target_type *owner);
+		common::read_only_object_value_property<target_type, basic_object> target;
+		common::read_only_object_value_property<target_type, basic_object> owner;
 
-		common::read_only_object_value_property<target_type, object> target;
-		common::read_only_object_value_property<target_type, object> owner;
+		common::boolean_value_property<basic_object> do_default;
+		common::boolean_value_property<basic_object> prevent_default;
+		common::boolean_value_property<basic_object> stop_propagation;
 
-		common::boolean_value_property<object> do_default;
-		common::boolean_value_property<object> prevent_default;
-		common::boolean_value_property<object> stop_propagation;
-
-		common::read_only_boolean_value_property<object> bubbled;
-		common::read_only_boolean_value_property<object> handled;
+		common::read_only_boolean_value_property<basic_object> bubbled;
+		common::read_only_boolean_value_property<basic_object> handled;
 
 	protected:
 		friend class ewin::message::target;
 
-		void bind_properties_();
+		void bind_properties_(){
+			auto handler = EWIN_PROP_HANDLER(basic_object);
 
-		virtual void handle_property_(void *prop, void *arg, common::property_access access);
+			target.initialize_(target_, nullptr);
+			owner.initialize_(owner_, nullptr);
 
-		virtual void do_default_();
+			do_default.initialize_(nullptr, handler);
+			prevent_default.initialize_(nullptr, handler);
+			stop_propagation.initialize_(nullptr, handler);
 
-		virtual void prevent_default_();
+			bubbled.initialize_(nullptr, handler);
+			handled.initialize_(nullptr, handler);
+		}
+
+		virtual void handle_property_(void *prop, void *arg, common::property_access access){
+			if (prop == &prevent_default){
+				if (access == common::property_access::read)
+					*static_cast<bool *>(arg) = EWIN_IS(states_, state_type::default_prevented);
+				else if (access == common::property_access::write && *static_cast<bool *>(arg))
+					prevent_default_();
+			}
+			else if (prop == &stop_propagation){
+				if (access == common::property_access::read)
+					*static_cast<bool *>(arg) = EWIN_IS(states_, state_type::propagation_stopped);
+				else if (access == common::property_access::write && *static_cast<bool *>(arg))
+					EWIN_SET(states_, state_type::propagation_stopped);
+			}
+			else if (prop == &bubbled)
+				*static_cast<bool *>(arg) = EWIN_IS(states_, state_type::bubbled);
+			else if (prop == &handled)
+				*static_cast<bool *>(arg) = EWIN_IS_ANY(states_, state_type::default_called | state_type::default_prevented | state_type::bubbled);
+		}
+
+		virtual void do_default_(){
+			if (!EWIN_IS_ANY(states_, state_type::default_called | state_type::default_prevented | state_type::bubbled))
+				EWIN_SET(states_, state_type::default_called);
+		}
+
+		virtual void prevent_default_(){
+			if (!EWIN_IS_ANY(states_, state_type::default_called | state_type::default_prevented | state_type::bubbled))
+				EWIN_SET(states_, state_type::default_prevented);
+		}
 
 		target_type *target_;
 		target_type *owner_;
 		state_type states_;
 	};
+
+	using object = basic_object<ewin::message::target>;
+	using menu_object = basic_object<ewin::message::menu_target>;
 
 	class message : public object{
 	public:
@@ -416,8 +465,6 @@ namespace ewin::events{
 
 		bool released_;
 	};
-
-	EWIN_MAKE_OPERATORS(object::state_type);
 }
 
 #endif /* !EWIN_EVENT_OBJECT_H */

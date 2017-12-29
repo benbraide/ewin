@@ -8,10 +8,6 @@
 #include "../events/event_callback.h"
 #include "../events/basic_event.h"
 
-namespace ewin::events{
-	class menu_object;
-}
-
 namespace ewin::message{
 	class menu_target{
 	public:

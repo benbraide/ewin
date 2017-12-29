@@ -28,12 +28,14 @@ namespace ewin::common{
 			: linked_(&linked), callback_(callback){}
 
 		template <typename target_type, typename unused_type = value_type>
-		std::enable_if_t<std::is_base_of_v<property_object, target_type>, object_value_property<unused_type, manager_type, access>> &operator =(const target_type &value){
+		std::enable_if_t<(std::is_base_of_v<property_object, target_type> && !std::is_pointer_v<target_type>),
+			object_value_property<unused_type, manager_type, access>> &operator =(const target_type &value){
 			return operator =((value_type *)value);
 		}
 
 		template <typename target_type, typename unused_type = value_type>
-		std::enable_if_t<!std::is_base_of_v<property_object, target_type>, object_value_property<unused_type, manager_type, access>> &operator =(const target_type &value){
+		std::enable_if_t<(!std::is_base_of_v<property_object, target_type> && !std::is_pointer_v<target_type>),
+			object_value_property<unused_type, manager_type, access>> &operator =(const target_type &value){
 			return operator =((const value_type &)value);
 		}
 

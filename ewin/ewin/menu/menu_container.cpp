@@ -13,10 +13,30 @@ ewin::common::types::hmenu ewin::menu::container::handle_value_(){
 	return handle_;
 }
 
+void ewin::menu::container::handle_property_(void *prop, void *arg, common::property_access access){
+	if (prop == &handle)
+		*static_cast<common::types::hmenu *>(arg) = handle_;
+	else//Forward
+		object::handle_property_(prop, arg, access);
+}
+
 void ewin::menu::container::create_(bool create, const create_info *info){
 	if (!create && handle_ != nullptr){//Destroy
 		app_->task += [this]{
 			if (EWIN_CPP_BOOL(::DestroyMenu(handle_))){
+				set_error_(error_type::nil);
+
+				if (!app_->menu_handles_.empty()){//Remove from list
+					auto entry = app_->menu_handles_.find(handle_);
+					if (entry != app_->menu_handles_.end())
+						app_->menu_handles_.erase(entry);
+				}
+
+				if (handle_ == app_->cached_menu_handle_.first){//Reset cached
+					app_->cached_menu_handle_.first = nullptr;
+					app_->cached_menu_handle_.second = nullptr;
+				}
+
 				handle_ = nullptr;
 			}
 			else//Failed to destroy

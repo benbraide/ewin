@@ -529,16 +529,9 @@ bool ewin::window::object::validate_parent_change_(object *value){
 		return false;
 	}
 
-	if (value != nullptr && created){//Target window has been created
-		if (!value->created){
-			set_error_(common::error_type::parent_not_created);
-			return false;
-		}
-
-		if (value->app_ != app_){//Cannot move to parent in a different app
-			set_error_(common::error_type::app_mismatch);
-			return false;
-		}
+	if (value != nullptr && created && !value->created){//Parent window has not been created
+		set_error_(common::error_type::parent_not_created);
+		return false;
 	}
 
 	return true;

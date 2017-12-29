@@ -21,7 +21,7 @@ namespace ewin::message{
 		common::transformation_property<common::types::msg, common::types::result, target> dispatch_message;
 
 	protected:
-		virtual target *parent_() const = 0;
+		//virtual target *parent_() const = 0;
 	};
 }
 

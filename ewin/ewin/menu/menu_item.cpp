@@ -76,6 +76,8 @@ void ewin::menu::item::handle_property_(void *prop, void *arg, common::property_
 		update_bitmap_();
 	else if ((prop == &checked_bitmap || prop == &unchecked_bitmap) && access == common::property_access::write)
 		update_check_marks_();
+	else//Forward
+		object::handle_property_(prop, arg, access);
 }
 
 void ewin::menu::item::destruct_(){
@@ -106,19 +108,30 @@ bool ewin::menu::item::validate_child_add_(object &value, std::size_t index){
 }
 
 void ewin::menu::item::parent_changed_(object *current, object *previous, std::size_t index, std::size_t previous_index){
-	app_->task += [&]{
-		created_ = false;
-		if (previous != nullptr)//Remove item
+	if (previous != nullptr){//Remove item
+		app_ = nullptr;
+		previous->app->task += [&]{
 			::RemoveMenu(previous->handle, static_cast<common::types::uint>(previous_index), MF_BYPOSITION);
+		};
+	}
 
-		if (current != nullptr)//Insert into new parent
+	if (created_ && current != nullptr){//Insert item
+		(app_ = current->app)->task += [&]{
+			created_ = false;
 			low_level_create_(current->handle, static_cast<common::types::uint>(index));
-	};
+		};
+	}
+	else//Reset
+		created_ = false;
 }
 
 void ewin::menu::item::low_level_create_(){
 	object *parent = tree.parent;
 	if (parent != nullptr){//Insert into parent
+		if (!parent->created){
+			//#TODO: Delay insertion
+		}
+
 		(app_ = parent->app)->task += [&]{
 			low_level_create_(parent->handle, static_cast<common::types::uint>(parent->tree.children[*this]));
 		};

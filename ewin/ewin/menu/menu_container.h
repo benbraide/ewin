@@ -13,6 +13,8 @@ namespace ewin::menu{
 		virtual ~container();
 
 	protected:
+		virtual void handle_property_(void *prop, void *arg, common::property_access access) override;
+
 		virtual common::types::hmenu handle_value_() override;
 
 		virtual void create_(bool create, const create_info *info) override;

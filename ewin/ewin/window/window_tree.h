@@ -172,9 +172,16 @@ namespace ewin::window{
 					return -1;//No changes
 			}
 
-			if (value->tree.parent_ == target_){//Error
-				target_->set_error_(common::error_type::parent_change_forbidden);
-				return -1;
+			if (value != nullptr){
+				if (value->tree.parent_ == target_){//Error
+					target_->set_error_(common::error_type::parent_change_forbidden);
+					return -1;
+				}
+
+				if (value->created && target_->created && value->app != target_->app){
+					target_->set_error_(common::error_type::app_mismatch);
+					return -1;
+				}
 			}
 
 			if (!target_->validate_parent_change_(value))

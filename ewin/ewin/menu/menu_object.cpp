@@ -168,11 +168,6 @@ void ewin::menu::object::set_error_(common::types::dword value){
 }
 
 bool ewin::menu::object::validate_parent_change_(object *value){
-	if (value == nullptr){//Parent required
-		set_error_(common::error_type::parent_required);
-		return false;
-	}
-
 	return true;
 }
 

@@ -585,3 +585,5 @@ void ewin::window::object::parent_changed_(object *current, object *previous, st
 			style.value -= WS_CHILD;//Remove child style
 	}
 }
+
+void ewin::window::object::event_listener_count_changed_(events::basic &e, std::size_t count){}

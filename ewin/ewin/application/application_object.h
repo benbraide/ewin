@@ -25,9 +25,16 @@
 #define EWIN_WUUID		L"{DABED3E8-D8A5-48FC-B80B-B17C167FA9B0}"
 
 #define EWIN_WM_APP_FIRST	(WM_APP + 1)
-#define EWIN_WM_APP_LAST	(WM_APP + 10)
+#define EWIN_WM_APP_LAST	(EWIN_WM_APP_FIRST + 10)
+
+#define EWIN_WM_WIN_FIRST	(EWIN_WM_APP_LAST  + 1)
+#define EWIN_WM_WIN_LAST	(EWIN_WM_WIN_FIRST + 30)
+
+#define EWIN_WM_MENU_FIRST	(EWIN_WM_WIN_LAST  + 1)
+#define EWIN_WM_MENU_LAST	(EWIN_WM_MENU_FIRST  + 20)
 
 #define EWIN_WM_TASK		(EWIN_WM_APP_FIRST + 0)
+#define EWIN_WM_MENU_MSG	(EWIN_WM_APP_FIRST + 1)
 
 namespace ewin::menu{
 	class container;
@@ -149,6 +156,18 @@ namespace ewin::application{
 		void mouse_up_(common::types::hwnd hwnd, common::types::uint button);
 
 		void track_mouse_(common::types::hwnd hwnd, common::types::uint flags);
+
+		common::types::result menu_init_(window_type &window_object, common::types::wparam wparam, common::types::lparam lparam);
+
+		common::types::result menu_rbutton_up_(window_type &window_object, common::types::wparam wparam, common::types::lparam lparam);
+
+		common::types::result menu_highlight_(window_type &window_object, common::types::wparam wparam, common::types::lparam lparam);
+
+		common::types::result menu_command_(window_type &window_object, common::types::wparam wparam, common::types::lparam lparam);
+
+		common::types::result command_(window_type &window_object, common::types::wparam wparam, common::types::lparam lparam);
+
+		common::types::result system_command_(window_type &window_object, common::types::wparam wparam, common::types::lparam lparam);
 
 		common::types::result app_message_(common::types::uint msg, common::types::wparam wparam, common::types::lparam lparam);
 

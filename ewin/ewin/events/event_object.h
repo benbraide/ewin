@@ -17,12 +17,44 @@ namespace ewin::message{
 	class menu_target;
 }
 
+namespace ewin::menu{
+	class object;
+	class popup;
+
+	template <class base_type>
+	class collection;
+}
+
 namespace ewin::window{
 	class object;
 }
 
 namespace ewin::events{
-	class callback;
+	template <class target_type>
+	class basic_callback;
+
+	template <typename target_type>
+	struct message_target_from_object;
+
+	template <>
+	struct message_target_from_object<window::object>{
+		typedef ewin::message::target type;
+	};
+
+	template <>
+	struct message_target_from_object<ewin::message::target>{
+		typedef ewin::message::target type;
+	};
+
+	template <>
+	struct message_target_from_object<ewin::menu::object>{
+		typedef ewin::message::menu_target type;
+	};
+
+	template <>
+	struct message_target_from_object<ewin::message::menu_target>{
+		typedef ewin::message::menu_target type;
+	};
 
 	enum class object_state_type : unsigned int{
 		nil						= (0 << 0x0000),
@@ -113,39 +145,57 @@ namespace ewin::events{
 	using object = basic_object<ewin::message::target>;
 	using menu_object = basic_object<ewin::message::menu_target>;
 
-	class message : public object{
+	template <class target_type>
+	class basic_message : public basic_object<target_type>{
 	public:
-		typedef callback callback_type;
+		typedef target_type target_type;
+		typedef basic_object<target_type> base_type;
+		typedef basic_callback<target_type> callback_type;
 
 		template <typename... args_types>
-		message(common::types::msg &msg, callback_type &callback, args_types &&... args)
-			: object(std::forward<args_types>(args)...), msg_(&msg), callback_(callback), result_(0){
+		basic_message(common::types::msg &msg, callback_type &callback, args_types &&... args)
+			: base_type(std::forward<args_types>(args)...), msg_(&msg), callback_(callback), result_(0){
 			info.initialize_(msg_, nullptr);
-			result.initialize_(nullptr, EWIN_PROP_HANDLER(message));
+			result.initialize_(nullptr, [this](void *prop, void *arg, common::property_access access){
+				if (access == common::property_access::write){
+					result_ = *static_cast<common::types::result *>(arg);
+					EWIN_SET(states_, state_type::default_called);
+				}
+				else if (access == common::property_access::read)
+					*static_cast<common::types::result *>(arg) = call_default_();
+			});
 		}
 
-		virtual ~message();
+		virtual ~basic_message() = default;
 
-		common::read_only_object_value_property<common::types::msg, message> info;
-		common::value_property<common::types::result, message> result;
+		common::read_only_object_value_property<common::types::msg, basic_message> info;
+		common::value_property<common::types::result, basic_message> result;
 
 	protected:
-		friend class ewin::message::target;
+		friend target_type;
 
-		virtual void handle_property_(void *prop, void *arg, common::property_access access) override;
+		virtual void do_default_() override{
+			call_default_();
+		}
 
-		virtual void do_default_() override;
+		virtual common::types::result call_default_(){
+			if (EWIN_IS_ANY(states_, state_type::default_called | state_type::default_prevented | state_type::bubbled))
+				return result_;
 
-		virtual common::types::result call_default_();
+			result_ = callback_(*this);//Call
+			if (!EWIN_IS(states_, state_type::default_prevented))
+				EWIN_SET(states_, state_type::default_called);
 
-		virtual void bubble_();
-
-		virtual void remove_bubble_();
+			return result_;
+		}
 
 		common::types::msg *msg_;
 		callback_type &callback_;
 		common::types::result result_;
 	};
+
+	using message = basic_message<ewin::message::target>;
+	using menu_message = basic_message<ewin::message::menu_target>;
 
 	class mouse_activate : public message{
 	public:
@@ -365,21 +415,29 @@ namespace ewin::events{
 
 	class context_menu : public message{
 	public:
+		typedef ewin::menu::collection<ewin::menu::popup> menu_type;
+
 		template <typename... args_types>
 		explicit context_menu(args_types &&... args)
 			: message(std::forward<args_types>(args)...){
 			cache_values_();
-			position.initialize_(&position_, nullptr);
+			bind_properties_();
 		}
 
 		virtual ~context_menu();
 
 		common::read_only_point_value_property<common::types::point, context_menu> position;
+		common::read_only_object_value_property<menu_type, context_menu> menu;
 
 	protected:
+		friend class ewin::message::target;
+
 		void cache_values_();
 
+		void bind_properties_();
+
 		common::types::point position_;
+		std::shared_ptr<menu_type> menu_;
 	};
 
 	class key : public message{

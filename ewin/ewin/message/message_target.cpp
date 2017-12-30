@@ -318,10 +318,22 @@ ewin::common::types::result ewin::message::target::dispatch_message_(common::typ
 		});
 	case WM_CONTEXTMENU:
 		return dispatch_bubbling_message_to_(&target::on_context_menu_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
+			if (!fire && !e.handled){
+				e.result = 0;//Prevent procedure call
+
+				auto context_menu_event = dynamic_cast<events::context_menu *>(&e);
+				auto menu = context_menu_event->menu_;
+
+				if (menu != nullptr && menu->tree.children.size > 0u){
+					if (context_menu_event->position.x == -1 && context_menu_event->position.y == -1)
+						menu->tracker.position = dynamic_cast<window::object *>(this)->position;
+					else//Use specified position
+						menu->tracker.position = context_menu_event->position;
+					menu->tracker.activate = true;
+				}
+			}
+			else if (fire)
 				events_->context_menu.fire_(e);
-			else if (!e.handled)//Prevent procedure call
-				e.result = 0;
 		});
 	case WM_KEYDOWN:
 		return dispatch_bubbling_message_to_(&target::on_key_down_, msg, target, [this](events::message &e, bool fire){

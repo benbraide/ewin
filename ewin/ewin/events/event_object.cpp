@@ -1,43 +1,5 @@
 #include "../window/window_object.h"
 
-ewin::events::message::~message() = default;
-
-void ewin::events::message::handle_property_(void *prop, void *arg, common::property_access access){
-	if (prop == &result){
-		if (access == common::property_access::write){
-			result_ = *static_cast<common::types::result *>(arg);
-			EWIN_SET(states_, state_type::default_called);
-		}
-		else if (access == common::property_access::read)
-			*static_cast<common::types::result *>(arg) = call_default_();
-	}
-	else//Forward
-		object::handle_property_(prop, arg, access);
-}
-
-void ewin::events::message::do_default_(){
-	call_default_();
-}
-
-ewin::common::types::result ewin::events::message::call_default_(){
-	if (EWIN_IS_ANY(states_, state_type::default_called | state_type::default_prevented | state_type::bubbled))
-		return result_;
-
-	result_ = callback_(*this);//Call
-	if (!EWIN_IS(states_, state_type::default_prevented))
-		EWIN_SET(states_, state_type::default_called);
-
-	return result_;
-}
-
-void ewin::events::message::bubble_(){
-	EWIN_SET(states_, state_type::bubbled);
-}
-
-void ewin::events::message::remove_bubble_(){
-	EWIN_REMOVE(states_, state_type::bubbled);
-}
-
 void ewin::events::mouse_activate::handle_property_(void *prop, void *arg, common::property_access access){
 	if (prop == &hit_target)
 		*static_cast<common::types::uint *>(arg) = LOWORD(msg_->lParam);
@@ -258,6 +220,15 @@ ewin::events::context_menu::~context_menu() = default;
 
 void ewin::events::context_menu::cache_values_(){
 	position_ = common::types::point{ GET_X_LPARAM(msg_->lParam), GET_Y_LPARAM(msg_->lParam) };
+}
+
+void ewin::events::context_menu::bind_properties_(){
+	position.initialize_(&position_, nullptr);
+	menu.initialize_(nullptr, [this](void *prop, void *arg, common::property_access access){
+		if (menu_ == nullptr)//Create
+			menu_ = std::make_shared<menu_type>();
+		*static_cast<menu_type **>(arg) = menu_.get();
+	});
 }
 
 ewin::events::key::~key() = default;

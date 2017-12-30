@@ -48,6 +48,12 @@ ewin::menu::popup::~popup(){
 	destruct_();
 }
 
+ewin::message::menu_target *ewin::menu::popup::parent_() const{
+	if (owner_ == nullptr)
+		return nullptr;
+	return owner_->tree.parent;
+}
+
 void ewin::menu::popup::bind_properties_(){
 	owner.initialize_(nullptr, [this](void *prop, void *arg, common::property_access access){
 		if (access == common::property_access::write){

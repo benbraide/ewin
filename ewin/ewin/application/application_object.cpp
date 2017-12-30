@@ -386,10 +386,84 @@ void ewin::application::object::track_mouse_(common::types::hwnd hwnd, common::t
 	::TrackMouseEvent(&track_info);//Notify when mouse leaves window or client area
 }
 
+ewin::common::types::result ewin::application::object::menu_init_(window_type &window_object, common::types::wparam wparam, common::types::lparam lparam){
+	auto target = find_menu_(reinterpret_cast<common::types::hmenu>(wparam));
+	if (target == nullptr)//Menu not found
+		return ::CallWindowProcW(window_object.procedure_, window_object.handle_, WM_INITMENUPOPUP, wparam, lparam);
+
+	menu::item *menu_item;
+	common::types::msg info{ nullptr, EWIN_WM_MENU_INIT };
+	for (auto item : target->tree.children){//Query enabling of items
+		if ((menu_item = dynamic_cast<menu::item *>(item)) != nullptr)
+			menu_item->enabled = (item->dispatch_message[info] == 1u);
+	}
+
+	return 0;
+}
+
+ewin::common::types::result ewin::application::object::menu_rbutton_up_(window_type &window_object, common::types::wparam wparam, common::types::lparam lparam){
+	return ::CallWindowProcW(window_object.procedure_, window_object.handle_, WM_MENURBUTTONUP, wparam, lparam);
+}
+
+ewin::common::types::result ewin::application::object::menu_highlight_(window_type &window_object, common::types::wparam wparam, common::types::lparam lparam){
+	if (!EWIN_IS(HIWORD(wparam), MF_HILITE)) 
+		return ::CallWindowProcW(window_object.procedure_, window_object.handle_, WM_MENUSELECT, wparam, lparam);
+
+	menu::container *target;
+	if (EWIN_IS(HIWORD(wparam), MF_SYSMENU))//System menu
+		target = find_menu_(::GetSystemMenu(window_object.handle_, FALSE));
+	else//Normal menu
+		target = find_menu_(reinterpret_cast<common::types::hmenu>(lparam));
+
+	if (target == nullptr)//Menu not found
+		return ::CallWindowProcW(window_object.procedure_, window_object.handle_, WM_MENUSELECT, wparam, lparam);
+
+	menu::item *item = nullptr;
+	if (!EWIN_IS(HIWORD(wparam), MF_POPUP)){//Search by ID
+		menu::item *menu_child;
+		for (auto child : target->tree.children){
+			if ((menu_child = dynamic_cast<menu::item *>(child)) != nullptr && menu_child->id == LOWORD(wparam)){//Found
+				item = menu_child;
+				break;
+			}
+		}
+	}
+	else//Search by position
+		item = dynamic_cast<menu::item *>(target->tree.children[LOWORD(wparam)]);
+
+	if (item == nullptr)//Item not found
+		return ::CallWindowProcW(window_object.procedure_, window_object.handle_, WM_MENUSELECT, wparam, lparam);
+
+	return item->dispatch_message[common::types::msg{ nullptr, EWIN_WM_MENU_HIGHLIGHT }];
+}
+
+ewin::common::types::result ewin::application::object::menu_command_(window_type &window_object, common::types::wparam wparam, common::types::lparam lparam){
+	auto target = find_menu_(reinterpret_cast<common::types::hmenu>(lparam));
+	if (target == nullptr)//Menu not found
+		return ::CallWindowProcW(window_object.procedure_, window_object.handle_, WM_MENUCOMMAND, wparam, lparam);
+
+	auto item = dynamic_cast<menu::item *>(target->tree.children[wparam]);
+	if (item == nullptr)//Item not found
+		return ::CallWindowProcW(window_object.procedure_, window_object.handle_, WM_MENUCOMMAND, wparam, lparam);
+
+	return item->dispatch_message[common::types::msg{ nullptr, EWIN_WM_MENU_SELECT }];
+}
+
+ewin::common::types::result ewin::application::object::command_(window_type &window_object, common::types::wparam wparam, common::types::lparam lparam){
+	return ::CallWindowProcW(window_object.procedure_, window_object.handle_, WM_COMMAND, wparam, lparam);
+}
+
+ewin::common::types::result ewin::application::object::system_command_(window_type &window_object, common::types::wparam wparam, common::types::lparam lparam){
+	return ::CallWindowProcW(window_object.procedure_, window_object.handle_, WM_SYSCOMMAND, wparam, lparam);
+}
+
 ewin::common::types::result ewin::application::object::app_message_(common::types::uint msg, common::types::wparam wparam, common::types::lparam lparam){
 	switch (msg){
 	case EWIN_WM_TASK://Execute task
 		execute_task_(reinterpret_cast<task_type *>(wparam), EWIN_CPP_BOOL(lparam));
+		break;
+	case EWIN_WM_MENU_MSG:
+		reinterpret_cast<ewin::message::menu_target *>(wparam)->dispatch_message[*reinterpret_cast<common::types::msg *>(lparam)];
 		break;
 	default:
 		break;
@@ -438,6 +512,18 @@ ewin::common::types::result CALLBACK ewin::application::object::entry_(common::t
 	case WM_RBUTTONUP:
 		current->mouse_up_(hwnd, MK_RBUTTON);
 		break;
+	case WM_INITMENUPOPUP:
+		return current->menu_init_(*target, wparam, lparam);
+	case WM_MENURBUTTONUP:
+		return current->menu_rbutton_up_(*target, wparam, lparam);
+	case WM_MENUSELECT:
+		return current->menu_highlight_(*target, wparam, lparam);
+	case WM_MENUCOMMAND:
+		return current->menu_command_(*target, wparam, lparam);
+	case WM_COMMAND:
+		return current->command_(*target, wparam, lparam);
+	case WM_SYSCOMMAND:
+		return current->system_command_(*target, wparam, lparam);
 	default:
 		break;
 	}

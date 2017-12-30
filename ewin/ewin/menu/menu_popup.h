@@ -43,6 +43,8 @@ namespace ewin::menu{
 	protected:
 		friend class item;
 
+		virtual ewin::message::menu_target *parent_() const override;
+
 		void bind_properties_();
 
 		virtual void destruct_() override;

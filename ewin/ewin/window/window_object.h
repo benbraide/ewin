@@ -146,6 +146,9 @@ namespace ewin::window{
 		friend class application::object;
 		friend class wnd_tree<object>;
 
+		template <class, class>
+		friend class events::typed_basic;
+
 		virtual ewin::message::target *parent_() const override;
 
 		void bind_properties_();
@@ -209,6 +212,8 @@ namespace ewin::window{
 		virtual void child_added_(object &value, std::size_t index);
 
 		virtual void parent_changed_(object *current, object *previous, std::size_t index, std::size_t previous_index);
+
+		virtual void event_listener_count_changed_(events::basic &e, std::size_t count);
 
 		application_type *app_;
 		common::types::hwnd handle_;

@@ -1,13 +1,18 @@
 #include "menu_object.h"
 
 ewin::menu::object::object()
-	: tree(*this), app_(nullptr), error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), local_error_value_(ERROR_SUCCESS), auto_destroy_(true){
+	: menu_target(events_), tree(*this), app_(nullptr), error_throw_policy_(error_throw_policy_type::always),
+	error_value_(error_type::nil), local_error_value_(ERROR_SUCCESS), auto_destroy_(true), events_(*this){
 	cache_ = cache_info{};
 	bind_properties_();
 }
 
 ewin::menu::object::~object(){
 	destruct_();
+}
+
+ewin::message::menu_target *ewin::menu::object::parent_() const{
+	return tree.parent_;
 }
 
 void ewin::menu::object::bind_properties_(){
@@ -184,3 +189,5 @@ void ewin::menu::object::child_removed_(object &value, std::size_t index){}
 void ewin::menu::object::child_added_(object &value, std::size_t index){}
 
 void ewin::menu::object::parent_changed_(object *current, object *previous, std::size_t index, std::size_t previous_index){}
+
+void ewin::menu::object::event_listener_count_changed_(events::menu_basic &e, std::size_t count){}

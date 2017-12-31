@@ -30,6 +30,7 @@ namespace ewin::menu{
 		typedef common::error_throw_policy_type error_throw_policy_type;
 
 		typedef std::shared_ptr<object> ptr_type;
+		typedef std::shared_ptr<menu_event> event_ptr_type;
 
 		struct property_forbidden_info{
 			void *value;
@@ -73,6 +74,10 @@ namespace ewin::menu{
 
 		virtual ewin::message::menu_target *parent_() const override;
 
+		virtual menu_event *get_events_() override;
+
+		virtual bool has_events_() const override;
+
 		void bind_properties_();
 
 		virtual void handle_property_(void *prop, void *arg, common::property_access access);
@@ -105,7 +110,7 @@ namespace ewin::menu{
 		cache_info cache_;
 
 		bool auto_destroy_;
-		menu_event events_;
+		event_ptr_type events_;
 	};
 }
 

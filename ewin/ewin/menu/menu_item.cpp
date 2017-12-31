@@ -140,7 +140,7 @@ void ewin::menu::item::parent_changed_(object *current, object *previous, std::s
 }
 
 void ewin::menu::item::event_listener_count_changed_(events::menu_basic &e, std::size_t count){
-	if (&e == &events_.draw && !is_owner_drawn_()){
+	if (events_ != nullptr  && &e == &events_->draw && !is_owner_drawn_()){
 		if (count == 0u){//Remove owner draw flag
 			EWIN_REMOVE(cache_.types, MFT_OWNERDRAW);
 			update_types_();

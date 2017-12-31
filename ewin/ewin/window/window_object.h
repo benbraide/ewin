@@ -37,6 +37,7 @@ namespace ewin::window{
 		typedef common::error_throw_policy_type error_throw_policy_type;
 
 		typedef std::shared_ptr<object> ptr_type;
+		typedef std::shared_ptr<wnd_event> event_ptr_type;
 
 		enum class attribute_option_type : unsigned int{
 			nil					= (0 << 0x0000),
@@ -149,6 +150,10 @@ namespace ewin::window{
 
 		virtual ewin::message::target *parent_() const override;
 
+		virtual wnd_event *get_events_() override;
+
+		virtual bool has_events_() const override;
+
 		void bind_properties_();
 
 		virtual void handle_property_(void *prop, void *arg, common::property_access access);
@@ -210,7 +215,7 @@ namespace ewin::window{
 		application_type *app_;
 		common::types::hwnd handle_;
 
-		wnd_event events_;
+		event_ptr_type events_;
 		cache_info cache_;
 
 		bool auto_destroy_;

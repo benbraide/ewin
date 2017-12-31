@@ -52,7 +52,7 @@ void ewin::menu::separator::parent_changed_(object *current, object *previous, s
 }
 
 void ewin::menu::separator::event_listener_count_changed_(events::menu_basic &e, std::size_t count){
-	if (&e == &events_.draw && !is_owner_drawn_()){
+	if (events_ != nullptr  && &e == &events_->draw && !is_owner_drawn_()){
 		if (count == 0u){//Remove owner draw flag
 			EWIN_REMOVE(types_, MFT_OWNERDRAW);
 			update_types_();

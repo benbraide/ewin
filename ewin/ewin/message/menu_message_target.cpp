@@ -1,7 +1,6 @@
 #include "../menu/menu_object.h"
 
-ewin::message::menu_target::menu_target(ewin::menu::menu_event &events)
-	: events_(&events){
+ewin::message::menu_target::menu_target(){
 	dispatch_message.initialize_(nullptr, [this](void *prop, void *arg, common::property_access access){
 		auto info = static_cast<std::pair<common::types::msg *, common::types::result> *>(arg);
 		info->second = dispatch_message_(*info->first, nullptr);
@@ -14,35 +13,35 @@ ewin::common::types::result ewin::message::menu_target::dispatch_message_(common
 	switch (msg.message){
 	case EWIN_WM_MENU_CREATE:
 		return dispatch_message_to_(&menu_target::on_create_, msg, target, [this](events::menu_message &e, bool fire){
-			if (fire)
-				events_->create.fire_(e);
+			if (fire && has_events_())
+				get_events_()->create.fire_(e);
 		});
 	case EWIN_WM_MENU_DESTROY:
 		return dispatch_message_to_(&menu_target::on_destroy_, msg, target, [this](events::menu_message &e, bool fire){
-			if (fire)
-				events_->destroy.fire_(e);
+			if (fire && has_events_())
+				get_events_()->destroy.fire_(e);
 		});
 	case EWIN_WM_MENU_INIT:
 		return dispatch_bubbling_message_to_(&menu_target::on_init_, msg, target, [this](events::menu_message &e, bool fire){
-			if (fire)
-				events_->init.fire_(e);
-			else//Accepted
+			if (fire && has_events_())
+				get_events_()->init.fire_(e);
+			else if (!fire)//Accepted
 				e.result = 1;
 		});
 	case EWIN_WM_MENU_HIGHLIGHT:
 		return dispatch_bubbling_message_to_(&menu_target::on_highlight_, msg, target, [this](events::menu_message &e, bool fire){
-			if (fire)
-				events_->highlight.fire_(e);
+			if (fire && has_events_())
+				get_events_()->highlight.fire_(e);
 		});
 	case EWIN_WM_MENU_SELECT:
 		return dispatch_bubbling_message_to_(&menu_target::on_select_, msg, target, [this](events::menu_message &e, bool fire){
-			if (fire)
-				events_->select.fire_(e);
+			if (fire && has_events_())
+				get_events_()->select.fire_(e);
 		});
 	case EWIN_WM_MENU_CHECK:
 		return dispatch_bubbling_message_to_(&menu_target::on_check_, msg, target, [this](events::menu_message &e, bool fire){
-			if (fire)
-				events_->check.fire_(e);
+			if (fire && has_events_())
+				get_events_()->check.fire_(e);
 		});
 	default:
 		break;
@@ -50,7 +49,7 @@ ewin::common::types::result ewin::message::menu_target::dispatch_message_(common
 
 	return dispatch_message_to_(&menu_target::on_unknown_message_, msg, target, [this](events::menu_message &e, bool fire){
 		if (fire)
-			events_->unknown_message.fire_(e);
+			get_events_()->unknown_message.fire_(e);
 	});
 }
 

@@ -25,7 +25,7 @@ namespace ewin::message{
 		typedef std::function<void(events::menu_message &, bool)> dispatch_callback_type;
 		typedef std::function<void(common::types::msg &)> bubble_callback_type;
 
-		explicit menu_target(ewin::menu::menu_event &events);
+		menu_target();
 
 		virtual ~menu_target();
 
@@ -144,7 +144,9 @@ namespace ewin::message{
 
 		virtual menu_target *parent_() const = 0;
 
-		ewin::menu::menu_event *events_;
+		virtual ewin::menu::menu_event *get_events_() = 0;
+
+		virtual bool has_events_() const = 0;
 	};
 }
 

@@ -1,7 +1,7 @@
 #include "menu_object.h"
 
 ewin::menu::object::object()
-	: menu_target(events_), tree(*this), app_(nullptr), auto_destroy_(true), events_(*this){
+	: tree(*this), app_(nullptr), auto_destroy_(true){
 	cache_ = cache_info{};
 	bind_properties_();
 }
@@ -12,6 +12,16 @@ ewin::menu::object::~object(){
 
 ewin::message::menu_target *ewin::menu::object::parent_() const{
 	return tree.parent_;
+}
+
+ewin::menu::menu_event *ewin::menu::object::get_events_(){
+	if (events_ == nullptr)
+		events_ = std::make_shared<menu_event>(*this);
+	return events_.get();
+}
+
+bool ewin::menu::object::has_events_() const{
+	return (events_ != nullptr);
 }
 
 void ewin::menu::object::bind_properties_(){
@@ -31,7 +41,7 @@ void ewin::menu::object::bind_properties_(){
 	create.initialize_(nullptr, handler);
 	auto_destroy.initialize_(&auto_destroy_, nullptr);
 
-	events.initialize_(&events_, nullptr);
+	events.initialize_(nullptr, handler);
 }
 
 void ewin::menu::object::handle_property_(void *prop, void *arg, common::property_access access){
@@ -69,6 +79,8 @@ void ewin::menu::object::handle_property_(void *prop, void *arg, common::propert
 	}
 	else if (prop == &create)
 		create_(true, static_cast<create_info *>(arg));
+	else if (prop == &events)
+		*static_cast<menu_event **>(arg) = get_events_();
 }
 
 ewin::menu::object::ptr_type ewin::menu::object::reflect_(){

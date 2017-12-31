@@ -3,8 +3,8 @@
 #include "dialog_window.h"
 
 ewin::window::object::object()
-	: message_target_type(events_), tree(*this), view(*this), frame(*this), state(*this), style(*this),
-	attribute(*this), events_(*this), app_(nullptr), handle_(nullptr), auto_destroy_(true){
+	: tree(*this), view(*this), frame(*this), state(*this), style(*this),
+	attribute(*this), app_(nullptr), handle_(nullptr), auto_destroy_(true){
 	cache_ = cache_info{};
 	bind_properties_();
 
@@ -21,6 +21,16 @@ ewin::window::object::~object(){
 
 ewin::message::target *ewin::window::object::parent_() const{
 	return tree.parent_;
+}
+
+ewin::window::wnd_event *ewin::window::object::get_events_(){
+	if (events_ == nullptr)
+		events_ = std::make_shared<wnd_event>(*this);
+	return events_.get();
+}
+
+bool ewin::window::object::has_events_() const{
+	return (events_ != nullptr);
 }
 
 void ewin::window::object::bind_properties_(){
@@ -53,7 +63,7 @@ void ewin::window::object::bind_properties_(){
 	filtered_extended_styles.initialize_(nullptr, handler);
 
 	is_dialog_message.initialize_(nullptr, handler);
-	events.initialize_(&events_, nullptr);
+	events.initialize_(nullptr, handler);
 
 	created.initialize_(nullptr, handler);
 	create.initialize_(nullptr, handler);
@@ -169,6 +179,8 @@ void ewin::window::object::handle_property_(void *prop, void *arg, common::prope
 	}
 	else if (prop == &create)
 		create_(true, static_cast<create_info *>(arg));
+	else if (prop == &events)
+		*static_cast<wnd_event **>(arg) = get_events_();
 }
 
 ewin::window::object::ptr_type ewin::window::object::reflect_(){

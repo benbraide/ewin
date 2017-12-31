@@ -1,7 +1,7 @@
 #include "../window/window_object.h"
 
-ewin::message::target::target(window::wnd_event &events)
-	: procedure_(::DefWindowProcW), context_menu_(nullptr), events_(&events){
+ewin::message::target::target()
+	: procedure_(::DefWindowProcW), context_menu_(nullptr){
 	dispatch_message.initialize_(nullptr, [this](void *prop, void *arg, common::property_access access){
 		auto info = static_cast<std::pair<common::types::msg *, common::types::result> *>(arg);
 		info->second = dispatch_message_(*info->first, nullptr);
@@ -23,8 +23,8 @@ ewin::common::types::result ewin::message::target::dispatch_message_(common::typ
 	switch (msg.message){
 	case WM_NCCREATE:
 		return dispatch_message_to_(&target::on_pre_create_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->create.fire_(e);
+			if (fire && has_events_())
+				get_events_()->create.fire_(e);
 			
 			if (e.prevent_default)
 				e.result = FALSE;
@@ -38,65 +38,65 @@ ewin::common::types::result ewin::message::target::dispatch_message_(common::typ
 		return dispatch_message_to_(&target::on_destroy_, msg, target);
 	case WM_NCDESTROY:
 		return dispatch_message_to_(&target::on_post_destroy_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->destroy.fire_(e);
+			if (fire && has_events_())
+				get_events_()->destroy.fire_(e);
 		});
 	case WM_CLOSE:
 		return dispatch_message_to_(&target::on_close_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->close.fire_(e);
+			if (fire && has_events_())
+				get_events_()->close.fire_(e);
 		});
 	case WM_MOUSEACTIVATE:
 		return dispatch_message_to_(&target::on_mouse_activate_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->mouse_activate.fire_(e);
+			if (fire && has_events_())
+				get_events_()->mouse_activate.fire_(e);
 
 			if (e.prevent_default)//Prevent
 				e.result = MA_NOACTIVATEANDEAT;
 		});
 	case WM_NCACTIVATE:
 		return dispatch_message_to_(&target::on_pre_activate_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->pre_activate.fire_(e);
+			if (fire && has_events_())
+				get_events_()->pre_activate.fire_(e);
 		});
 	case WM_ACTIVATE:
 		return dispatch_message_to_(&target::on_activate_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->activate.fire_(e);
+			if (fire && has_events_())
+				get_events_()->activate.fire_(e);
 		});
 	case WM_CANCELMODE:
 		return dispatch_message_to_(&target::on_cancel_mode_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->cancel_mode.fire_(e);
+			if (fire && has_events_())
+				get_events_()->cancel_mode.fire_(e);
 		});
 	case WM_SETFOCUS:
 	case WM_KILLFOCUS:
 		return dispatch_message_to_(&target::on_focus_change_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->focus_change.fire_(e);
+			if (fire && has_events_())
+				get_events_()->focus_change.fire_(e);
 		});
 	case WM_ENABLE:
 		return dispatch_message_to_(&target::on_enable_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->enable.fire_(e);
+			if (fire && has_events_())
+				get_events_()->enable.fire_(e);
 		});
 	case WM_SETCURSOR:
 		return dispatch_message_to_(&target::on_set_cursor_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->set_cursor.fire_(e);
+			if (fire && has_events_())
+				get_events_()->set_cursor.fire_(e);
 		});
 	case EWIN_WM_GET_CURSOR:
 		return dispatch_message_to_(&target::on_get_cursor_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->get_cursor.fire_(e);
+			if (fire && has_events_())
+				get_events_()->get_cursor.fire_(e);
 
 			if (!e.handled)//Use default
 				e.result = ::LoadCursorW(nullptr, IDC_ARROW);
 		});
 	case WM_NCHITTEST:
 		return dispatch_message_to_(&target::on_hit_test_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->hit_test.fire_(e);
+			if (fire && has_events_())
+				get_events_()->hit_test.fire_(e);
 
 			if (e.prevent_default)//Prevent
 				e.result = HTNOWHERE;
@@ -105,8 +105,8 @@ ewin::common::types::result ewin::message::target::dispatch_message_(common::typ
 	case WM_WINDOWPOSCHANGED:
 	case EWIN_WM_POSITION_CHANGE:
 		return dispatch_message_to_(&target::on_position_change_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->position_change.fire_(e);
+			if (fire && has_events_())
+				get_events_()->position_change.fire_(e);
 
 			if (e.msg_->message == WM_WINDOWPOSCHANGING && e.prevent_default)//Prevent
 				EWIN_SET(reinterpret_cast<common::types::wnd_position *>(e.msg_->lParam)->flags, (SWP_NOSIZE | SWP_NOMOVE));
@@ -114,12 +114,12 @@ ewin::common::types::result ewin::message::target::dispatch_message_(common::typ
 	case WM_SIZING:
 	case WM_SIZE:
 		return dispatch_message_to_(&target::on_size_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->size.fire_(e);
+			if (fire && has_events_())
+				get_events_()->size.fire_(e);
 
 			if (e.msg_->message == WM_SIZING && e.prevent_default){//Prevent
 				auto rect = reinterpret_cast<common::types::rect *>(e.msg_->lParam);
-				common::types::size size = reinterpret_cast<window::object *>(this)->size;
+				common::types::size size = dynamic_cast<window::object *>(this)->size;
 				*rect = common::types::rect{//Restore values
 					(rect->left),
 					(rect->top),
@@ -131,17 +131,17 @@ ewin::common::types::result ewin::message::target::dispatch_message_(common::typ
 	case WM_MOVING:
 	case WM_MOVE:
 		return dispatch_message_to_(&target::on_move_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->move.fire_(e);
+			if (fire && has_events_())
+				get_events_()->move.fire_(e);
 
 			if (e.msg_->message == WM_MOVING && e.prevent_default)//Prevent
-				*reinterpret_cast<common::types::rect *>(e.msg_->lParam) = reinterpret_cast<window::object *>(this)->rect;
+				*reinterpret_cast<common::types::rect *>(e.msg_->lParam) = dynamic_cast<window::object *>(this)->rect;
 		});
 	case WM_STYLECHANGING:
 	case WM_STYLECHANGED:
 		return dispatch_message_to_(&target::on_style_change_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->style_change.fire_(e);
+			if (fire && has_events_())
+				get_events_()->style_change.fire_(e);
 
 			if (e.msg_->message == WM_STYLECHANGING && e.prevent_default){//Prevent
 				auto info = reinterpret_cast<common::types::style_struct *>(e.msg_->lParam);
@@ -150,171 +150,171 @@ ewin::common::types::result ewin::message::target::dispatch_message_(common::typ
 		});
 	case WM_ERASEBKGND:
 		return dispatch_message_to_(&target::on_background_erase_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->background_erase.fire_(e);
+			if (fire && has_events_())
+				get_events_()->background_erase.fire_(e);
 		});
 	case EWIN_WM_GET_BG_BRUSH:
 		return dispatch_message_to_(&target::on_get_background_brush_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->get_background_brush.fire_(e);
+			if (fire && has_events_())
+				get_events_()->get_background_brush.fire_(e);
 		});
 	case EWIN_WM_GET_BG_COLOR:
 		return dispatch_message_to_(&target::on_get_background_color_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->get_background_color.fire_(e);
+			if (fire && has_events_())
+				get_events_()->get_background_color.fire_(e);
 		});
 	case WM_NCPAINT:
 		return dispatch_message_to_(&target::on_non_client_paint_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->non_client_paint.fire_(e);
+			if (fire && has_events_())
+				get_events_()->non_client_paint.fire_(e);
 		});
 	case WM_PAINT:
 		return dispatch_message_to_(&target::on_paint_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->paint.fire_(e);
+			if (fire && has_events_())
+				get_events_()->paint.fire_(e);
 		});
 	case WM_PRINTCLIENT:
 		return dispatch_message_to_(&target::on_print_client_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->print_client.fire_(e);
+			if (fire && has_events_())
+				get_events_()->print_client.fire_(e);
 		});
 	case WM_NCMOUSELEAVE:
 	case WM_MOUSELEAVE:
 	case EWIN_WM_MOUSELEAVE:
 		return dispatch_message_to_(&target::on_mouse_leave_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->mouse_leave.fire_(e);
+			if (fire && has_events_())
+				get_events_()->mouse_leave.fire_(e);
 		});
 	case EWIN_WM_MOUSEENTER:
 		return dispatch_message_to_(&target::on_mouse_enter_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->mouse_enter.fire_(e);
+			if (fire && has_events_())
+				get_events_()->mouse_enter.fire_(e);
 		});
 	case WM_NCMOUSEMOVE:
 		return dispatch_bubbling_message_to_(&target::on_mouse_move_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->mouse_move.fire_(e);
+			if (fire && has_events_())
+				get_events_()->mouse_move.fire_(e);
 		}, [](common::types::msg &msg){ msg.message = WM_MOUSEMOVE; });
 	case WM_MOUSEMOVE:
 		return dispatch_bubbling_message_to_(&target::on_mouse_move_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->mouse_move.fire_(e);
+			if (fire && has_events_())
+				get_events_()->mouse_move.fire_(e);
 		});
 	case WM_NCMOUSEHOVER:
 		return dispatch_bubbling_message_to_(&target::on_mouse_hover_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->mouse_hover.fire_(e);
+			if (fire && has_events_())
+				get_events_()->mouse_hover.fire_(e);
 		}, [](common::types::msg &msg){ msg.message = WM_MOUSEHOVER; });
 	case WM_MOUSEHOVER:
 		return dispatch_bubbling_message_to_(&target::on_mouse_hover_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->mouse_hover.fire_(e);
+			if (fire && has_events_())
+				get_events_()->mouse_hover.fire_(e);
 		});
 	case WM_NCLBUTTONDOWN:
 		return dispatch_bubbling_message_to_(&target::on_left_mouse_down_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->left_mouse_down.fire_(e);
+			if (fire && has_events_())
+				get_events_()->left_mouse_down.fire_(e);
 		}, [](common::types::msg &msg){ msg.message = WM_LBUTTONDOWN; });
 	case WM_LBUTTONDOWN:
 		return dispatch_bubbling_message_to_(&target::on_left_mouse_down_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->left_mouse_down.fire_(e);
+			if (fire && has_events_())
+				get_events_()->left_mouse_down.fire_(e);
 		});
 	case WM_NCMBUTTONDOWN:
 		return dispatch_bubbling_message_to_(&target::on_middle_mouse_down_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->middle_mouse_down.fire_(e);
+			if (fire && has_events_())
+				get_events_()->middle_mouse_down.fire_(e);
 		}, [](common::types::msg &msg){ msg.message = WM_MBUTTONDOWN; });
 	case WM_MBUTTONDOWN:
 		return dispatch_bubbling_message_to_(&target::on_middle_mouse_down_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->middle_mouse_down.fire_(e);
+			if (fire && has_events_())
+				get_events_()->middle_mouse_down.fire_(e);
 		});
 	case WM_NCRBUTTONDOWN:
 		return dispatch_bubbling_message_to_(&target::on_right_mouse_down_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->right_mouse_down.fire_(e);
+			if (fire && has_events_())
+				get_events_()->right_mouse_down.fire_(e);
 		}, [](common::types::msg &msg){ msg.message = WM_RBUTTONDOWN; });
 	case WM_RBUTTONDOWN:
 		return dispatch_bubbling_message_to_(&target::on_right_mouse_down_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->right_mouse_down.fire_(e);
+			if (fire && has_events_())
+				get_events_()->right_mouse_down.fire_(e);
 		});
 	case WM_NCLBUTTONUP:
 		return dispatch_bubbling_message_to_(&target::on_left_mouse_up_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->left_mouse_up.fire_(e);
+			if (fire && has_events_())
+				get_events_()->left_mouse_up.fire_(e);
 		}, [](common::types::msg &msg){ msg.message = WM_LBUTTONUP; });
 	case WM_LBUTTONUP:
 		return dispatch_bubbling_message_to_(&target::on_left_mouse_up_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->left_mouse_up.fire_(e);
+			if (fire && has_events_())
+				get_events_()->left_mouse_up.fire_(e);
 		});
 	case WM_NCMBUTTONUP:
 		return dispatch_bubbling_message_to_(&target::on_middle_mouse_up_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->middle_mouse_up.fire_(e);
+			if (fire && has_events_())
+				get_events_()->middle_mouse_up.fire_(e);
 		}, [](common::types::msg &msg){ msg.message = WM_MBUTTONUP; });
 	case WM_MBUTTONUP:
 		return dispatch_bubbling_message_to_(&target::on_middle_mouse_up_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->middle_mouse_up.fire_(e);
+			if (fire && has_events_())
+				get_events_()->middle_mouse_up.fire_(e);
 		});
 	case WM_NCRBUTTONUP:
 		return dispatch_bubbling_message_to_(&target::on_right_mouse_up_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->right_mouse_up.fire_(e);
+			if (fire && has_events_())
+				get_events_()->right_mouse_up.fire_(e);
 		}, [](common::types::msg &msg){ msg.message = WM_RBUTTONUP; });
 	case WM_RBUTTONUP:
 		return dispatch_bubbling_message_to_(&target::on_right_mouse_up_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->right_mouse_up.fire_(e);
+			if (fire && has_events_())
+				get_events_()->right_mouse_up.fire_(e);
 		});
 	case WM_NCLBUTTONDBLCLK:
 		return dispatch_bubbling_message_to_(&target::on_left_mouse_double_click_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->left_mouse_double_click.fire_(e);
+			if (fire && has_events_())
+				get_events_()->left_mouse_double_click.fire_(e);
 		}, [](common::types::msg &msg){ msg.message = WM_LBUTTONDBLCLK; });
 	case WM_LBUTTONDBLCLK:
 		return dispatch_bubbling_message_to_(&target::on_left_mouse_double_click_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->left_mouse_double_click.fire_(e);
+			if (fire && has_events_())
+				get_events_()->left_mouse_double_click.fire_(e);
 		});
 	case WM_NCMBUTTONDBLCLK:
 		return dispatch_bubbling_message_to_(&target::on_middle_mouse_double_click_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->middle_mouse_double_click.fire_(e);
+			if (fire && has_events_())
+				get_events_()->middle_mouse_double_click.fire_(e);
 		}, [](common::types::msg &msg){ msg.message = WM_MBUTTONDBLCLK; });
 	case WM_MBUTTONDBLCLK:
 		return dispatch_bubbling_message_to_(&target::on_middle_mouse_double_click_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->middle_mouse_double_click.fire_(e);
+			if (fire && has_events_())
+				get_events_()->middle_mouse_double_click.fire_(e);
 		});
 	case WM_NCRBUTTONDBLCLK:
 		return dispatch_bubbling_message_to_(&target::on_right_mouse_double_click_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->right_mouse_double_click.fire_(e);
+			if (fire && has_events_())
+				get_events_()->right_mouse_double_click.fire_(e);
 		}, [](common::types::msg &msg){ msg.message = WM_RBUTTONDBLCLK; });
 	case WM_RBUTTONDBLCLK:
 		return dispatch_bubbling_message_to_(&target::on_right_mouse_double_click_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->right_mouse_double_click.fire_(e);
+			if (fire && has_events_())
+				get_events_()->right_mouse_double_click.fire_(e);
 		});
 	case WM_MOUSEWHEEL:
 	case WM_MOUSEHWHEEL:
 		return dispatch_bubbling_message_to_(&target::on_mouse_wheel_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->mouse_wheel.fire_(e);
+			if (fire && has_events_())
+				get_events_()->mouse_wheel.fire_(e);
 		});
 	case EWIN_WM_MOUSEDRAG:
 		return dispatch_bubbling_message_to_(&target::on_mouse_drag_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->mouse_drag.fire_(e);
+			if (fire && has_events_())
+				get_events_()->mouse_drag.fire_(e);
 		});
 	case EWIN_WM_MOUSEDRAGEND:
 		return dispatch_bubbling_message_to_(&target::on_mouse_drag_end_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->mouse_drag_end.fire_(e);
+			if (fire && has_events_())
+				get_events_()->mouse_drag_end.fire_(e);
 		});
 	case WM_CONTEXTMENU:
 		return dispatch_bubbling_message_to_(&target::on_context_menu_, msg, target, [this](events::message &e, bool fire){
@@ -332,48 +332,48 @@ ewin::common::types::result ewin::message::target::dispatch_message_(common::typ
 					menu->tracker.activate = true;
 				}
 			}
-			else if (fire)
-				events_->context_menu.fire_(e);
+			else if (fire && has_events_())
+				get_events_()->context_menu.fire_(e);
 		});
 	case WM_KEYDOWN:
 		return dispatch_bubbling_message_to_(&target::on_key_down_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->key_down.fire_(e);
+			if (fire && has_events_())
+				get_events_()->key_down.fire_(e);
 		});
 	case WM_KEYUP:
 		return dispatch_bubbling_message_to_(&target::on_key_up_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->key_up.fire_(e);
+			if (fire && has_events_())
+				get_events_()->key_up.fire_(e);
 		});
 	case WM_CHAR:
 		return dispatch_bubbling_message_to_(&target::on_key_press_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->key_press.fire_(e);
+			if (fire && has_events_())
+				get_events_()->key_press.fire_(e);
 		});
 	case WM_DEADCHAR:
 		return dispatch_bubbling_message_to_(&target::on_dead_key_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->dead_key.fire_(e);
+			if (fire && has_events_())
+				get_events_()->dead_key.fire_(e);
 		});
 	case WM_SYSKEYDOWN:
 		return dispatch_bubbling_message_to_(&target::on_system_key_down_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->system_key_down.fire_(e);
+			if (fire && has_events_())
+				get_events_()->system_key_down.fire_(e);
 		});
 	case WM_SYSKEYUP:
 		return dispatch_bubbling_message_to_(&target::on_system_key_up_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->system_key_up.fire_(e);
+			if (fire && has_events_())
+				get_events_()->system_key_up.fire_(e);
 		});
 	case WM_SYSCHAR:
 		return dispatch_bubbling_message_to_(&target::on_system_key_press_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->system_key_press.fire_(e);
+			if (fire && has_events_())
+				get_events_()->system_key_press.fire_(e);
 		});
 	case WM_SYSDEADCHAR:
 		return dispatch_bubbling_message_to_(&target::on_dead_system_key_, msg, target, [this](events::message &e, bool fire){
-			if (fire)
-				events_->dead_system_key.fire_(e);
+			if (fire && has_events_())
+				get_events_()->dead_system_key.fire_(e);
 		});
 	default:
 		break;
@@ -475,7 +475,7 @@ void ewin::message::target::on_background_erase_(events::draw &e){
 			return;//Color not returned
 
 		::SendMessageW(e.msg_->hwnd, EWIN_WM_POSITION_CHANGE, 0, 0);
-		if (e.clip != reinterpret_cast<window::object *>(this)->client_rect){
+		if (e.clip != dynamic_cast<window::object *>(this)->client_rect){
 			drawing::solid_color_brush *brush = e.color_brush;
 			brush->color = *reinterpret_cast<drawing::types::color *>(result);//Update
 

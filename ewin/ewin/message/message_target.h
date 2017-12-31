@@ -33,7 +33,7 @@ namespace ewin::message{
 		typedef std::function<void(events::message &, bool)> dispatch_callback_type;
 		typedef std::function<void(common::types::msg &)> bubble_callback_type;
 
-		explicit target(window::wnd_event &events);
+		target();
 
 		virtual ~target();
 
@@ -247,9 +247,12 @@ namespace ewin::message{
 
 		virtual target *parent_() const = 0;
 
+		virtual window::wnd_event *get_events_() = 0;
+
+		virtual bool has_events_() const = 0;
+
 		common::types::procedure procedure_;
 		menu::popup *context_menu_;
-		window::wnd_event *events_;
 		drawing::types::color background_color_;
 	};
 }

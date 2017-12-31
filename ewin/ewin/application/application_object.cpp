@@ -392,10 +392,28 @@ ewin::common::types::result ewin::application::object::menu_init_(window_type &w
 		return ::CallWindowProcW(window_object.procedure_, window_object.handle_, WM_INITMENUPOPUP, wparam, lparam);
 
 	menu::item *menu_item;
+	common::types::uint index = 0;
+
+	common::types::hmenu target_handle = target->handle;
 	common::types::msg info{ nullptr, EWIN_WM_MENU_INIT };
+
+	//Allow system and control menus to carry out default initialization
+	::CallWindowProcW(window_object.procedure_, window_object.handle_, WM_INITMENUPOPUP, wparam, lparam);
+
 	for (auto item : target->tree.children){//Query enabling of items
-		if ((menu_item = dynamic_cast<menu::item *>(item)) != nullptr)
+		if ((menu_item = dynamic_cast<menu::item *>(item)) != nullptr){
+			common::types::menu_item_info item_info{
+				sizeof(common::types::menu_item_info),					//Size
+				MIIM_STATE												//Flags
+			};
+
+			if (EWIN_CPP_BOOL(::GetMenuItemInfoW(target_handle, index, TRUE, &item_info)))
+				menu_item->states = item_info.fState;//Refresh states
+
 			menu_item->enabled = (item->dispatch_message[info] == 1u);
+		}
+
+		++index;
 	}
 
 	return 0;

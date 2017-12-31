@@ -99,6 +99,8 @@ void ewin::menu::item::create_(bool create, const create_info *info){
 		app_->task += [this]{
 			if (::RemoveMenu(tree.parent->handle, static_cast<common::types::uint>(tree.index), MF_BYPOSITION) != FALSE){
 				created_ = false;
+				common::types::msg msg{ nullptr, EWIN_WM_MENU_DESTROY };
+				dispatch_message_(msg, nullptr);
 			}
 			else//Failed to destroy
 				set_error_(::GetLastError());
@@ -121,6 +123,9 @@ void ewin::menu::item::parent_changed_(object *current, object *previous, std::s
 	if (previous != nullptr && previous->created){//Remove item
 		previous->app->task += [&]{
 			::RemoveMenu(previous->handle, static_cast<common::types::uint>(previous_index), MF_BYPOSITION);
+			auto bar_parent = dynamic_cast<bar *>(previous);
+			if (bar_parent != nullptr && bar_parent->owner != nullptr)
+				::DrawMenuBar(bar_parent->owner->handle);
 		};
 	}
 
@@ -237,6 +242,13 @@ void ewin::menu::item::low_level_create_(common::types::hmenu handle, common::ty
 	if (EWIN_CPP_BOOL(::InsertMenuItemW(handle, index, TRUE, &info))){
 		created_ = true;
 		set_error_(error_type::nil);
+
+		auto bar_parent = dynamic_cast<bar *>(parent_());
+		if (bar_parent != nullptr && bar_parent->owner != nullptr)
+			::DrawMenuBar(bar_parent->owner->handle);
+
+		common::types::msg msg{ nullptr, EWIN_WM_MENU_CREATE };
+		dispatch_message_(msg, nullptr);
 	}
 	else{//Failed to insert
 		created_ = false;
@@ -375,8 +387,10 @@ void ewin::menu::item::update_check_marks_(){
 
 void ewin::menu::item::update_(const common::types::menu_item_info &info){
 	app_->task += [&]{
-		if (!EWIN_CPP_BOOL(::SetMenuItemInfoW(tree.parent->handle, static_cast<common::types::uint>(tree.index), TRUE, &info)))
-			set_error_(::GetLastError());
+		if (!EWIN_CPP_BOOL(::SetMenuItemInfoW(tree.parent->handle, static_cast<common::types::uint>(tree.index), TRUE, &info))){
+			if (::GetLastError() != ERROR_INVALID_PARAMETER)
+				set_error_(::GetLastError());
+		}
 	};
 }
 

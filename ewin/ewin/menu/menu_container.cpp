@@ -38,6 +38,8 @@ void ewin::menu::container::create_(bool create, const create_info *info){
 				}
 
 				handle_ = nullptr;
+				common::types::msg msg{ nullptr, EWIN_WM_MENU_DESTROY };
+				dispatch_message_(msg, nullptr);
 			}
 			else//Failed to destroy
 				set_error_(::GetLastError());
@@ -75,6 +77,9 @@ void ewin::menu::container::low_level_create_(bool popup){
 			};
 
 			::SetMenuInfo(handle_, &info);
+
+			common::types::msg msg{ nullptr, EWIN_WM_MENU_CREATE };
+			dispatch_message_(msg, nullptr);
 		}
 		else//Failed to create
 			set_error_(::GetLastError());

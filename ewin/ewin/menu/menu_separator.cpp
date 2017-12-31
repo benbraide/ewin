@@ -14,6 +14,8 @@ void ewin::menu::separator::create_(bool create, const create_info *info){
 		app_->task += [this]{
 			if (::RemoveMenu(tree.parent->handle, static_cast<common::types::uint>(tree.index), MF_BYPOSITION) != FALSE){
 				created_ = false;
+				common::types::msg msg{ nullptr, EWIN_WM_MENU_DESTROY };
+				dispatch_message_(msg, nullptr);
 			}
 			else//Failed to destroy
 				set_error_(::GetLastError());
@@ -92,6 +94,9 @@ void ewin::menu::separator::low_level_create_(common::types::hmenu handle, commo
 	if (EWIN_CPP_BOOL(::InsertMenuItemW(handle, index, TRUE, &info))){
 		created_ = true;
 		set_error_(error_type::nil);
+
+		common::types::msg msg{ nullptr, EWIN_WM_MENU_CREATE };
+		dispatch_message_(msg, nullptr);
 	}
 	else{//Failed to insert
 		created_ = false;

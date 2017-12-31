@@ -147,6 +147,11 @@ void ewin::menu::item::event_listener_count_changed_(events::menu_basic &e, std:
 	}
 }
 
+bool ewin::menu::item::on_init_(ewin::events::menu_message &e){
+	e.stop_propagation = true;
+	return !get_state_(MFS_DISABLED);
+}
+
 bool ewin::menu::item::is_owner_drawn_(){
 	return false;
 }
@@ -376,10 +381,25 @@ void ewin::menu::item::update_(const common::types::menu_item_info &info){
 }
 
 void ewin::menu::item::set_state_(common::types::uint state, bool add){
-	if (add)
-		EWIN_SET(cache_.states, state);
-	else//Remove
-		EWIN_REMOVE(cache_.states, state);
+	if (add){
+		if (EWIN_IS(state, MFS_CHECKED) && !EWIN_IS(cache_.states, MFS_CHECKED)){
+			EWIN_SET(cache_.states, state);
+			common::types::msg msg{ nullptr, EWIN_WM_MENU_CHECK, 1 };
+			dispatch_message_(msg, nullptr);
+		}
+		else//No check change
+			EWIN_SET(cache_.states, state);
+	}
+	else{//Remove
+		if (EWIN_IS(state, MFS_CHECKED) && EWIN_IS(cache_.states, MFS_CHECKED)){
+			EWIN_REMOVE(cache_.states, state);
+			common::types::msg msg{ nullptr, EWIN_WM_MENU_CHECK, 0 };
+			dispatch_message_(msg, nullptr);
+		}
+		else//No check change
+			EWIN_REMOVE(cache_.states, state);
+	}
+
 	update_states_();
 }
 

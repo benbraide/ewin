@@ -39,6 +39,11 @@ ewin::common::types::result ewin::message::menu_target::dispatch_message_(common
 			if (fire)
 				events_->select.fire_(e);
 		});
+	case EWIN_WM_MENU_CHECK:
+		return dispatch_bubbling_message_to_(&menu_target::on_check_, msg, target, [this](events::menu_message &e, bool fire){
+			if (fire)
+				events_->check.fire_(e);
+		});
 	default:
 		break;
 	}
@@ -56,6 +61,8 @@ void ewin::message::menu_target::on_destroy_(ewin::events::menu_message &e){}
 void ewin::message::menu_target::on_highlight_(ewin::events::menu_message &e){}
 
 void ewin::message::menu_target::on_select_(ewin::events::menu_message &e){}
+
+void ewin::message::menu_target::on_check_(ewin::events::menu_message &e){}
 
 bool ewin::message::menu_target::on_init_(ewin::events::menu_message &e){
 	return true;

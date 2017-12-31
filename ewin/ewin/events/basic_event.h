@@ -66,7 +66,8 @@ namespace ewin::events{
 			}
 
 			template <typename unused_type = object_type>
-			std::enable_if_t<!std::is_same_v<unused_type, basic_message<base_target_type>>, void> operator()(const base_callback_type &callback) const{
+			std::enable_if_t<!std::is_same_v<unused_type, basic_message<base_target_type>> &&
+				!std::is_same_v<unused_type, basic_object<base_target_type>>, void> operator()(const base_callback_type &callback) const{
 				callback(*e_);
 			}
 
@@ -94,7 +95,8 @@ namespace ewin::events{
 		}
 
 		template <typename unused_type = object_type>
-		std::enable_if_t<!std::is_same_v<unused_type, basic_message<base_target_type>>, std::size_t> operator +=(const base_callback_type &callback){
+		std::enable_if_t<!std::is_same_v<unused_type, basic_message<base_target_type>> &&
+			!std::is_same_v<unused_type, basic_object<base_target_type>>, std::size_t> operator +=(const base_callback_type &callback){
 			return add_(callback);
 		}
 

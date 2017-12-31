@@ -3,7 +3,8 @@
 #ifndef EWIN_MENU_CONTAINER_H
 #define EWIN_MENU_CONTAINER_H
 
-#include "menu_item.h"
+#include "menu_check_item.h"
+#include "menu_radio_item.h"
 #include "menu_separator.h"
 
 namespace ewin::menu{

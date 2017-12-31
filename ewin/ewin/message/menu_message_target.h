@@ -13,6 +13,7 @@
 #define EWIN_WM_MENU_INIT			(EWIN_WM_MENU_FIRST  + 2)
 #define EWIN_WM_MENU_HIGHLIGHT		(EWIN_WM_MENU_FIRST  + 3)
 #define EWIN_WM_MENU_SELECT			(EWIN_WM_MENU_FIRST  + 4)
+#define EWIN_WM_MENU_CHECK			(EWIN_WM_MENU_FIRST  + 5)
 
 namespace ewin::menu{
 	class menu_event;
@@ -76,6 +77,9 @@ namespace ewin::message{
 			else//No dispatch callback
 				(this->*callback)(e);
 
+			if (!e.handled)//Prevent default handling
+				e.result = 0;
+
 			if (stop_propagation != nullptr && e.stop_propagation)
 				*stop_propagation = true;
 
@@ -95,6 +99,9 @@ namespace ewin::message{
 			}
 			else//No dispatch callback
 				(this->*callback)(e);
+
+			if (!e.handled)//Prevent default handling
+				e.result = 0;
 
 			if (stop_propagation != nullptr && e.stop_propagation)
 				*stop_propagation = true;
@@ -128,6 +135,8 @@ namespace ewin::message{
 		virtual void on_highlight_(ewin::events::menu_message &e);
 
 		virtual void on_select_(ewin::events::menu_message &e);
+
+		virtual void on_check_(ewin::events::menu_message &e);
 
 		virtual bool on_init_(ewin::events::menu_message &e);
 

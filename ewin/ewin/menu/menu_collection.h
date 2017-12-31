@@ -21,7 +21,8 @@ namespace ewin::menu{
 
 		typedef std::function<void()> no_arg_action_callback_type;
 		typedef std::function<void(events::menu_object &)> arg_action_callback_type;
-		typedef std::variant<no_arg_action_callback_type, arg_action_callback_type> action_callback_type;
+		typedef std::function<void(events::menu_message &)> msg_arg_action_callback_type;
+		typedef std::variant<int, no_arg_action_callback_type, arg_action_callback_type, msg_arg_action_callback_type> action_callback_type;
 
 		typedef std::function<bool(std::wstring &, action_callback_type &, std::size_t &)> item_callback_type;
 		typedef std::function<bool(std::wstring &, collection<popup> &, std::size_t &)> link_callback_type;
@@ -30,6 +31,28 @@ namespace ewin::menu{
 		typedef std::shared_ptr<object> object_ptr_type;
 		typedef std::list<object_ptr_type> object_list_type;
 
+		template <class event_type>
+		struct callback_visitor{
+			explicit callback_visitor(event_type &e)
+				: e_(&e){}
+
+			void operator()(int) const{}
+
+			void operator()(const no_arg_action_callback_type &callback) const{
+				(*e_) += callback;
+			}
+
+			void operator()(const arg_action_callback_type &callback) const{
+				(*e_) += callback;
+			}
+
+			void operator()(const msg_arg_action_callback_type &callback) const{
+				(*e_) += callback;
+			}
+
+			event_type *e_;
+		};
+
 		template <typename... args_types>
 		explicit collection(args_types &&... args)
 			: base_type(std::forward<args_types>(args)...){
@@ -37,7 +60,7 @@ namespace ewin::menu{
 				base_type::created = true;//Create if not already created
 
 				std::wstring label;
-				action_callback_type action;
+				action_callback_type action = 0;
 				std::size_t index = -1;
 
 				auto &info = *reinterpret_cast<std::pair<std::size_t, item_callback_type *> *>(arg);
@@ -45,6 +68,8 @@ namespace ewin::menu{
 					return;//Canceled
 
 				auto item = std::make_shared<menu::item>();
+				std::visit(callback_visitor<decltype(item->events->select)>(item->events->select), action);
+
 				item->tree.parent = *this;
 				item->label = label;
 				item->tree.index = index;
@@ -78,6 +103,52 @@ namespace ewin::menu{
 				info.first = item->tree.index;
 			});
 
+			checks.initialize_(nullptr, [this](void *prop, void *arg, common::property_access access){
+				base_type::created = true;//Create if not already created
+
+				std::wstring label;
+				action_callback_type action = 0;
+				std::size_t index = -1;
+
+				auto &info = *reinterpret_cast<std::pair<std::size_t, item_callback_type *> *>(arg);
+				if (!(*info.second)(label, action, index))
+					return;//Canceled
+
+				auto item = std::make_shared<menu::check_item>();
+				std::visit(callback_visitor<decltype(item->events->check)>(item->events->check), action);
+
+				item->tree.parent = *this;
+				item->label = label;
+				item->tree.index = index;
+				item->created = true;
+
+				object_list_.push_back(item);
+				info.first = item->tree.index;
+			});
+
+			radios.initialize_(nullptr, [this](void *prop, void *arg, common::property_access access){
+				base_type::created = true;//Create if not already created
+
+				std::wstring label;
+				action_callback_type action = 0;
+				std::size_t index = -1;
+
+				auto &info = *reinterpret_cast<std::pair<std::size_t, item_callback_type *> *>(arg);
+				if (!(*info.second)(label, action, index))
+					return;//Canceled
+
+				auto item = std::make_shared<menu::radio_item>();
+				std::visit(callback_visitor<decltype(item->events->check)>(item->events->check), action);
+
+				item->tree.parent = *this;
+				item->label = label;
+				item->tree.index = index;
+				item->created = true;
+
+				object_list_.push_back(item);
+				info.first = item->tree.index;
+			});
+
 			separators.initialize_(nullptr, [this](void *prop, void *arg, common::property_access access){
 				base_type::created = true;//Create if not already created
 
@@ -102,6 +173,10 @@ namespace ewin::menu{
 
 		common::list_value_property<item_callback_type, void *, void *, collection, std::size_t, common::property_access::list_add> items;
 		common::list_value_property<link_callback_type, void *, void *, collection, std::size_t, common::property_access::list_add> links;
+
+		common::list_value_property<item_callback_type, void *, void *, collection, std::size_t, common::property_access::list_add> checks;
+		common::list_value_property<item_callback_type, void *, void *, collection, std::size_t, common::property_access::list_add> radios;
+
 		common::list_value_property<separator_callback_type, void *, void *, collection, std::size_t, common::property_access::list_add> separators;
 
 	protected:

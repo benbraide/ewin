@@ -22,6 +22,7 @@ namespace ewin::menu{
 		ewin::events::typed_basic<ewin::events::menu_message, object> highlight;
 		ewin::events::typed_basic<ewin::events::menu_message, object> select;
 
+		ewin::events::typed_basic<ewin::events::menu_message, object> check;
 		ewin::events::typed_basic<ewin::events::menu_message, object> init;
 
 		ewin::events::typed_basic<ewin::events::menu_message, object> draw;

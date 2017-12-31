@@ -34,6 +34,8 @@ void ewin::menu::object::bind_properties_(){
 	created.initialize_(nullptr, handler);
 	create.initialize_(nullptr, handler);
 	auto_destroy.initialize_(&auto_destroy_, nullptr);
+
+	events.initialize_(&events_, nullptr);
 }
 
 void ewin::menu::object::handle_property_(void *prop, void *arg, common::property_access access){

@@ -58,6 +58,8 @@ namespace ewin::menu{
 
 		virtual void event_listener_count_changed_(events::menu_basic &e, std::size_t count) override;
 
+		virtual bool on_init_(ewin::events::menu_message &e) override;
+
 		virtual bool is_owner_drawn_();
 
 		virtual void low_level_create_();

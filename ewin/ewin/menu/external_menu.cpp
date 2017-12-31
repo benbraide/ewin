@@ -3,17 +3,19 @@
 #include "external_menu.h"
 
 ewin::menu::external_item::external_item(object &parent, std::size_t index){
-	auto_destroy_ = false;//Prevent destruction
-	parent.tree.children += *this;
-	tree.index = index;
-
 	common::types::menu_item_info info{
 		sizeof(common::types::menu_item_info),
 		(MIIM_ID | MIIM_STRING | MIIM_FTYPE | MIIM_STATE | MIIM_BITMAP | MIIM_CHECKMARKS | MIIM_SUBMENU)
 	};
 
-	if (EWIN_CPP_BOOL(::GetMenuItemInfoW(parent.handle, static_cast<common::types::uint>(tree.index), TRUE, &info))){
+	if (EWIN_CPP_BOOL(::GetMenuItemInfoW(parent.handle, static_cast<common::types::uint>(index), TRUE, &info))){
+		auto_destroy_ = false;//Prevent destruction
+		parent.tree.children += *this;
+		tree.index = index;
+
 		created_ = true;
+		app_ = parent.app;
+
 		if (info.wID == 0u && !EWIN_IS(info.fType, MFT_SEPARATOR))//Generate random id
 			cache_.id = app_->integer_generator(static_cast<common::types::word>(1), std::numeric_limits<common::types::word>::max());
 		else//Use retrieved ID
@@ -24,7 +26,8 @@ ewin::menu::external_item::external_item(object &parent, std::size_t index){
 			info.fMask = MIIM_STRING;
 			info.dwTypeData = cache_.label.data();
 			info.cch += 1;
-			::GetMenuItemInfoW(parent.handle, static_cast<common::types::uint>(tree.index), TRUE, &info);
+			if (EWIN_CPP_BOOL(::GetMenuItemInfoW(parent.handle, static_cast<common::types::uint>(index), TRUE, &info)))
+				split_label_();
 		}
 
 		cache_.types = info.fType;

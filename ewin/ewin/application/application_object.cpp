@@ -454,6 +454,20 @@ ewin::common::types::result ewin::application::object::command_(window_type &win
 }
 
 ewin::common::types::result ewin::application::object::system_command_(window_type &window_object, common::types::wparam wparam, common::types::lparam lparam){
+	if (window_object.system_menu_ == nullptr)
+		return ::CallWindowProcW(window_object.procedure_, window_object.handle_, WM_SYSCOMMAND, wparam, lparam);
+
+	menu::item *item = nullptr, *menu_child;
+	for (auto child : window_object.system_menu_->tree.children){//Search by ID
+		if ((menu_child = dynamic_cast<menu::item *>(child)) != nullptr && menu_child->id == LOWORD(wparam)){//Found
+			item = menu_child;
+			break;
+		}
+	}
+
+	if (item != nullptr)//Item found
+		item->dispatch_message[common::types::msg{ nullptr, EWIN_WM_MENU_SELECT }];
+		
 	return ::CallWindowProcW(window_object.procedure_, window_object.handle_, WM_SYSCOMMAND, wparam, lparam);
 }
 

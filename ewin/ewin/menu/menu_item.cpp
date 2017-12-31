@@ -17,7 +17,7 @@ void ewin::menu::item::bind_properties_(){
 	sub_menu.initialize_(nullptr, handler);
 
 	label.initialize_(&cache_.label, handler);
-	label.initialize_(&cache_.shortcut, handler);
+	shortcut.initialize_(&cache_.shortcut, handler);
 
 	states.initialize_(&cache_.states, handler);
 	enabled.initialize_(nullptr, handler);
@@ -206,6 +206,14 @@ void ewin::menu::item::low_level_create_(common::types::hmenu handle, common::ty
 		EWIN_SET(mask, MIIM_SUBMENU);
 	}
 
+	std::wstring joined_label, *label;
+	if (!cache_.label.empty() && !cache_.shortcut.empty()){
+		joined_label = (cache_.label + L"\t" + cache_.shortcut);
+		label = &joined_label;
+	}
+	else//No shortcut
+		label = &cache_.label;
+
 	common::types::menu_item_info info{
 		sizeof(common::types::menu_item_info),					//Size
 		mask,													//Flags
@@ -216,8 +224,8 @@ void ewin::menu::item::low_level_create_(common::types::hmenu handle, common::ty
 		cache_.checked_bitmap,									//Checked bitmap
 		cache_.unchecked_bitmap,								//Unchecked bitmap
 		reinterpret_cast<common::types::uptr>(this),			//Data
-		cache_.label.data(),									//String
-		static_cast<common::types::uint>(cache_.label.size()),	//String size
+		label->data(),											//String
+		static_cast<common::types::uint>(label->size()),		//String size
 		cache_.bitmap											//Item bitmap
 	};
 

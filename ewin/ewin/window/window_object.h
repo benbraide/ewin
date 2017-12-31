@@ -3,13 +3,14 @@
 #ifndef EWIN_WINDOW_OBJECT_H
 #define EWIN_WINDOW_OBJECT_H
 
+#include "../common/error_target.h"
+
 #include "../common/string_property.h"
 #include "../common/state_property.h"
 #include "../common/size_property.h"
 #include "../common/point_property.h"
 #include "../common/rect_property.h"
 #include "../common/transformation_property.h"
-#include "../common/variant_property.h"
 
 #include "../message/message_target.h"
 
@@ -27,7 +28,7 @@
 #include "window_event.h"
 
 namespace ewin::window{
-	class object : public std::enable_shared_from_this<object>, public ewin::message::target{
+	class object : public std::enable_shared_from_this<object>, public common::error_target<>, public ewin::message::target{
 	public:
 		typedef ewin::message::target message_target_type;
 		typedef application::object application_type;
@@ -93,9 +94,6 @@ namespace ewin::window{
 
 		common::read_only_value_property<ptr_type, object> reflect;
 		common::transformation_property<property_forbidden_info, bool, object> is_forbidden;
-
-		common::value_property<error_throw_policy_type, object> error_throw_policy;
-		common::variant_value_property<object, common::property_access::nil, error_type, common::types::dword> error;
 
 		common::object_value_property<application_type, object> app;
 		common::read_only_value_property<common::types::hwnd, object> handle;
@@ -165,12 +163,6 @@ namespace ewin::window{
 
 		virtual void low_level_create_(const common::types::create_struct &info, object *parent, application_type *app, attribute_option_type options);
 
-		virtual void set_error_(common::variant_value_property_arg_info &info);
-
-		virtual void set_error_(error_type value);
-
-		virtual void set_error_(common::types::dword value);
-
 		virtual void update_dimension_(dimension_type type);
 
 		virtual void cache_dimensions_();
@@ -217,15 +209,12 @@ namespace ewin::window{
 
 		application_type *app_;
 		common::types::hwnd handle_;
+
 		wnd_event events_;
 		cache_info cache_;
 
 		bool auto_destroy_;
-		error_throw_policy_type error_throw_policy_;
 
-		error_type error_value_;
-		common::types::dword local_error_value_;
-		
 		std::shared_ptr<ewin::menu::bar_collection> menu_;
 		std::shared_ptr<ewin::menu::external_collection> system_menu_;
 

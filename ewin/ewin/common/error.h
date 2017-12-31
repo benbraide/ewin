@@ -31,6 +31,7 @@ namespace ewin::common{
 	enum class error_throw_policy_type{
 		always,
 		once,
+		no_throw_once,
 		never,
 	};
 }

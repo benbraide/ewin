@@ -3,13 +3,14 @@
 #ifndef EWIN_MENU_OBJECT_H
 #define EWIN_MENU_OBJECT_H
 
+#include "../common/error_target.h"
+
 #include "../common/string_property.h"
 #include "../common/state_property.h"
 #include "../common/size_property.h"
 #include "../common/point_property.h"
 #include "../common/rect_property.h"
 #include "../common/transformation_property.h"
-#include "../common/variant_property.h"
 
 #include "../message/menu_message_target.h"
 
@@ -20,7 +21,7 @@
 #include "menu_event.h"
 
 namespace ewin::menu{
-	class object : public std::enable_shared_from_this<object>, public ewin::message::menu_target{
+	class object : public std::enable_shared_from_this<object>, public common::error_target<>, public ewin::message::menu_target{
 	public:
 		typedef ewin::message::menu_target message_target_type;
 		typedef application::object application_type;
@@ -49,9 +50,6 @@ namespace ewin::menu{
 
 		common::read_only_value_property<ptr_type, object> reflect;
 		common::transformation_property<property_forbidden_info, bool, object> is_forbidden;
-
-		common::value_property<error_throw_policy_type, object> error_throw_policy;
-		common::variant_value_property<object, common::property_access::nil, error_type, common::types::dword> error;
 
 		common::object_value_property<application_type, object> app;
 		common::read_only_value_property<common::types::hmenu, object> handle;
@@ -89,12 +87,6 @@ namespace ewin::menu{
 
 		virtual void create_(bool create, const create_info *info);
 
-		virtual void set_error_(common::variant_value_property_arg_info &info);
-
-		virtual void set_error_(error_type value);
-
-		virtual void set_error_(common::types::dword value);
-
 		virtual bool validate_parent_change_(object *value);
 
 		virtual bool validate_child_remove_(object &value);
@@ -111,10 +103,6 @@ namespace ewin::menu{
 
 		application_type *app_;
 		cache_info cache_;
-
-		error_throw_policy_type error_throw_policy_;
-		error_type error_value_;
-		common::types::dword local_error_value_;
 
 		bool auto_destroy_;
 		menu_event events_;

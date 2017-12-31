@@ -6,7 +6,7 @@
 #include "../common/point_property.h"
 #include "../common/size_property.h"
 #include "../common/transformation_property.h"
-#include "../common/error_handler.h"
+#include "../common/error_target.h"
 
 #include "drawing_factory.h"
 

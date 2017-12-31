@@ -3,8 +3,8 @@
 #include "dialog_window.h"
 
 ewin::window::object::object()
-	: message_target_type(events_), tree(*this), view(*this), frame(*this), state(*this), style(*this), attribute(*this), events_(*this), app_(nullptr), handle_(nullptr),
-	auto_destroy_(true), error_throw_policy_(error_throw_policy_type::always), error_value_(error_type::nil), local_error_value_(ERROR_SUCCESS){
+	: message_target_type(events_), tree(*this), view(*this), frame(*this), state(*this), style(*this),
+	attribute(*this), events_(*this), app_(nullptr), handle_(nullptr), auto_destroy_(true){
 	cache_ = cache_info{};
 	bind_properties_();
 
@@ -28,9 +28,6 @@ void ewin::window::object::bind_properties_(){
 
 	reflect.initialize_(nullptr, handler);
 	is_forbidden.initialize_(nullptr, handler);
-
-	error_throw_policy.initialize_(nullptr, handler);
-	error.initialize_(nullptr, handler);
 
 	app.initialize_(nullptr, handler);
 	handle.initialize_(&handle_, nullptr);
@@ -81,39 +78,13 @@ void ewin::window::object::handle_property_(void *prop, void *arg, common::prope
 		return;
 	}
 	
-	if (prop == &error){
-		if (access == common::property_access::read){
-			auto &info = *static_cast<common::variant_value_property_arg_info *>(arg);
-			switch (info.index){
-			case 0u:
-				*static_cast<error_type *>(info.value) = error_value_;
-				break;
-			case 1u:
-				*static_cast<common::types::dword *>(info.value) = local_error_value_;
-				break;
-			default:
-				break;
-			}
-		}
-		else if (access == common::property_access::write)
-			set_error_(*static_cast<common::variant_value_property_arg_info *>(arg));
-
-		return;
-	}
-
 	if (is_forbidden_(property_forbidden_info{ prop, access })){
 		set_error_(error_type::forbidden_property);
 		return;
 	}
 
 	error_value_ = error_type::nil;
-	if (prop == &error_throw_policy){
-		if (access == common::property_access::read)
-			*static_cast<error_throw_policy_type *>(arg) = error_throw_policy_;
-		else if (access == common::property_access::write)
-			error_throw_policy_ = *static_cast<error_throw_policy_type *>(arg);
-	}
-	else if (prop == &app){
+	if (prop == &app){
 		if (access == common::property_access::read)
 			*static_cast<application_type **>(arg) = app_;
 		else if (access == common::property_access::write && handle_ == nullptr)
@@ -322,46 +293,6 @@ void ewin::window::object::low_level_create_(const common::types::create_struct 
 		else//Failed to create window
 			set_error_(::GetLastError());
 	};
-}
-
-void ewin::window::object::set_error_(common::variant_value_property_arg_info &info){
-	switch (info.index){
-	case 0u:
-		set_error_(*static_cast<error_type *>(info.value));
-		break;
-	case 1u:
-		set_error_(*static_cast<common::types::dword *>(info.value));
-		break;
-	default:
-		break;
-	}
-}
-
-void ewin::window::object::set_error_(error_type value){
-	if (value == error_type::nil){//Clear error
-		error_value_ = value;
-		return;
-	}
-
-	switch (static_cast<error_throw_policy_type>(error_throw_policy_)){
-	case error_throw_policy_type::never://Update last error
-		error_value_ = value;
-		break;
-	case error_throw_policy_type::once://Throw once
-		error_throw_policy_ = error_throw_policy_type::never;
-		throw value;
-		break;
-	default:
-		throw value;
-		break;
-	}
-}
-
-void ewin::window::object::set_error_(common::types::dword value){
-	if ((local_error_value_ = value) == ERROR_SUCCESS)
-		error_value_ = error_type::nil;
-	else//Signify local error
-		set_error_(error_type::local_error);
 }
 
 void ewin::window::object::update_dimension_(dimension_type type){

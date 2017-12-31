@@ -14,13 +14,16 @@ void ewin::menu::item::bind_properties_(){
 	auto handler = EWIN_PROP_HANDLER(item);
 
 	id.initialize_(&cache_.id, handler);
-	label.initialize_(&cache_.label, handler);
 	sub_menu.initialize_(nullptr, handler);
+
+	label.initialize_(&cache_.label, handler);
+	label.initialize_(&cache_.shortcut, handler);
 
 	states.initialize_(&cache_.states, handler);
 	enabled.initialize_(nullptr, handler);
 	is_default.initialize_(nullptr, handler);
 	checked.initialize_(nullptr, handler);
+	owner_drawn.initialize_(nullptr, handler);
 
 	bitmap.initialize_(&cache_.bitmap, handler);
 	checked_bitmap.initialize_(&cache_.checked_bitmap, handler);
@@ -66,12 +69,18 @@ void ewin::menu::item::handle_property_(void *prop, void *arg, common::property_
 		else if (access == common::property_access::write)
 			set_state_(MFS_CHECKED, *static_cast<bool *>(arg));
 	}
+	else if (prop == &label && access == common::property_access::write){
+		split_label_();
+		update_label_();
+	}
+	else if (prop == &shortcut && access == common::property_access::write)
+		update_label_();
 	else if (prop == &id && access == common::property_access::write)
 		update_id_();
-	else if (prop == &label && access == common::property_access::write)
-		update_label_();
 	else if (prop == &states && access == common::property_access::write)
 		update_states_();
+	else if (prop == &owner_drawn)
+		*static_cast<bool *>(arg) = (EWIN_IS(cache_.types, MFT_OWNERDRAW) || is_owner_drawn_());
 	else if (prop == &bitmap && access == common::property_access::write)
 		update_bitmap_();
 	else if ((prop == &checked_bitmap || prop == &unchecked_bitmap) && access == common::property_access::write)
@@ -123,6 +132,23 @@ void ewin::menu::item::parent_changed_(object *current, object *previous, std::s
 	}
 	else//Reset
 		created_ = false;
+}
+
+void ewin::menu::item::event_listener_count_changed_(events::menu_basic &e, std::size_t count){
+	if (&e == &events_.draw && !is_owner_drawn_()){
+		if (count == 0u){//Remove owner draw flag
+			EWIN_REMOVE(cache_.types, MFT_OWNERDRAW);
+			update_types_();
+		}
+		else if (count == 1u){//Add owner draw flag
+			EWIN_SET(cache_.types, MFT_OWNERDRAW);
+			update_types_();
+		}
+	}
+}
+
+bool ewin::menu::item::is_owner_drawn_(){
+	return false;
 }
 
 void ewin::menu::item::low_level_create_(){
@@ -205,12 +231,7 @@ void ewin::menu::item::low_level_create_(common::types::hmenu handle, common::ty
 	}
 }
 
-void ewin::menu::item::update_id_(common::types::word *value){
-	if (value != nullptr){
-		cache_.id = *value;
-		return;
-	}
-
+void ewin::menu::item::update_id_(){
 	if (!created_)
 		return;
 
@@ -230,14 +251,11 @@ void ewin::menu::item::update_id_(common::types::word *value){
 	};
 }
 
-void ewin::menu::item::update_label_(common::types::uptr *value, std::size_t *size){
-	if (value != nullptr){
-		if (*value != reinterpret_cast<common::types::uptr>(cache_.label.data()))
-			cache_.label.assign(reinterpret_cast<const wchar_t *>(*value), *size);
+void ewin::menu::item::update_label_(){
+	if (!created_)
 		return;
-	}
 
-	if (created_){
+	if (cache_.label.empty() || cache_.shortcut.empty()){
 		update_(common::types::menu_item_info{
 			sizeof(common::types::menu_item_info),					//Size
 			MIIM_STRING,											//Flags
@@ -252,14 +270,25 @@ void ewin::menu::item::update_label_(common::types::uptr *value, std::size_t *si
 			static_cast<common::types::uint>(cache_.label.size()),	//String size
 		});
 	}
+	else{//Append shortcut
+		auto label = (cache_.label + L"\t" + cache_.shortcut);
+		update_(common::types::menu_item_info{
+			sizeof(common::types::menu_item_info),					//Size
+			MIIM_STRING,											//Flags
+			0,														//Types
+			0,														//States
+			0,														//Id
+			nullptr,												//Sub-menu
+			nullptr,												//Checked bitmap
+			nullptr,												//Unchecked bitmap
+			0,														//Data
+			label.data(),											//String
+			static_cast<common::types::uint>(label.size()),			//String size
+		});
+	}
 }
 
-void ewin::menu::item::update_sub_menu_(popup *value){
-	if (value != nullptr){
-		set_sub_menu_(value);
-		return;
-	}
-
+void ewin::menu::item::update_sub_menu_(){
 	if (created_){
 		common::types::hmenu sub = nullptr;
 		if (sub_menu_ != nullptr)
@@ -276,12 +305,7 @@ void ewin::menu::item::update_sub_menu_(popup *value){
 	}
 }
 
-void ewin::menu::item::update_states_(common::types::uint *value){
-	if (value != nullptr){
-		cache_.states = *value;
-		return;
-	}
-
+void ewin::menu::item::update_states_(){
 	if (created_){
 		update_(common::types::menu_item_info{
 			sizeof(common::types::menu_item_info),					//Size
@@ -292,12 +316,7 @@ void ewin::menu::item::update_states_(common::types::uint *value){
 	}
 }
 
-void ewin::menu::item::update_types_(common::types::uint *value){
-	if (value != nullptr){
-		cache_.types = *value;
-		return;
-	}
-
+void ewin::menu::item::update_types_(){
 	if (created_){
 		update_(common::types::menu_item_info{
 			sizeof(common::types::menu_item_info),					//Size
@@ -307,12 +326,7 @@ void ewin::menu::item::update_types_(common::types::uint *value){
 	}
 }
 
-void ewin::menu::item::update_bitmap_(common::types::hbitmap *value){
-	if (value != nullptr){
-		cache_.bitmap = *value;
-		return;
-	}
-
+void ewin::menu::item::update_bitmap_(){
 	if (created_){
 		update_(common::types::menu_item_info{
 			sizeof(common::types::menu_item_info),					//Size
@@ -331,13 +345,7 @@ void ewin::menu::item::update_bitmap_(common::types::hbitmap *value){
 	}
 }
 
-void ewin::menu::item::update_check_marks_(common::types::hbitmap *checked, common::types::hbitmap *unchecked){
-	if (checked != nullptr){
-		cache_.checked_bitmap = *checked;
-		cache_.unchecked_bitmap = *unchecked;
-		return;
-	}
-
+void ewin::menu::item::update_check_marks_(){
 	if (created_){
 		update_(common::types::menu_item_info{
 			sizeof(common::types::menu_item_info),					//Size
@@ -364,6 +372,7 @@ void ewin::menu::item::set_state_(common::types::uint state, bool add){
 		EWIN_SET(cache_.states, state);
 	else//Remove
 		EWIN_REMOVE(cache_.states, state);
+	update_states_();
 }
 
 bool ewin::menu::item::get_state_(common::types::uint state){
@@ -388,4 +397,15 @@ void ewin::menu::item::set_sub_menu_(popup *value){
 
 	if ((sub_menu_ = value) != nullptr)//Create association
 		sub_menu_->owner_ = this;
+}
+
+void ewin::menu::item::split_label_(){
+	auto index = cache_.label.find(L'\t');
+	if (index < cache_.label.size()){//Split
+		if ((index + 1) < cache_.label.size())
+			cache_.shortcut.assign((cache_.label.data() + index + 1), (cache_.label.size() - index + 1));
+		else//No shortcut
+			cache_.shortcut.clear();
+		cache_.label.erase(index);
+	}
 }

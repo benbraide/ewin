@@ -23,6 +23,10 @@ namespace ewin::menu{
 		ewin::events::typed_basic<ewin::events::menu_message, object> select;
 
 		ewin::events::typed_basic<ewin::events::menu_message, object> init;
+
+		ewin::events::typed_basic<ewin::events::menu_message, object> draw;
+		ewin::events::typed_basic<ewin::events::menu_message, object> measure;
+
 		ewin::events::typed_basic<ewin::events::menu_message, object> unknown_message;
 	};
 }

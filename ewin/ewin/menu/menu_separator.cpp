@@ -1,6 +1,11 @@
 #include "menu_separator.h"
 
-ewin::menu::separator::separator() = default;
+ewin::menu::separator::separator()
+	: created_(false), types_(0){
+	owner_drawn.initialize_(nullptr, [this](void *prop, void *arg, common::property_access access){
+		*static_cast<bool *>(arg) = (EWIN_IS(types_, MFT_OWNERDRAW) || is_owner_drawn_());
+	});
+}
 
 ewin::menu::separator::~separator() = default;
 
@@ -44,6 +49,23 @@ void ewin::menu::separator::parent_changed_(object *current, object *previous, s
 		created_ = false;
 }
 
+void ewin::menu::separator::event_listener_count_changed_(events::menu_basic &e, std::size_t count){
+	if (&e == &events_.draw && !is_owner_drawn_()){
+		if (count == 0u){//Remove owner draw flag
+			EWIN_REMOVE(types_, MFT_OWNERDRAW);
+			update_types_();
+		}
+		else if (count == 1u){//Add owner draw flag
+			EWIN_SET(types_, MFT_OWNERDRAW);
+			update_types_();
+		}
+	}
+}
+
+bool ewin::menu::separator::is_owner_drawn_(){
+	return false;
+}
+
 void ewin::menu::separator::low_level_create_(){
 	object *parent = tree.parent;
 	if (parent != nullptr){//Insert into parent
@@ -75,4 +97,21 @@ void ewin::menu::separator::low_level_create_(common::types::hmenu handle, commo
 		created_ = false;
 		set_error_(::GetLastError());
 	}
+}
+
+void ewin::menu::separator::update_types_(){
+	if (created_){
+		update_(common::types::menu_item_info{
+			sizeof(common::types::menu_item_info),					//Size
+			MIIM_FTYPE,												//Flags
+			(MFT_SEPARATOR | types_),								//Types
+		});
+	}
+}
+
+void ewin::menu::separator::update_(const common::types::menu_item_info &info){
+	app_->task += [&]{
+		if (!EWIN_CPP_BOOL(::SetMenuItemInfoW(tree.parent->handle, static_cast<common::types::uint>(tree.index), TRUE, &info)))
+			set_error_(::GetLastError());
+	};
 }

@@ -60,6 +60,7 @@ namespace ewin::common::types{
 	typedef ::PAINTSTRUCT		paint_struct;
 	typedef ::MSG				msg;
 
+	typedef ::INITCOMMONCONTROLSEX	init_common_controls;
 	typedef ::WINDOWPLACEMENT	wnd_placement;
 	typedef ::WINDOWPOS			wnd_position;
 
@@ -78,6 +79,7 @@ namespace ewin::common::types{
 	typedef ::HRESULT			hresult;
 	typedef ::HDC				hdc;
 	typedef ::HRGN				hrgn;
+	typedef ::HFONT				hfont;
 }
 
 #endif /* !EWIN_TYPE_ALIASES_H */

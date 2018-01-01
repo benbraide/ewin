@@ -168,6 +168,8 @@ namespace ewin::window{
 
 		virtual void low_level_create_(const common::types::create_struct &info, object *parent, application_type *app, attribute_option_type options);
 
+		virtual const wchar_t *class_name_();
+
 		virtual void update_dimension_(dimension_type type);
 
 		virtual void cache_dimensions_();

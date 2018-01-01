@@ -1,19 +1,19 @@
 #pragma once
 
-#ifndef EWIN_DRAWING_FACTORY_H
-#define EWIN_DRAWING_FACTORY_H
+#ifndef EWIN_WRITING_FACTORY_H
+#define EWIN_WRITING_FACTORY_H
 
 #include "../common/type_aliases.h"
 #include "../common/boolean_property.h"
 #include "../common/object_property.h"
 
-#include "drawing_type_aliases.h"
+#include "writing_type_aliases.h"
 
 namespace ewin::application{
 	class object;
 }
 
-namespace ewin::drawing{
+namespace ewin::writing{
 	class factory{
 	public:
 		struct create_info{};
@@ -23,7 +23,7 @@ namespace ewin::drawing{
 		virtual ~factory();
 
 		factory(const factory &) = delete;
-		
+
 		factory &operator =(const factory &) = delete;
 
 		common::read_only_object_value_property<application::object, factory> app;
@@ -42,4 +42,4 @@ namespace ewin::drawing{
 	};
 }
 
-#endif /* !EWIN_DRAWING_FACTORY_H */
+#endif /* !EWIN_WRITING_FACTORY_H */

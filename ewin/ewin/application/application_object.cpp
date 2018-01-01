@@ -65,6 +65,8 @@ void ewin::application::object::bind_properties_(){
 	run.initialize_(nullptr, handler);
 
 	drawing_factory.initialize_(nullptr, handler);
+	writing_factory.initialize_(nullptr, handler);
+
 	hdc_drawer.initialize_(nullptr, handler);
 	color_brush.initialize_(nullptr, handler);
 
@@ -126,9 +128,16 @@ void ewin::application::object::handle_property_(void *prop, void *arg, common::
 	}
 	else if (prop == &drawing_factory){
 		*static_cast<drawing::factory **>(arg) = &drawing_factory_;
-		if (!drawing_factory_.created){//Create
+		if (drawing_factory_.native_ == nullptr){//Create
 			drawing_factory_.app_ = this;
-			drawing_factory_.created = true;
+			drawing_factory_.create_(true, nullptr);
+		}
+	}
+	else if (prop == &writing_factory){
+		*static_cast<writing::factory **>(arg) = &writing_factory_;
+		if (writing_factory_.native_ == nullptr){//Create
+			writing_factory_.app_ = this;
+			writing_factory_.create_(true, nullptr);
 		}
 	}
 	else if (prop == &hdc_drawer){

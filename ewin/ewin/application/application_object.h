@@ -21,6 +21,8 @@
 #include "../drawing/hdc_drawing_object.h"
 #include "../drawing/solid_color_drawing_brush.h"
 
+#include "../writing/writing_factory.h"
+
 #define EWIN_UUID		 "{DABED3E8-D8A5-48FC-B80B-B17C167FA9B0}"
 #define EWIN_WUUID		L"{DABED3E8-D8A5-48FC-B80B-B17C167FA9B0}"
 
@@ -92,6 +94,8 @@ namespace ewin::application{
 		common::read_only_value_property<int, object> run;
 
 		common::read_only_object_value_property<drawing::factory, object> drawing_factory;
+		common::read_only_object_value_property<writing::factory, object> writing_factory;
+
 		common::read_only_object_value_property<drawing::hdc_object, object> hdc_drawer;
 		common::read_only_object_value_property<drawing::solid_color_brush, object> color_brush;
 
@@ -190,6 +194,8 @@ namespace ewin::application{
 		common::types::hook hook_id_;
 
 		drawing::factory drawing_factory_;
+		writing::factory writing_factory_;
+
 		drawing::hdc_object hdc_drawer_;
 		drawing::solid_color_brush color_brush_;
 	};

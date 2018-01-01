@@ -22,9 +22,10 @@
 #include <d2d1_2.h>
 #include <d2d1helper.h>
 #include <d2d1_2helper.h>
-#include <wrl.h>
+#include <dwrite_2.h>
 
 #pragma comment(lib, "d2d1.lib")
+#pragma comment(lib, "dwrite.lib")
 
 #pragma comment(lib, "UxTheme.lib")
 

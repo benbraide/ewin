@@ -49,6 +49,15 @@ namespace ewin::drawing{
 
 		native_type *native_;
 	};
+
+	template <class native_type>
+	class shared_com_native : public com_native<native_type>{
+	public:
+		explicit shared_com_native(native_type value){
+			if ((native_ = value) != nullptr)
+				native_->AddRef();
+		}
+	};
 }
 
 #endif /* !EWIN_COM_NATIVE_H */

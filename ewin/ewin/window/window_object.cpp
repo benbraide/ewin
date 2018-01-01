@@ -285,7 +285,7 @@ void ewin::window::object::low_level_create_(const common::types::create_struct 
 		app->window_being_created = this;
 		handle_ = ::CreateWindowExW(
 			extended_styles,
-			((dynamic_cast<dialog *>(this) == nullptr) ? application::manager::main->general_window_class.raw_name : application::manager::main->dialog_window_class.raw_name),
+			class_name_(),
 			info.lpszName,
 			styles,
 			(EWIN_IS(options, attribute_option_type::absolute_position) ? offset.x : info.x),
@@ -305,6 +305,10 @@ void ewin::window::object::low_level_create_(const common::types::create_struct 
 		else//Failed to create window
 			set_error_(::GetLastError());
 	};
+}
+
+const wchar_t *ewin::window::object::class_name_(){
+	return (attribute.is_dialog ? application::manager::main->dialog_window_class.raw_name : application::manager::main->general_window_class.raw_name);
 }
 
 void ewin::window::object::update_dimension_(dimension_type type){

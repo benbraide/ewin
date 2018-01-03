@@ -7,6 +7,8 @@
 #include "../common/boolean_property.h"
 #include "../common/object_property.h"
 
+#include "../drawing/com_native.h"
+
 #include "writing_type_aliases.h"
 
 namespace ewin::application{
@@ -14,6 +16,12 @@ namespace ewin::application{
 }
 
 namespace ewin::writing{
+	template <class native_type>
+	using com_native = drawing::com_native<native_type>;
+
+	template <class native_type>
+	using shared_com_native = drawing::shared_com_native<native_type>;
+
 	class factory{
 	public:
 		struct create_info{};

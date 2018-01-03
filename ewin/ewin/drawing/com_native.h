@@ -16,7 +16,10 @@ namespace ewin::drawing{
 
 		com_native()
 			: native_(nullptr){
-			native.initialize_(native_, nullptr);
+			native.initialize_(nullptr, [this](void *prop, void *arg, common::property_access access){
+				*static_cast<native_type **>(arg) = native_;
+			});
+
 			created.initialize_(nullptr, [this](void *prop, void *arg, common::property_access access){
 				if (access == common::property_access::write)
 					create_(*static_cast<bool *>(arg), nullptr);
@@ -53,9 +56,23 @@ namespace ewin::drawing{
 	template <class native_type>
 	class shared_com_native : public com_native<native_type>{
 	public:
-		explicit shared_com_native(native_type value){
-			if ((native_ = value) != nullptr)
+		explicit shared_com_native(native_type *value){
+			native_ = value;
+		}
+
+		shared_com_native(const shared_com_native &other){
+			if ((native_ = other.native_) != nullptr)
 				native_->AddRef();
+		}
+
+		shared_com_native &operator =(const shared_com_native &other){
+			if (native_ != nullptr)//Release previous
+				native_->Release();
+
+			if ((native_ = other.native_) != nullptr)
+				native_->AddRef();
+
+			return *this;
 		}
 	};
 }

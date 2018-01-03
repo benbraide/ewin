@@ -220,7 +220,7 @@ ewin::menu::container *ewin::application::object::find_menu_(common::types::hmen
 int ewin::application::object::run_(){
 	common::types::msg msg;
 	while (!top_level_handles_.empty()){
-		if (!EWIN_CPP_BOOL(::GetMessageW(&msg, nullptr, 0u, 0u)))
+		if (::GetMessageW(&msg, nullptr, 0u, 0u) == -1)
 			throw common::error_type::failed_to_retrieve_message;
 
 		if (msg.message == WM_QUIT)//Quit message posted

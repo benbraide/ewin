@@ -26,25 +26,49 @@ void ewin::window::wnd_view::handle_property_(void *prop, void *arg, common::pro
 
 	target_->error = common::error_type::nil;//Clear error
 	if (prop == &visible){
-		if (access == common::property_access::write)
+		if (target_->created){
+			target_->app->task += [&]{
+				if (access == common::property_access::write)
+					::ShowWindow(target_->handle, (*reinterpret_cast<bool *>(arg) ? SW_NORMAL : SW_HIDE));
+				else if (access == common::property_access::read)
+					*reinterpret_cast<bool *>(arg) = EWIN_CPP_BOOL(::IsWindowVisible(target_->handle));
+			};
+		}
+		else if (access == common::property_access::write)
 			set_or_remove_(WS_VISIBLE, *reinterpret_cast<bool *>(arg));
 		else if (access == common::property_access::read)
 			*reinterpret_cast<bool *>(arg) = EWIN_IS(get_(), WS_VISIBLE);
 	}
 	else if (prop == &show){
-		if (target_->handle == nullptr)
-			show_type_ = *reinterpret_cast<common::types::uint *>(arg);
-		else//Use
+		if (target_->created)
 			::ShowWindow(target_->handle, *reinterpret_cast<common::types::uint *>(arg));
+		else
+			show_type_ = *reinterpret_cast<common::types::uint *>(arg);
 	}
 	else if (prop == &maximized){
-		if (access == common::property_access::write)
+		if (target_->created){
+			target_->app->task += [&]{
+				if (access == common::property_access::write)
+					::ShowWindow(target_->handle, (*reinterpret_cast<bool *>(arg) ? SW_MAXIMIZE : SW_RESTORE));
+				else if (access == common::property_access::read)
+					*reinterpret_cast<bool *>(arg) = EWIN_CPP_BOOL(::IsZoomed(target_->handle));
+			};
+		}
+		else if (access == common::property_access::write)
 			set_or_remove_(WS_MAXIMIZE, *reinterpret_cast<bool *>(arg));
 		else if (access == common::property_access::read)
 			*reinterpret_cast<bool *>(arg) = EWIN_IS(get_(), WS_MAXIMIZE);
 	}
 	else if (prop == &minimized){
-		if (access == common::property_access::write)
+		if (target_->created){
+			target_->app->task += [&]{
+				if (access == common::property_access::write)
+					::ShowWindow(target_->handle, (*reinterpret_cast<bool *>(arg) ? SW_MINIMIZE : SW_RESTORE));
+				else if (access == common::property_access::read)
+					*reinterpret_cast<bool *>(arg) = EWIN_CPP_BOOL(::IsIconic(target_->handle));
+			};
+		}
+		else if (access == common::property_access::write)
 			set_or_remove_(WS_MINIMIZE, *reinterpret_cast<bool *>(arg));
 		else if (access == common::property_access::read)
 			*reinterpret_cast<bool *>(arg) = EWIN_IS(get_(), WS_MINIMIZE);
@@ -55,6 +79,6 @@ void ewin::window::wnd_view::handle_property_(void *prop, void *arg, common::pro
 		else if (access == common::property_access::read)
 			*reinterpret_cast<bool *>(arg) = EWIN_IS(get_extended_(), WS_EX_TRANSPARENT);
 	}
-	else if (prop == &show_async && target_->handle != nullptr)
+	else if (prop == &show_async && target_->created)
 		::ShowWindowAsync(target_->handle, *reinterpret_cast<common::types::uint *>(arg));
 }

@@ -27,7 +27,15 @@ void ewin::window::wnd_state::handle_property_(void *prop, void *arg, common::pr
 
 	target_->error = common::error_type::nil;//Clear error
 	if (prop == &enabled){
-		if (access == common::property_access::write)
+		if (target_->created){
+			target_->app->task += [&]{
+				if (access == common::property_access::write)
+					::EnableWindow(target_->handle, EWIN_C_BOOL(*reinterpret_cast<bool *>(arg)));
+				else if (access == common::property_access::read)
+					*reinterpret_cast<bool *>(arg) = EWIN_CPP_BOOL(::IsWindowEnabled(target_->handle));
+			};
+		}
+		else if (access == common::property_access::write)
 			set_or_remove_(WS_DISABLED, !*reinterpret_cast<bool *>(arg));
 		else if (access == common::property_access::read)
 			*reinterpret_cast<bool *>(arg) = !EWIN_IS(get_(), WS_DISABLED);

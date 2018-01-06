@@ -3,6 +3,7 @@
 #ifndef EWIN_RAII_H
 #define EWIN_RAII_H
 
+#include <thread>
 #include <functional>
 
 namespace ewin::common{
@@ -13,8 +14,9 @@ namespace ewin::common{
 	public:
 		typedef value_type value_type;
 
-		explicit value_raii_base(const value_type &value)
-			: value_(value){}
+		template <typename value_type>
+		explicit value_raii_base(value_type &&value)
+			: value_(std::forward<value_type>(value)){}
 
 		const value_type &value() const{
 			return value_;
@@ -61,6 +63,20 @@ namespace ewin::common{
 
 	protected:
 		target_type *target_;
+	};
+
+	class raii_thread{
+	public:
+		template <class callback_type, class... args_types>
+		raii_thread(callback_type &&callback, args_types &&... args)
+			: thread_(std::forward<callback_type>(callback), std::forward<args_types>(args)...){}
+
+		~raii_thread(){
+			thread_.detach();
+		}
+
+	protected:
+		std::thread thread_;
 	};
 }
 

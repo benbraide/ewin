@@ -4,7 +4,7 @@ ewin::application::object::object()
 	: object(false){}
 
 ewin::application::object::object(bool is_main)
-	: window_being_created_(nullptr){
+	: transition(*this), window_being_created_(nullptr){
 	cached_window_handle_ = std::make_pair<common::types::hwnd, window_type *>(nullptr, nullptr);
 	cached_menu_handle_ = std::make_pair<common::types::hmenu, menu::container *>(nullptr, nullptr);
 

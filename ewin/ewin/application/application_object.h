@@ -17,6 +17,8 @@
 
 #include "../window/window_class.h"
 
+#include "../animation/animation_transition.h"
+
 #include "../drawing/drawing_factory.h"
 #include "../drawing/hdc_drawing_object.h"
 #include "../drawing/solid_color_drawing_brush.h"
@@ -92,6 +94,8 @@ namespace ewin::application{
 		common::iterator_only_list_value_property<window_type, window_list_iterator_type, window_list_const_iterator_type, object> top_level_handles;
 		common::write_only_value_property<window_type *, object> window_being_created;
 		common::read_only_value_property<int, object> run;
+
+		animation::transition<object> transition;
 
 		common::read_only_object_value_property<drawing::factory, object> drawing_factory;
 		common::read_only_object_value_property<writing::factory, object> writing_factory;

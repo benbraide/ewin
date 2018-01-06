@@ -63,6 +63,7 @@ void ewin::window::object::bind_properties_(){
 	filtered_extended_styles.initialize_(nullptr, handler);
 
 	is_dialog_message.initialize_(nullptr, handler);
+	transition.initialize_(nullptr, handler);
 	events.initialize_(nullptr, handler);
 
 	created.initialize_(nullptr, handler);
@@ -181,6 +182,8 @@ void ewin::window::object::handle_property_(void *prop, void *arg, common::prope
 		create_(true, static_cast<create_info *>(arg));
 	else if (prop == &events)
 		*static_cast<wnd_event **>(arg) = get_events_();
+	else if (prop == &transition)
+		*static_cast<wnd_transition **>(arg) = get_transition_();
 }
 
 ewin::window::object::ptr_type ewin::window::object::reflect_(){
@@ -534,3 +537,9 @@ void ewin::window::object::parent_changed_(object *current, object *previous, st
 }
 
 void ewin::window::object::event_listener_count_changed_(events::basic &e, std::size_t count){}
+
+ewin::window::wnd_transition *ewin::window::object::get_transition_(){
+	if (transition_ == nullptr)
+		transition_ = std::make_shared<wnd_transition>(*this);
+	return transition_.get();
+}

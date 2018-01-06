@@ -26,6 +26,7 @@
 #include "window_style.h"
 #include "window_attribute.h"
 #include "window_event.h"
+#include "window_transition.h"
 
 namespace ewin::window{
 	class object : public std::enable_shared_from_this<object>, public common::error_target<>, public ewin::message::target{
@@ -37,6 +38,7 @@ namespace ewin::window{
 		typedef common::error_throw_policy_type error_throw_policy_type;
 
 		typedef std::shared_ptr<object> ptr_type;
+		typedef std::shared_ptr<wnd_transition> transition_ptr_type;
 		typedef std::shared_ptr<wnd_event> event_ptr_type;
 
 		enum class attribute_option_type : unsigned int{
@@ -127,6 +129,8 @@ namespace ewin::window{
 		wnd_state state;
 		wnd_style style;
 		wnd_attribute attribute;
+
+		common::read_only_object_value_property<wnd_transition, object> transition;
 		common::read_only_object_value_property<wnd_event, object> events;
 
 		common::boolean_value_property<object> created;
@@ -214,12 +218,15 @@ namespace ewin::window{
 
 		virtual void event_listener_count_changed_(events::basic &e, std::size_t count);
 
+		virtual wnd_transition *get_transition_();
+
 		application_type *app_;
 		common::types::hwnd handle_;
 
+		transition_ptr_type transition_;
 		event_ptr_type events_;
-		cache_info cache_;
 
+		cache_info cache_;
 		bool auto_destroy_;
 
 		std::shared_ptr<ewin::menu::bar_collection> menu_;

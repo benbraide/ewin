@@ -27,8 +27,8 @@ namespace ewin::animation{
 		};
 
 		typedef std::vector<limit_info> list_type;
-		typedef std::function<void(float)> callback_type;
-		typedef std::function<void(const std::vector<float> &)> multiple_callback_type;
+		typedef std::function<void(float, bool)> callback_type;
+		typedef std::function<void(const std::vector<float> &, bool)> multiple_callback_type;
 
 		typedef std::shared_ptr<timer_type> timer_ptr_type;
 		typedef std::unordered_map<std::size_t, timer_ptr_type> timer_list_type;
@@ -72,11 +72,11 @@ namespace ewin::animation{
 					timer->callback = [this, id, change, info](common::types::uint frame, common::types::uint frames, bool active){
 						if (!active || frame >= frames){//Done transition
 							if (active)
-								info.callback(info.end);
+								info.callback(info.end, true);
 							operator -=(id);//Remove
 						}
 						else//Continue
-							info.callback(info.start + ease(info.type, info.mode, static_cast<float>(frame), change, static_cast<float>(frames)));
+							info.callback(info.start + ease(info.type, info.mode, static_cast<float>(frame), change, static_cast<float>(frames)), false);
 					};
 				}
 
@@ -112,9 +112,12 @@ namespace ewin::animation{
 						if (!active || frame >= frames){//Done transition
 							if (active){//Last call
 								auto offsets_end = offsets.end();
-								for (auto limit = info.limits.begin(), offset = offsets.begin(); offset != offsets_end; ++limit, ++offset)
+								auto offset = offsets.begin();
+
+								for (auto limit = info.limits.begin(); offset != offsets_end; ++limit, ++offset)
 									*offset = limit->end;
-								info.callback(offsets);
+
+								info.callback(offsets, true);
 							}
 
 							offsets.clear();
@@ -122,12 +125,15 @@ namespace ewin::animation{
 						}
 						else{//Continue
 							auto changes_end = changes.end();
-							for (auto change = changes.begin(), offset = offsets.begin(); change != changes_end; ++change, ++offset){
+							auto offset = offsets.begin();
+							auto limit = info.limits.begin();
+
+							for (auto change = changes.begin(); change != changes_end; ++change, ++offset, ++limit){
 								auto value = ease(info.type, info.mode, static_cast<float>(frame), *change, static_cast<float>(frames));
-								*offset = (info.start + value);
+								*offset = (limit->start + value);
 							}
 
-							info.callback(offsets);
+							info.callback(offsets, false);
 						}
 					};
 				}

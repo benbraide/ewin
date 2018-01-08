@@ -32,7 +32,7 @@ namespace ewin::window{
 		};
 
 		explicit wnd_tree(object_type &target)
-			: target_(&target), parent_(nullptr){
+			: target_(&target), parent_(nullptr), cached_index_(-1){
 			bind_properties_();
 		}
 
@@ -78,13 +78,17 @@ namespace ewin::window{
 			target_->set_error_(common::error_type::nil);//Clear error
 			if (prop == &parent){
 				if (access == common::property_access::write)
-					set_parent_(reinterpret_cast<object_type *>(arg), static_cast<std::size_t>(-1));
+					set_parent_(reinterpret_cast<object_type *>(arg), cached_index_);
 				else if (access == common::property_access::read)
 					*reinterpret_cast<object_type **>(arg) = parent_;
 			}
 			else if (prop == &index){
-				if (access == common::property_access::write)
-					set_parent_(parent_, *reinterpret_cast<std::size_t *>(arg));
+				if (access == common::property_access::write){
+					if (parent_ == nullptr)
+						cached_index_ = *reinterpret_cast<std::size_t *>(arg);
+					else//Update
+						set_parent_(parent_, *reinterpret_cast<std::size_t *>(arg));
+				}
 				else if (access == common::property_access::read)
 					*reinterpret_cast<std::size_t *>(arg) = index_();
 			}
@@ -212,6 +216,7 @@ namespace ewin::window{
 					parent_children.insert((std::next(parent_children.begin(), index)), target_);
 			}
 
+			cached_index_ = index;
 			target_->parent_changed_(parent_, old_parent, index, old_index);
 			if (parent_ != nullptr)
 				parent_->child_added_(*target_, index);
@@ -223,7 +228,7 @@ namespace ewin::window{
 		}
 
 		std::size_t index_() const{
-			return ((parent_ == nullptr) ? -1 : parent_->tree.find_(*target_, list_target_type::children));
+			return ((parent_ == nullptr) ? cached_index_ : parent_->tree.find_(*target_, list_target_type::children));
 		}
 
 		object_type *sibling_(bool previous) const{
@@ -318,7 +323,7 @@ namespace ewin::window{
 
 		void remove_child_(object_type *value){
 			if (value->tree.parent_ == target_)
-				value->tree.set_parent_(nullptr, 0u);
+				value->tree.set_parent_(nullptr, -1);
 		}
 
 		void remove_child_(std::size_t index){
@@ -328,6 +333,7 @@ namespace ewin::window{
 
 		object_type *target_;
 		object_type *parent_;
+		std::size_t cached_index_;
 		object_list_type children_;
 	};
 }

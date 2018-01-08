@@ -19,9 +19,9 @@ namespace ewin::menu{
 	public:
 		typedef base_type base_type;
 
-		typedef std::function<bool(item &, std::size_t &)> item_callback_type;
-		typedef std::function<bool(item &, collection<popup> &, std::size_t &)> link_callback_type;
-		typedef std::function<bool(std::size_t &)> separator_callback_type;
+		typedef std::function<bool(item &)> item_callback_type;
+		typedef std::function<bool(item &, collection<popup> &)> link_callback_type;
+		typedef std::function<bool(separator &)> separator_callback_type;
 
 		typedef std::shared_ptr<object> object_ptr_type;
 		typedef std::list<object_ptr_type> object_list_type;
@@ -36,16 +36,14 @@ namespace ewin::menu{
 			links.initialize_(nullptr, [this](void *prop, void *arg, common::property_access access){
 				base_type::created = true;//Create if not already created
 
-				std::size_t index = -1;
 				auto link = std::make_shared<collection<popup>>();
 				auto item = std::make_shared<menu::item>();
 
 				auto &info = *reinterpret_cast<std::pair<std::size_t, link_callback_type *> *>(arg);
-				if (!(*info.second)(*item, *link, index) || !link->created)
+				if (!(*info.second)(*item, *link) || !link->created)
 					return;//Canceled
 
 				item->tree.parent = *this;
-				item->tree.index = index;
 				item->sub_menu = *link;
 
 				link->created = true;
@@ -68,14 +66,13 @@ namespace ewin::menu{
 			separators.initialize_(nullptr, [this](void *prop, void *arg, common::property_access access){
 				base_type::created = true;//Create if not already created
 
-				std::size_t index = -1;
 				auto &info = *reinterpret_cast<std::pair<std::size_t, separator_callback_type *> *>(arg);
-				if (!(*info.second)(index))
+				auto item = std::make_shared<separator>();
+
+				if (!(*info.second)(*item))
 					return;//Canceled
 
-				auto item = std::make_shared<separator>();
 				item->tree.parent = *this;
-				item->tree.index = index;
 				item->created = true;
 
 				object_list_.push_back(item);
@@ -100,13 +97,11 @@ namespace ewin::menu{
 		void add_item_(std::pair<std::size_t, item_callback_type *> &info){
 			base_type::created = true;//Create if not already created
 
-			std::size_t index = -1;
 			auto item = std::make_shared<item_type>();
-			if (!(*info.second)(*item, index))
+			if (!(*info.second)(*item))
 				return;//Canceled
 
 			item->tree.parent = *this;
-			item->tree.index = index;
 			item->created = true;
 
 			object_list_.push_back(item);

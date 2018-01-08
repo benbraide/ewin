@@ -1,10 +1,11 @@
 #include "../window/message_window.h"
+#include "../window/control/control_object.h"
 
 ewin::application::object::object()
 	: object(false){}
 
 ewin::application::object::object(bool is_main)
-	: transition(*this), window_being_created_(nullptr){
+	: transition(*this), window_being_created_(nullptr), font_collection_(nullptr){
 	cached_window_handle_ = std::make_pair<common::types::hwnd, window_type *>(nullptr, nullptr);
 	cached_menu_handle_ = std::make_pair<common::types::hmenu, menu::container *>(nullptr, nullptr);
 
@@ -66,6 +67,7 @@ void ewin::application::object::bind_properties_(){
 
 	drawing_factory.initialize_(nullptr, handler);
 	writing_factory.initialize_(nullptr, handler);
+	font_collection.initialize_(nullptr, handler);
 
 	hdc_drawer.initialize_(nullptr, handler);
 	color_brush.initialize_(nullptr, handler);
@@ -139,6 +141,11 @@ void ewin::application::object::handle_property_(void *prop, void *arg, common::
 			writing_factory_.app_ = this;
 			writing_factory_.create_(true, nullptr);
 		}
+	}
+	else if (prop == &font_collection){
+		if (font_collection_ == nullptr)//Create
+			writing_factory->native_->GetSystemFontCollection(&font_collection_, TRUE);
+		*static_cast<writing::types::font_collection **>(arg) = font_collection_;
 	}
 	else if (prop == &hdc_drawer){
 		*static_cast<drawing::hdc_object **>(arg) = &hdc_drawer_;
@@ -571,14 +578,20 @@ ewin::common::types::result CALLBACK ewin::application::object::entry_(common::t
 
 	auto result = target->dispatch_message[common::types::msg{ hwnd, msg, wparam, lparam }];
 	switch (msg){
+	case WM_NCCREATE:
+		target->handle_ = hwnd;
+		break;
 	case WM_CREATE:
-		if (result == 0u){
-			target->handle_ = hwnd;
-			target->cache_dimensions_();
-		}
+		target->cache_dimensions_();
 		break;
 	case WM_NCDESTROY:
+		target->system_menu_ = nullptr;
+		target->color_brush_.created = false;
+		target->drawer_.created = false;
+
 		current->destroy_window_(hwnd);
+		target->handle_ = nullptr;
+
 		break;
 	case WM_ACTIVATEAPP:
 		if (!EWIN_CPP_BOOL(wparam)){//Another app activated

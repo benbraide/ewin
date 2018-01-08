@@ -99,6 +99,7 @@ namespace ewin::application{
 
 		common::read_only_object_value_property<drawing::factory, object> drawing_factory;
 		common::read_only_object_value_property<writing::factory, object> writing_factory;
+		common::read_only_object_value_property<writing::types::font_collection, object> font_collection;
 
 		common::read_only_object_value_property<drawing::hdc_object, object> hdc_drawer;
 		common::read_only_object_value_property<drawing::solid_color_brush, object> color_brush;
@@ -199,6 +200,7 @@ namespace ewin::application{
 
 		drawing::factory drawing_factory_;
 		writing::factory writing_factory_;
+		writing::types::font_collection *font_collection_;
 
 		drawing::hdc_object hdc_drawer_;
 		drawing::solid_color_brush color_brush_;

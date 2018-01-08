@@ -3,6 +3,8 @@
 #ifndef EWIN_CONTROL_OBJECT_H
 #define EWIN_CONTROL_OBJECT_H
 
+#include "../../writing/writing_gdi_font.h"
+
 #include "../window_object.h"
 
 #include "control_initializer.h"
@@ -23,12 +25,14 @@ namespace ewin::window::control{
 		virtual ~object();
 
 		common::read_only_value_property<id_type, object> id;
-		common::value_property<common::types::hfont, object> font;
-
 		common::size_value_property<size_f, object> relative_size;
 		common::size_value_property<common::types::size, object> padding;
 
+		writing::gdi_font font;
+
 	protected:
+		friend class application::object;
+
 		void bind_properties_();
 
 		virtual void handle_property_(void *prop, void *arg, common::property_access access) override;
@@ -37,10 +41,21 @@ namespace ewin::window::control{
 
 		virtual void compute_size_();
 
+		virtual writing::types::text_format *get_format_();
+
+		virtual writing::types::text_layout *get_layout_();
+
+		virtual void free_rss_();
+
+		virtual void font_changed_(writing::gdi_font &font);
+
 		id_type id_;
-		common::types::hfont font_;
 		size_f relative_size_;
 		common::types::size padding_;
+		writing::types::text_format *format_;
+		writing::types::text_layout *layout_;
+		std::wstring label_;
+		application::object *rss_app_;
 	};
 
 	template <id control_id>

@@ -58,8 +58,8 @@ void ewin::drawing::hwnd_object::create_(bool create, const base_type::create_in
 	if (create && native_ == nullptr){
 		if (info == nullptr && target_ != nullptr && target_->created){
 			cache_.pixel_size = types::usize{
-				target_->client_size.width,
-				target_->client_size.height
+				static_cast<common::types::uint>(target_->client_size.width),
+				static_cast<common::types::uint>(target_->client_size.height)
 			};
 
 			if (factory_ == nullptr)
@@ -95,8 +95,8 @@ void ewin::drawing::hwnd_object::create_(bool create, const base_type::create_in
 								return;//Basic checks
 
 							types::usize size{
-								target_->client_size.width,
-								target_->client_size.height
+								static_cast<common::types::uint>(target_->client_size.width),
+								static_cast<common::types::uint>(target_->client_size.height)
 							};
 
 							if (!e.is_changing && size.width != cache_.pixel_size.width && size.height != cache_.pixel_size.height)

@@ -9,6 +9,9 @@
 #include "../common/type_aliases.h"
 #include "../common/boolean_property.h"
 #include "../common/object_property.h"
+#include "../common/rect_property.h"
+#include "../common/size_property.h"
+#include "../common/point_property.h"
 
 #include "../application/application_object.h"
 
@@ -84,10 +87,10 @@ namespace ewin::events{
 		common::read_only_object_value_property<target_type, basic_object> target;
 		common::read_only_object_value_property<target_type, basic_object> owner;
 
-		common::boolean_value_property<basic_object> do_default;
 		common::boolean_value_property<basic_object> prevent_default;
 		common::boolean_value_property<basic_object> stop_propagation;
 
+		common::read_only_boolean_value_property<basic_object> default_called;
 		common::read_only_boolean_value_property<basic_object> bubbled;
 		common::read_only_boolean_value_property<basic_object> handled;
 
@@ -121,6 +124,8 @@ namespace ewin::events{
 				else if (access == common::property_access::write && *static_cast<bool *>(arg))
 					EWIN_SET(states_, state_type::propagation_stopped);
 			}
+			else if (prop == &default_called)
+				*static_cast<bool *>(arg) = EWIN_IS(states_, state_type::default_called);
 			else if (prop == &bubbled)
 				*static_cast<bool *>(arg) = EWIN_IS(states_, state_type::bubbled);
 			else if (prop == &handled)

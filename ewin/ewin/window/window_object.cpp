@@ -290,7 +290,7 @@ void ewin::window::object::low_level_create_(const common::types::create_struct 
 			extended_styles,
 			class_name_(),
 			info.lpszName,
-			styles,
+			(styles | additional_styles),
 			(EWIN_IS(options, attribute_option_type::absolute_position) ? offset.x : info.x),
 			(EWIN_IS(options, attribute_option_type::absolute_position) ? offset.y : info.y),
 			(EWIN_IS(options, attribute_option_type::client_size) ? size.cx : info.cx),
@@ -369,8 +369,8 @@ void ewin::window::object::update_dimension_(dimension_type type){
 		else{//Invalidate others
 			cache_.rect = cache_.client_rect = common::types::rect{};
 			cache_.position = common::types::point{};
-			cache_.relative_position.x = cache_.rect.left;
-			cache_.relative_position.y = cache_.rect.top;
+			cache_.relative_position.x = cache_.relative_rect.left;
+			cache_.relative_position.y = cache_.relative_rect.top;
 		}
 		break;
 	case dimension_type::position:
@@ -498,11 +498,6 @@ void ewin::window::object::client_to_screen_(common::types::rect &rect) const{
 bool ewin::window::object::validate_parent_change_(object *value){
 	if (attribute.is_message_only){//Cannot change parent
 		set_error_(common::error_type::parent_change_forbidden);
-		return false;
-	}
-
-	if (attribute.is_control && value == nullptr){//Parent required
-		set_error_(common::error_type::parent_required);
 		return false;
 	}
 

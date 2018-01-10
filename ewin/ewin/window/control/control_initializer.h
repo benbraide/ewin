@@ -23,7 +23,7 @@ namespace ewin::window::control{
 			}
 
 			common::types::wnd_class info;
-			if (EWIN_CPP_BOOL(::GetClassInfoExW(nullptr, attributes<control_id>::class_name, &info)))
+			if (EWIN_CPP_BOOL(::GetClassInfoExW(nullptr, attributes<control_id>::class_name(), &info)))
 				return info.lpfnWndProc;//Return control's procedure
 
 			return nullptr;

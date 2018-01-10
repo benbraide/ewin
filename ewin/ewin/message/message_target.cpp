@@ -375,6 +375,16 @@ ewin::common::types::result ewin::message::target::dispatch_message_(common::typ
 			if (fire && has_events_())
 				get_events_()->dead_system_key.fire_(e);
 		});
+	case WM_SETTEXT:
+		return dispatch_message_to_(&target::on_text_change_, msg, target, [this](events::message &e, bool fire){
+			if (fire && has_events_())
+				get_events_()->text_change.fire_(e);
+		});
+	case WM_SETFONT:
+		return dispatch_message_to_(&target::on_font_change_, msg, target, [this](events::message &e, bool fire){
+			if (fire && has_events_())
+				get_events_()->font_change.fire_(e);
+		});
 	default:
 		break;
 	}
@@ -573,6 +583,10 @@ void ewin::message::target::on_system_key_press_(events::key_press &e){}
 void ewin::message::target::on_dead_key_(events::key_press &e){}
 
 void ewin::message::target::on_dead_system_key_(events::key_press &e){}
+
+void ewin::message::target::on_text_change_(events::message &e){}
+
+void ewin::message::target::on_font_change_(events::message &e){}
 
 void ewin::message::target::on_unknown_message_(events::message &e){}
 

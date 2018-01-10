@@ -51,7 +51,7 @@ namespace ewin::message{
 
 			if (dispatch_callback != nullptr){
 				dispatch_callback(e, true);
-				if (!e.handled){
+				if (!e.prevent_default && !e.default_called){
 					auto result = (this->*callback)(e);
 					if (!e.handled)
 						e.result = result;
@@ -78,7 +78,7 @@ namespace ewin::message{
 
 			if (dispatch_callback != nullptr){
 				dispatch_callback(e, true);
-				if (!e.handled){
+				if (!e.prevent_default && !e.default_called){
 					(this->*callback)(e);
 					dispatch_callback(e, false);
 
@@ -106,8 +106,8 @@ namespace ewin::message{
 
 			if (dispatch_callback != nullptr){
 				dispatch_callback(e, true);
-				if (!e.handled){
-					if (!(this->*callback)(e) || e.handled)
+				if (!e.prevent_default && !e.default_called){
+					if (!(this->*callback)(e) && !e.handled)
 						e.prevent_default = true;
 
 					dispatch_callback(e, false);
@@ -139,7 +139,7 @@ namespace ewin::message{
 			if (bubble_callback != nullptr)//Prepare for bubbling
 				bubble_callback(msg);
 
-			parent->dispatch_message_(msg, target);
+			parent->dispatch_message_(msg, ((target == nullptr) ? this : target));
 			return result;
 		}
 
@@ -240,6 +240,10 @@ namespace ewin::message{
 		virtual void on_dead_key_(events::key_press &e);
 
 		virtual void on_dead_system_key_(events::key_press &e);
+
+		virtual void on_text_change_(events::message &e);
+
+		virtual void on_font_change_(events::message &e);
 
 		virtual void on_unknown_message_(events::message &e);
 

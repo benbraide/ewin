@@ -80,6 +80,9 @@ namespace ewin::window{
 		ewin::events::typed_basic<ewin::events::key_press, object> dead_key;
 		ewin::events::typed_basic<ewin::events::key_press, object> dead_system_key;
 
+		ewin::events::typed_basic<ewin::events::message, object> text_change;
+		ewin::events::typed_basic<ewin::events::message, object> font_change;
+
 		ewin::events::typed_basic<ewin::events::message, object> unknown_message;
 	};
 }

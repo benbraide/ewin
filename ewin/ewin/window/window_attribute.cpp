@@ -1,5 +1,6 @@
 #include "dialog_window.h"
 #include "message_window.h"
+#include "control/control_object.h"
 
 ewin::window::wnd_attribute::wnd_attribute(object &target)
 	: target_(&target){
@@ -32,4 +33,6 @@ void ewin::window::wnd_attribute::handle_property_(void *prop, void *arg, common
 		*static_cast<bool *>(arg) = (dynamic_cast<dialog *>(target_) != nullptr);
 	else if (prop == &is_message_only)
 		*static_cast<bool *>(arg) = (dynamic_cast<message *>(target_) != nullptr);
+	else if (prop == &is_control)
+		*static_cast<bool *>(arg) = (dynamic_cast<control::object *>(target_) != nullptr);
 }
